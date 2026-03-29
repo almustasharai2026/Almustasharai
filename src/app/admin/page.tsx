@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -8,6 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from "recharts";
 import { 
   Users, 
   TrendingUp, 
@@ -23,17 +34,27 @@ import {
   BarChart3,
   Activity,
   Loader2,
-  Image as ImageIcon,
   ShieldCheck,
   UserPlus,
   ArrowUpRight,
-  ShieldAlert
+  ShieldAlert,
+  Wallet
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { collection, deleteDoc, doc, addDoc, updateDoc, increment, query, orderBy } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, updateDoc, increment, query, orderBy, limit } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useMemoFirebase } from "@/firebase/provider";
+
+const chartData = [
+  { name: "السبت", users: 400, consultations: 240 },
+  { name: "الأحد", users: 300, consultations: 139 },
+  { name: "الإثنين", users: 200, consultations: 980 },
+  { name: "الثلاثاء", users: 278, consultations: 390 },
+  { name: "الأربعاء", users: 189, consultations: 480 },
+  { name: "الخميس", users: 239, consultations: 380 },
+  { name: "الجمعة", users: 349, consultations: 430 },
+];
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -57,7 +78,6 @@ export default function AdminDashboard() {
   const { data: paymentRequests } = useCollection(paymentQuery);
 
   // States
-  const [newSpec, setNewSpec] = useState({ name: "", description: "" });
   const [newConsultant, setNewConsultant] = useState({ name: "", specialty: "", hourlyRate: "", bio: "", image: "" });
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
@@ -77,7 +97,7 @@ export default function AdminDashboard() {
         createdAt: new Date().toISOString()
       });
       setNewConsultant({ name: "", specialty: "", hourlyRate: "", bio: "", image: "" });
-      toast({ title: "تم التثبيت", description: "تم إضافة المستشار الجديد إلى المنصة بنجاح." });
+      toast({ title: "تم التثبيت", description: "تم إضافة المستشار الجديد للمنصة بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ سيادي", description: "فشل في تسجيل المستشار." });
     }
@@ -105,30 +125,66 @@ export default function AdminDashboard() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[150px] -z-10" />
         <div className="text-right">
           <div className="flex items-center gap-4 justify-end mb-4">
-            <Badge className="bg-primary/20 text-primary border-primary/30 px-6 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">Supreme Command</Badge>
+            <Badge className="bg-primary/20 text-primary border-primary/30 px-6 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">Supreme Control Room</Badge>
             <h1 className="text-5xl font-black text-white flex items-center gap-5">
-               غرفة العمليات المركزية
+               غرفة القيادة العليا
                <ShieldAlert className="h-12 w-12 text-primary" />
             </h1>
           </div>
-          <p className="text-white/40 text-xl font-medium">أهلاً بك يا سيادة المدير. كامل صلاحيات المنصة مفعلة لك لإدارة الكوكب القانوني.</p>
+          <p className="text-white/40 text-xl font-medium">أهلاً بك يا سيادة المدير. نظام التحكم السيادي بالكامل تحت تصرفك.</p>
         </div>
       </header>
 
       <Tabs defaultValue="overview" className="space-y-12">
         <TabsList className="glass p-2.5 rounded-[2.5rem] w-full md:w-auto flex flex-wrap border-white/5 gap-3">
-          <TabsTrigger value="overview" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">إحصائيات حية</TabsTrigger>
-          <TabsTrigger value="consultants" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">إدارة المستشارين</TabsTrigger>
-          <TabsTrigger value="payments" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">طلبات الشحن</TabsTrigger>
-          <TabsTrigger value="users" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">المستخدمين</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">تحليلات الأداء</TabsTrigger>
+          <TabsTrigger value="consultants" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">إدارة الخبراء</TabsTrigger>
+          <TabsTrigger value="payments" className="rounded-2xl px-10 py-5 data-[state=active]:bg-primary transition-all font-black">المدفوعات</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-12 animate-in fade-in zoom-in duration-700">
           <div className="grid md:grid-cols-4 gap-8">
-            <StatCard label="إجمالي المواطنين" value={allUsers?.length || "0"} icon={<Users className="text-blue-400" />} trend="نشطون الآن" />
+            <StatCard label="إجمالي المواطنين" value={allUsers?.length || "0"} icon={<Users className="text-blue-400" />} trend="نمو مستمر" />
             <StatCard label="نخبة المستشارين" value={consultants?.length || "0"} icon={<Scale className="text-amber-400" />} trend="خبراء معتمدون" />
-            <StatCard label="طلبات معلقة" value={paymentRequests?.filter(r => r.status === "pending").length || "0"} icon={<CreditCard className="text-emerald-400" />} trend="تحتاج موافقتك" />
+            <StatCard label="طلبات معلقة" value={paymentRequests?.filter(r => r.status === "pending").length || "0"} icon={<Wallet className="text-emerald-400" />} trend="تحتاج موافقة" />
             <StatCard label="استقرار النظام" value="١٠٠٪" icon={<ShieldCheck className="text-primary" />} trend="آمن سيادياً" />
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            <Card className="glass-card border-none rounded-[3.5rem] p-10">
+              <h3 className="text-xl font-black mb-10 flex items-center gap-4 text-white">نشاط المنصة الأسبوعي <Activity className="h-6 w-6 text-primary" /></h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="name" stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0f172a', borderRadius: '20px', border: '1px solid #ffffff10' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                    <Bar dataKey="consultations" fill="#2563eb" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            <Card className="glass-card border-none rounded-[3.5rem] p-10">
+              <h3 className="text-xl font-black mb-10 flex items-center gap-4 text-white">توسع قاعدة البيانات <Database className="h-6 w-6 text-emerald-400" /></h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="name" stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff40" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                       contentStyle={{ backgroundColor: '#0f172a', borderRadius: '20px', border: '1px solid #ffffff10' }}
+                    />
+                    <Line type="monotone" dataKey="users" stroke="#10b981" strokeWidth={4} dot={{ fill: '#10b981', r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
           </div>
         </TabsContent>
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -26,6 +25,7 @@ import {
   Scale
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { processLegalQuery } from "@/ai/flows/legal-chat-flow";
 
 type Message = {
   id: string;
@@ -86,17 +86,30 @@ export default function BotPage() {
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const result = await processLegalQuery({
+        prompt: input,
+        characterName: activeChar.name,
+        characterDesc: activeChar.desc
+      });
+
       const botMsg: Message = { 
-        id: (Date.now() + 1).toString(), 
+        id: Date.now().toString(), 
         role: "bot", 
         character: activeChar.name,
-        content: `بصفتي ${activeChar.name}، قمت بمراجعة استفسارك. من الناحية القانونية المتعلقة بـ ${activeChar.desc}، أرى أن الخطوة الأولى هي التأكد من استيفاء كافة المتطلبات الإجرائية المعمول بها في التشريعات الحالية.` + DISCLAIMER_TEXT,
+        content: result.response + DISCLAIMER_TEXT,
         timestamp: new Date() 
       };
       setMessages(prev => [...prev, botMsg]);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في الاتصال",
+        description: "تعذر الحصول على رد من المستشار حالياً."
+      });
+    } finally {
       setIsLoading(false);
-    }, 1800);
+    }
   };
 
   const toggleRecording = () => {
@@ -170,7 +183,7 @@ export default function BotPage() {
                 <h1 className="text-xl font-black text-white">{activeChar.name}</h1>
                 <p className="text-[10px] text-primary flex items-center gap-2 font-black uppercase tracking-widest">
                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                   التحليل الذكي مفعل
+                   الذكاء القانوني الفائق مفعل
                 </p>
              </div>
           </div>
@@ -264,7 +277,7 @@ export default function BotPage() {
             </div>
             <div className="flex-grow relative">
               <Input 
-                placeholder={`تواصل مع ${activeChar.name} بمواصفات "المستشار ٤"...`} 
+                placeholder={`تواصل مع ${activeChar.name} بمواصفات "المستشار الذكي"...`} 
                 className="pr-8 pl-20 text-right glass border-white/[0.03] rounded-[2rem] h-16 text-lg focus-visible:ring-1 ring-primary/40 shadow-2xl"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -290,7 +303,7 @@ export default function BotPage() {
               {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
             </Button>
           </div>
-          <p className="text-[10px] text-center mt-8 opacity-20 font-black uppercase tracking-[0.5em] text-white">Advanced Legal Core AI Engine - v4.1 Platinum</p>
+          <p className="text-[10px] text-center mt-8 opacity-20 font-black uppercase tracking-[0.5em] text-white">Advanced Legal Core AI Engine - Platinum Edition</p>
         </div>
       </main>
     </div>
