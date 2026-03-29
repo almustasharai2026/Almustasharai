@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   Zap,
   Info,
-  ChevronLeft
+  ChevronLeft,
+  CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,6 +63,22 @@ export default function CosmicBotPage() {
     }
   }, [messages, isLoading]);
 
+  const handleSelectCharacter = (char: typeof CHARACTERS[0]) => {
+    setActiveChar(char);
+    const selectionMsg: Message = {
+      id: Date.now().toString(),
+      role: "bot",
+      content: `تم تفعيل نظام ${char.name} بنجاح. أنا جاهز تماماً لتحليل قضيتك الآن.`,
+      timestamp: new Date(),
+      character: char.name
+    };
+    setMessages(prev => [...prev, selectionMsg]);
+    toast({
+      title: "تغيير الشخصية",
+      description: `أنت الآن تتحدث مع ${char.name}`,
+    });
+  };
+
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input, timestamp: new Date() };
@@ -75,7 +92,7 @@ export default function CosmicBotPage() {
         id: (Date.now() + 1).toString(), 
         role: "bot", 
         character: activeChar.name,
-        content: `بصفتي ${activeChar.name}، قمت بتحليل طلبك عبر خوارزميات العدالة الذكية. إليك التحليل المبدئي لموقفك...`,
+        content: `بصفتي ${activeChar.name}، قمت بتحليل طلبك عبر خوارزميات العدالة الذكية. إليك التحليل المبدئي لموقفك بناءً على المعطيات القانونية الحالية...`,
         timestamp: new Date() 
       };
       setMessages(prev => [...prev, botMsg]);
@@ -148,7 +165,14 @@ export default function CosmicBotPage() {
             </div>
             <div className="flex gap-3">
               <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white"><History className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500"><Trash2 className="h-5 w-5" /></Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-12 w-12 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500"
+                onClick={() => setMessages([{ id: "1", role: "bot", content: "مرحباً بك في مركز القيادة القانونية الذكي. أي من خبرائنا التسعة تود استشارته اليوم؟", timestamp: new Date() }])}
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
             </div>
           </div>
 
@@ -158,17 +182,35 @@ export default function CosmicBotPage() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
                   <div className={`h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 shadow-2xl border-2 border-white/10 ${
-                    msg.role === 'bot' ? `bg-gradient-to-br ${activeChar.color}` : 'bg-accent'
+                    msg.role === 'bot' ? (msg.character ? `bg-gradient-to-br ${CHARACTERS.find(c => c.name === msg.character)?.color || activeChar.color}` : 'bg-zinc-800') : 'bg-accent'
                   } text-white`}>
-                    {msg.role === 'bot' ? <span className="text-3xl">{activeChar.icon}</span> : <User className="h-8 w-8" />}
+                    {msg.role === 'bot' ? <span className="text-3xl">{CHARACTERS.find(c => c.name === msg.character)?.icon || activeChar.icon}</span> : <User className="h-8 w-8" />}
                   </div>
-                  <div className={`max-w-[85%] space-y-2 ${msg.role === 'user' ? 'text-left' : 'text-right'}`}>
+                  <div className={`max-w-[85%] space-y-4 ${msg.role === 'user' ? 'text-left' : 'text-right'}`}>
                     <div className={`p-8 rounded-[2.5rem] text-xl leading-relaxed shadow-2xl relative group ${
                       msg.role === 'bot' 
                       ? 'bg-white/5 border border-white/10 text-white rounded-tr-none' 
                       : 'cosmic-gradient text-white rounded-tl-none'
                     }`}>
                       {msg.content}
+                      
+                      {/* Expert Selection Buttons - Only show for the first bot message */}
+                      {msg.id === "1" && msg.role === "bot" && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-8">
+                          {CHARACTERS.map((char) => (
+                            <Button
+                              key={char.id}
+                              variant="outline"
+                              className="glass-cosmic border-white/10 hover:border-accent hover:bg-accent/10 h-auto py-5 flex flex-col items-center gap-2 rounded-2xl transition-all group/btn"
+                              onClick={() => handleSelectCharacter(char)}
+                            >
+                              <span className="text-3xl group-hover/btn:scale-125 transition-transform duration-500">{char.icon}</span>
+                              <span className="text-xs font-black text-white">{char.name}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity">
                         <Info className="h-4 w-4" />
                       </div>
