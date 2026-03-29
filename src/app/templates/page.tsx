@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -7,12 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Search, Info, CheckCircle2, FileType, BookOpen, Scale } from "lucide-react";
+import { FileText, Download, Search, Info, CheckCircle2, FileType, BookOpen, Scale, Wallet, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useToast } from "@/hooks/use-toast";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+
+const TEMPLATE_PRICE = 25;
 
 const TEMPLATES = [
-  // Real Legal Categories (Simulating a library of 250+)
   { id: "1", title: "عقد إيجار سكني موحد", description: "نموذج قانوني متوافق مع تعديلات قانون الإيجار الجديد.", category: "عقاري" },
   { id: "2", title: "اتفاقية عدم إفصاح (NDA)", description: "حماية كاملة للأسرار التجارية والبيانات.", category: "تجاري" },
   { id: "3", title: "توكيل قانوني عام", description: "صيغة رسمية شاملة للتمويل والتقاضي.", category: "عام" },
@@ -26,10 +31,19 @@ const TEMPLATES = [
 ];
 
 export default function TemplatesPage() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useUser();
+  const db = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
+  
+  const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState({ name: "", idNumber: "", details: "" });
   const [activeCategory, setActiveCategory] = useState("الكل");
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+  // User Profile for Balance Check
+  const userDocRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user]);
+  const { data: profile } = useDoc(userDocRef);
 
   const categories = ["الكل", "عقاري", "تجاري", "أحوال شخصية", "عمالي", "قضائي", "مدني"];
 
@@ -37,24 +51,56 @@ export default function TemplatesPage() {
     (t.title.includes(searchTerm)) && (activeCategory === "الكل" || t.category === activeCategory)
   );
 
-  const handleDownload = (template: typeof TEMPLATES[0]) => {
+  const handleDownload = async (template: typeof TEMPLATES[0]) => {
+    if (!user) {
+      toast({ variant: "destructive", title: "تسجيل الدخول مطلوب", description: "يرجى تسجيل الدخول لإصدار النماذج." });
+      router.push("/auth/login");
+      return;
+    }
+
     if (!data.name || !data.idNumber) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى إكمال الاسم ورقم الهوية." });
       return;
     }
 
-    const doc = new jsPDF();
-    // Simplified PDF for speed and reliability in browser
-    doc.text("ALMUSTASHAR AI - PRO LEGAL DOCUMENT", 60, 20);
-    doc.line(20, 25, 190, 25);
-    doc.text(`Document Type: ${template.title}`, 20, 40);
-    doc.text(`Beneficiary: ${data.name}`, 20, 55);
-    doc.text(`National ID: ${data.idNumber}`, 20, 65);
-    doc.text("Legal Provisions:", 20, 85);
-    doc.text(doc.splitTextToSize(data.details || "Default standard legal clauses applied.", 160), 20, 95);
-    doc.save(`${template.title}_certified.pdf`);
-    
-    toast({ title: "تم الإصدار", description: "تم إنشاء النموذج القانوني المعتمد بنجاح." });
+    const currentBalance = profile?.balance || 0;
+    if (currentBalance < TEMPLATE_PRICE) {
+      toast({
+        variant: "destructive",
+        title: "رصيد غير كافٍ",
+        description: `تكلفة إصدار النموذج ${TEMPLATE_PRICE} EGP. رصيدك الحالي: ${currentBalance} EGP.`,
+      });
+      router.push("/pricing");
+      return;
+    }
+
+    setIsProcessing(template.id);
+    try {
+      // 1. Deduct Balance from Firestore
+      await updateDoc(doc(db!, "users", user.uid), {
+        balance: increment(-TEMPLATE_PRICE)
+      });
+
+      // 2. Generate PDF
+      const pdf = new jsPDF();
+      pdf.text("ALMUSTASHAR AI - PRO LEGAL DOCUMENT", 60, 20);
+      pdf.line(20, 25, 190, 25);
+      pdf.text(`Document Type: ${template.title}`, 20, 40);
+      pdf.text(`Beneficiary: ${data.name}`, 20, 55);
+      pdf.text(`National ID: ${data.idNumber}`, 20, 65);
+      pdf.text("Legal Provisions:", 20, 85);
+      pdf.text(pdf.splitTextToSize(data.details || "Default standard legal clauses applied.", 160), 20, 95);
+      pdf.save(`${template.title}_certified.pdf`);
+      
+      toast({ 
+        title: "تم الإصدار والخصم", 
+        description: `تم خصم ${TEMPLATE_PRICE} EGP وإصدار النموذج القانوني المعتمد بنجاح.` 
+      });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في النظام", description: "فشل في معالجة الطلب، يرجى المحاولة لاحقاً." });
+    } finally {
+      setIsProcessing(null);
+    }
   };
 
   return (
@@ -77,6 +123,13 @@ export default function TemplatesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
+              <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex items-center justify-between mb-4">
+                 <Wallet className="h-5 w-5 text-primary" />
+                 <div className="text-left">
+                    <p className="text-[10px] text-white/30 font-black uppercase">رصيدك المتاح</p>
+                    <p className="text-xl font-black text-white">{profile?.balance || 0} EGP</p>
+                 </div>
+              </div>
               <div className="space-y-2">
                 <Label>الاسم الكامل للمقر</Label>
                 <Input value={data.name} onChange={e => setData({...data, name: e.target.value})} className="glass border-white/10 h-12" placeholder="الاسم رباعي" />
@@ -124,16 +177,28 @@ export default function TemplatesPage() {
               <Card key={t.id} className="glass-card border-none rounded-[2rem] group hover:border-primary/40 transition-all flex flex-col">
                 <CardHeader>
                   <div className="flex justify-between items-start mb-4">
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[10px] px-3 font-black">
+                      {TEMPLATE_PRICE} EGP
+                    </Badge>
                     <Badge className="bg-primary/20 text-primary border-none text-[10px] px-3">{t.category}</Badge>
-                    <FileType className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-all text-primary" />
                   </div>
                   <CardTitle className="text-xl font-bold">{t.title}</CardTitle>
                   <CardDescription className="text-right leading-relaxed mt-2 opacity-60">{t.description}</CardDescription>
                 </CardHeader>
                 <div className="flex-grow" />
                 <CardFooter className="pt-6 border-t border-white/5">
-                  <Button className="w-full btn-primary h-14 rounded-2xl gap-3 text-lg font-bold" onClick={() => handleDownload(t)}>
-                    <Download className="h-5 w-5" /> تخصيص وإصدار
+                  <Button 
+                    className="w-full btn-primary h-14 rounded-2xl gap-3 text-lg font-bold" 
+                    onClick={() => handleDownload(t)}
+                    disabled={isProcessing === t.id}
+                  >
+                    {isProcessing === t.id ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Download className="h-5 w-5" /> تخصيص وإصدار
+                      </>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
