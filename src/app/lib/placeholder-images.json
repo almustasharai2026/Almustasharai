@@ -8,22 +8,58 @@
       "imageHint": "legal office"
     },
     {
-      "id": "consultant-1",
-      "description": "Female legal expert profile",
-      "imageUrl": "https://picsum.photos/seed/pro1/400/400",
-      "imageHint": "professional woman"
+      "id": "char-1",
+      "description": "Lawyer Character",
+      "imageUrl": "https://picsum.photos/seed/lawyer/200/200",
+      "imageHint": "lawyer avatar"
     },
     {
-      "id": "consultant-2",
-      "description": "Male senior legal consultant profile",
-      "imageUrl": "https://picsum.photos/seed/pro2/400/400",
-      "imageHint": "professional man"
+      "id": "char-2",
+      "description": "Judge Character",
+      "imageUrl": "https://picsum.photos/seed/judge/200/200",
+      "imageHint": "judge avatar"
     },
     {
-      "id": "consultant-3",
-      "description": "Legal team meeting",
-      "imageUrl": "https://picsum.photos/seed/pro3/400/400",
-      "imageHint": "business meeting"
+      "id": "char-3",
+      "description": "Consultant Character",
+      "imageUrl": "https://picsum.photos/seed/consultant/200/200",
+      "imageHint": "consultant avatar"
+    },
+    {
+      "id": "char-4",
+      "description": "Notary Character",
+      "imageUrl": "https://picsum.photos/seed/notary/200/200",
+      "imageHint": "notary avatar"
+    },
+    {
+      "id": "char-5",
+      "description": "Forensic Character",
+      "imageUrl": "https://picsum.photos/seed/forensic/200/200",
+      "imageHint": "forensic avatar"
+    },
+    {
+      "id": "char-6",
+      "description": "Arbitrator Character",
+      "imageUrl": "https://picsum.photos/seed/arbitrator/200/200",
+      "imageHint": "arbitrator avatar"
+    },
+    {
+      "id": "char-7",
+      "description": "Prosecutor Character",
+      "imageUrl": "https://picsum.photos/seed/prosecutor/200/200",
+      "imageHint": "prosecutor avatar"
+    },
+    {
+      "id": "char-8",
+      "description": "Mediator Character",
+      "imageUrl": "https://picsum.photos/seed/mediator/200/200",
+      "imageHint": "mediator avatar"
+    },
+    {
+      "id": "char-9",
+      "description": "Researcher Character",
+      "imageUrl": "https://picsum.photos/seed/researcher/200/200",
+      "imageHint": "researcher avatar"
     }
   ]
 }
