@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -18,7 +17,8 @@ import {
   ShieldCheck,
   Zap,
   Info,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,6 +41,8 @@ const CHARACTERS = [
   { id: "researcher", name: "الباحث الأكاديمي", icon: "📚", color: "from-green-600 to-emerald-800", desc: "دراسات فقهية عميقة" },
   { id: "prosecutor", name: "المدعي العام", icon: "📜", color: "from-rose-600 to-red-800", desc: "حماية الحقوق العامة" },
 ];
+
+const DISCLAIMER_TEXT = "\n\n--- \n⚠️ إخلاء مسؤولية: هذا الرد نتاج تحليل ذكاء اصطناعي لأغراض استرشادية فقط. لا يعتبر نصيحة قانونية نهائية، ويُنصح دائماً بمراجعة محامي مختص قبل اتخاذ أي إجراء قانوني.";
 
 export default function BotPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -81,7 +83,7 @@ export default function BotPage() {
         id: (Date.now() + 1).toString(), 
         role: "bot", 
         character: activeChar.name,
-        content: `بصفتي ${activeChar.name}، قمت بتحليل استفسارك بعناية. إليك التحليل القانوني المبدئي...`,
+        content: `بصفتي ${activeChar.name}، قمت بتحليل استفسارك بعناية. إليك التحليل القانوني المبدئي بناءً على المعطيات المقدمة...` + DISCLAIMER_TEXT,
         timestamp: new Date() 
       };
       setMessages(prev => [...prev, botMsg]);
@@ -90,7 +92,7 @@ export default function BotPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl h-[calc(100vh-6rem)] flex flex-col gap-6" dir="rtl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl h-[calc(100vh-8rem)] flex flex-col gap-6" dir="rtl">
       <div className="grid lg:grid-cols-12 gap-6 flex-grow overflow-hidden">
         
         {/* Sidebar: Character Selection */}
@@ -123,11 +125,11 @@ export default function BotPage() {
             </div>
           </div>
           
-          <div className="mt-auto glass-card p-4 rounded-xl flex items-center gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+          <div className="mt-auto glass-card p-4 rounded-xl flex items-center gap-3 bg-red-500/5 border-red-500/20">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
             <div className="text-right">
-              <p className="text-xs font-bold">تشفير كوانتم مفعل</p>
-              <p className="text-[10px] opacity-50">Safe & Secure</p>
+              <p className="text-[10px] font-bold text-red-500">تنبيه قانوني</p>
+              <p className="text-[8px] opacity-70">الردود استرشادية فقط ولا تعتبر نصيحة قانونية ملزمة.</p>
             </div>
           </div>
         </div>
@@ -145,7 +147,7 @@ export default function BotPage() {
                 <h2 className="text-lg font-bold text-white">{activeChar.name}</h2>
                 <span className="text-[10px] text-primary flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                  النظام جاهز للتحليل
+                  النظام جاهز للتحليل الذكي
                 </span>
               </div>
             </div>
@@ -172,7 +174,7 @@ export default function BotPage() {
                     {msg.role === 'bot' ? <span>{CHARACTERS.find(c => c.name === msg.character)?.icon || activeChar.icon}</span> : <User className="h-6 w-6" />}
                   </div>
                   <div className={`max-w-[80%] space-y-2 ${msg.role === 'user' ? 'text-left' : 'text-right'}`}>
-                    <div className={`p-5 rounded-2xl text-lg leading-relaxed ${
+                    <div className={`p-5 rounded-2xl text-sm md:text-lg leading-relaxed whitespace-pre-wrap ${
                       msg.role === 'bot' 
                       ? 'bg-slate-800/50 border border-white/5 text-white rounded-tr-none' 
                       : 'bg-primary text-white rounded-tl-none'
@@ -229,7 +231,7 @@ export default function BotPage() {
               </div>
               <div className="flex-grow relative">
                 <Input 
-                  placeholder={`اكتب رسالتك لـ ${activeChar.name}...`} 
+                  placeholder={`اكتب استشارتك لـ ${activeChar.name}...`} 
                   className="pr-6 pl-16 text-right glass border-white/5 rounded-2xl h-14 text-lg focus-visible:ring-1 ring-primary/50"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
