@@ -32,7 +32,8 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-body antialiased overflow-x-hidden;
-    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0f0f1b 100%);
+    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #080810 100%);
+    background-attachment: fixed;
   }
 }
 
@@ -41,7 +42,7 @@
   .font-headline { font-family: 'Cairo', sans-serif; }
   
   .glass-cosmic {
-    @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)];
+    @apply bg-white/[0.03] backdrop-blur-[40px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)];
   }
   
   .cosmic-gradient {
@@ -50,19 +51,47 @@
   
   .nebula-glow {
     position: absolute;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255,107,0,0.1) 0%, transparent 70%);
-    filter: blur(60px);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,107,0,0.08) 0%, transparent 70%);
+    filter: blur(80px);
     z-index: -1;
   }
   
   .animate-spin-slow {
-    animation: spin 8s linear infinite;
+    animation: spin 12s linear infinite;
   }
   
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 0, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 0, 0.5);
+  }
+
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+
+  /* Text Shimmer Effect */
+  .text-shimmer {
+    background: linear-gradient(90deg, #fff 0%, #ff6b00 50%, #fff 100%);
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shimmer 4s linear infinite;
+  }
+
+  @keyframes shimmer {
+    to { background-position: 200% center; }
   }
 }

@@ -1,49 +1,72 @@
 
 import Link from "next/link";
-import { Scale } from "lucide-react";
+import { Scale, Mail, Phone, MapPin, Sparkles } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full border-t bg-card py-12">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="space-y-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-primary text-lg">
-            <Scale className="h-5 w-5 text-accent" />
-            <span>المستشار</span>
+    <footer className="w-full border-t border-white/5 bg-black/40 backdrop-blur-3xl py-16 mt-20 relative overflow-hidden" dir="rtl">
+      <div className="absolute bottom-0 right-0 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
+      <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
+        <div className="space-y-6">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="bg-accent p-2 rounded-xl group-hover:rotate-[360deg] transition-transform duration-1000">
+              <Scale className="h-6 w-6 text-white" />
+            </div>
+            <span className="font-black text-2xl text-white tracking-tighter">
+               المستشار <span className="text-accent">AI</span>
+            </span>
           </Link>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            استشارات قانونية احترافية في متناول يدك. نصيحة خبيرة وآمنة وخاصة عندما تحتاج إليها.
+          <p className="text-lg text-white/60 leading-relaxed font-medium">
+            نحن نعيد تعريف العدالة باستخدام الذكاء الاصطناعي الفائق. استشارات قانونية آمنة، فورية، وبدقة كونية.
           </p>
+          <div className="flex gap-4">
+            <div className="h-10 w-10 rounded-xl glass-cosmic flex items-center justify-center hover:bg-accent hover:text-white transition-all cursor-pointer">
+               <Sparkles className="h-5 w-5" />
+            </div>
+          </div>
         </div>
         
         <div>
-          <h4 className="font-semibold mb-4 text-primary">المنصة</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/consultants" className="hover:text-accent">المستشارون</Link></li>
-            <li><Link href="/match" className="hover:text-accent">المطابقة الذكية</Link></li>
-            <li><Link href="/booking" className="hover:text-accent">الحجز</Link></li>
+          <h4 className="text-xl font-black mb-8 text-white border-r-4 border-accent pr-4">خريطة المنصة</h4>
+          <ul className="space-y-4 text-lg font-bold text-white/50">
+            <li><Link href="/consultants" className="hover:text-accent transition-colors">نخبة المستشارين</Link></li>
+            <li><Link href="/match" className="hover:text-accent transition-colors">خوارزمية المطابقة</Link></li>
+            <li><Link href="/templates" className="hover:text-accent transition-colors">النماذج الذكية</Link></li>
+            <li><Link href="/bot" className="hover:text-accent transition-colors">مركز العمليات</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4 text-primary">الشركة</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/about" className="hover:text-accent">من نحن</Link></li>
-            <li><Link href="/privacy" className="hover:text-accent">سياسة الخصوصية</Link></li>
-            <li><Link href="/terms" className="hover:text-accent">الشروط والأحكام</Link></li>
+          <h4 className="text-xl font-black mb-8 text-white border-r-4 border-accent pr-4">المركز القانوني</h4>
+          <ul className="space-y-4 text-lg font-bold text-white/50">
+            <li><Link href="/about" className="hover:text-accent transition-colors">رؤيتنا المستقبلية</Link></li>
+            <li><Link href="/privacy" className="hover:text-accent transition-colors">ميثاق الخصوصية</Link></li>
+            <li><Link href="/terms" className="hover:text-accent transition-colors">بروتوكول الاستخدام</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4 text-primary">اتصل بنا</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>support@almustasharai.com</li>
-            <li>+966 (123) 456-789</li>
+          <h4 className="text-xl font-black mb-8 text-white border-r-4 border-accent pr-4">اتصال مباشر</h4>
+          <ul className="space-y-6 text-lg font-bold text-white/50">
+            <li className="flex items-center gap-3 justify-end group">
+              <span className="group-hover:text-white transition-colors">Infoalmustasharai@gmali.com</span>
+              <Mail className="h-5 w-5 text-accent" />
+            </li>
+            <li className="flex items-center gap-3 justify-end group">
+              <span className="group-hover:text-white transition-colors" dir="ltr">+20 01130031531</span>
+              <Phone className="h-5 w-5 text-accent" />
+            </li>
+            <li className="flex items-center gap-3 justify-end group">
+              <span className="group-hover:text-white transition-colors">مركز الابتكار الرقمي، القاهرة</span>
+              <MapPin className="h-5 w-5 text-accent" />
+            </li>
           </ul>
         </div>
       </div>
-      <div className="container mx-auto px-4 mt-8 pt-8 border-t text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} المستشار للخدمات القانونية. جميع الحقوق محفوظة.
+      <div className="container mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-center">
+        <p className="text-sm font-black text-white/30 uppercase tracking-[0.3em]">
+          © {new Date().getFullYear()} المستشار AI | نظام العدالة الكوني الموحد
+        </p>
       </div>
     </footer>
   );
