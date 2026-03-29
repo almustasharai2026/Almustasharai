@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -7,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Search, Info, CheckCircle2, FileType, BookOpen, Scale } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useToast } from "@/hooks/use-toast";
