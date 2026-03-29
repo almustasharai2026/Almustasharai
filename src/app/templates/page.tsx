@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Search, Info, CheckCircle2, FileType, BookOpen, Scale, Wallet, Loader2 } from "lucide-react";
+import { Download, Search, BookOpen, Scale, Wallet, Loader2, FileType } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -185,8 +185,7 @@ export default function TemplatesPage() {
                   <CardTitle className="text-xl font-bold">{t.title}</CardTitle>
                   <CardDescription className="text-right leading-relaxed mt-2 opacity-60">{t.description}</CardDescription>
                 </CardHeader>
-                <div className="flex-grow" />
-                <CardFooter className="pt-6 border-t border-white/5">
+                <CardFooter className="pt-6 border-t border-white/5 mt-auto">
                   <Button 
                     className="w-full btn-primary h-14 rounded-2xl gap-3 text-lg font-bold" 
                     onClick={() => handleDownload(t)}
@@ -203,10 +202,6 @@ export default function TemplatesPage() {
                 </CardFooter>
               </Card>
             ))}
-          </div>
-          
-          <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[2rem] opacity-30">
-             <p className="text-lg font-bold">تصفح المزيد من النماذج الـ ٢٥٠+ عبر البحث</p>
           </div>
         </div>
       </div>

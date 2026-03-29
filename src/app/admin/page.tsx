@@ -21,29 +21,23 @@ import {
 } from "recharts";
 import { 
   Users, 
-  TrendingUp, 
   Scale,
   Plus,
   Trash2,
-  Lock,
   Database,
   CheckCircle,
-  XCircle,
-  AlertCircle,
-  BarChart3,
   Activity,
   Loader2,
   ShieldCheck,
   UserPlus,
-  ArrowUpRight,
-  ShieldAlert,
   Wallet,
   Settings2,
-  Gavel
+  Gavel,
+  XCircle
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { collection, deleteDoc, doc, addDoc, updateDoc, increment, query, orderBy, limit } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, updateDoc, increment, query, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useMemoFirebase } from "@/firebase/provider";
 
@@ -66,9 +60,6 @@ export default function AdminDashboard() {
   const isAdmin = user?.email === "bishoysamy390@gmail.com";
 
   // Queries
-  const specQuery = useMemoFirebase(() => collection(db!, "specializations"), [db]);
-  const { data: specializations } = useCollection(specQuery);
-
   const usersQuery = useMemoFirebase(() => collection(db!, "users"), [db]);
   const { data: allUsers } = useCollection(usersQuery);
 
@@ -115,6 +106,21 @@ export default function AdminDashboard() {
       toast({ title: "تم التصديق", description: `تم شحن ${amount} EGP لمحفظة المستخدم.` });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل في تحديث الرصيد." });
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  const handleRejectCredit = async (requestId: string) => {
+    setIsProcessing(requestId);
+    try {
+      await updateDoc(doc(db!, "paymentRequests", requestId), {
+        status: "rejected",
+        rejectedAt: new Date().toISOString()
+      });
+      toast({ title: "تم الرفض", description: "تم إلغاء طلب الشحن بنجاح." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ", description: "فشل في تحديث حالة الطلب." });
     } finally {
       setIsProcessing(null);
     }
@@ -242,7 +248,9 @@ export default function AdminDashboard() {
                       <Button onClick={() => handleApproveCredit(request.id, request.userId, request.amount)} disabled={!!isProcessing} className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 rounded-[1.8rem] h-20 px-16 font-black text-xl shadow-2xl">
                         {isProcessing === request.id ? <Loader2 className="animate-spin" /> : "قبول وشحن"}
                       </Button>
-                      <Button variant="outline" className="flex-1 md:flex-none text-red-500 border-red-500/20 rounded-[1.8rem] h-20 px-16 font-black text-xl">رفض الطلب</Button>
+                      <Button onClick={() => handleRejectCredit(request.id)} disabled={!!isProcessing} variant="outline" className="flex-1 md:flex-none text-red-500 border-red-500/20 rounded-[1.8rem] h-20 px-16 font-black text-xl">
+                        {isProcessing === request.id ? <Loader2 className="animate-spin" /> : "رفض الطلب"}
+                      </Button>
                     </div>
                     <div className="text-right">
                       <h4 className="font-black text-3xl text-white">{request.userName}</h4>
