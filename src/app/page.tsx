@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input";
 import { 
   ArrowRight, 
   Sparkles, 
-  ShieldCheck, 
   Video,
   FileText,
   MessageSquare,
   ChevronRight,
-  Zap,
-  Gift
+  Gift,
+  Scale
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,7 +43,7 @@ export default function LandingPage() {
         </div>
         
         <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-white leading-[0.9] text-gradient">
-          العدالة برؤية <br />مستقبلية فائقة
+          العدالة برؤية <br />احترافية فائقة
         </h1>
         
         <p className="text-lg md:text-2xl text-white/40 font-medium max-w-3xl mx-auto leading-relaxed">
@@ -70,7 +69,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* The Three Power Pillars */}
+        {/* Power Pillars */}
         <div className="grid md:grid-cols-3 gap-8 mt-24 max-w-6xl mx-auto">
           <PillarButton 
             href="/consultants"
@@ -93,7 +92,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Trust & Performance Banner */}
+      {/* Stats Section */}
       <section className="mt-40 w-full max-w-6xl glass-card p-16 md:p-24 rounded-[4rem] text-center border-white/[0.03] relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
         <h2 className="text-4xl md:text-5xl font-black mb-16 text-white/90">منظومة العدالة الأكثر موثوقية</h2>
