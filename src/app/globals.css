@@ -5,25 +5,25 @@
 
 @layer base {
   :root {
-    --background: 224 71% 4%;
+    --background: 222 47% 4%;
     --foreground: 213 31% 91%;
-    --card: 224 71% 4%;
+    --card: 222 47% 4%;
     --card-foreground: 213 31% 91%;
-    --popover: 224 71% 4%;
+    --popover: 222 47% 4%;
     --popover-foreground: 215 20.2% 65.1%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 226 100% 64%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
     --muted: 223 47% 11%;
     --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 216 34% 17%;
+    --accent: 226 70% 20%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 216 34% 17%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 226 100% 64%;
     --radius: 1.5rem;
   }
 }
@@ -31,10 +31,10 @@
 @layer base {
   * { @apply border-border; }
   body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary/20;
-    background: radial-gradient(circle at top right, hsla(222, 47%, 15%, 1) 0%, transparent 40%),
-                radial-gradient(circle at bottom left, hsla(217, 91%, 10%, 1) 0%, transparent 40%),
-                hsl(224, 71%, 4%);
+    @apply bg-background text-foreground font-body antialiased selection:bg-primary/30;
+    background: radial-gradient(circle at top right, hsla(226, 70%, 15%, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at bottom left, hsla(226, 70%, 10%, 0.4) 0%, transparent 40%),
+                hsl(222, 47%, 4%);
     background-attachment: fixed;
   }
 }
@@ -44,26 +44,30 @@
   .font-headline { font-family: 'Cairo', sans-serif; }
   
   .glass {
-    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.05] shadow-2xl;
+    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
   }
   
   .glass-card {
-    @apply bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] hover:border-white/[0.1] transition-all duration-500 shadow-xl;
+    @apply bg-white/[0.01] backdrop-blur-xl border border-white/[0.03] hover:border-white/[0.08] transition-all duration-700 shadow-2xl;
   }
 
   .glass-cosmic {
-    @apply bg-slate-950/40 backdrop-blur-3xl border border-white/[0.03] shadow-[0_0_50px_rgba(0,0,0,0.3)];
+    @apply bg-slate-950/60 backdrop-blur-2xl border border-white/[0.02] shadow-[0_0_80px_rgba(0,0,0,0.4)];
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-200 via-white to-blue-200;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-200 to-blue-400;
   }
 
   .btn-primary {
-    @apply bg-white text-slate-950 hover:bg-slate-200 shadow-xl transition-all active:scale-95 font-bold;
+    @apply bg-primary text-white hover:bg-primary/90 shadow-[0_0_20px_rgba(37,99,235,0.2)] transition-all active:scale-95 font-bold;
   }
 
   .cosmic-gradient {
-    @apply bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white border border-white/10;
+    @apply bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white border border-white/5;
+  }
+  
+  .mirror {
+    transform: scaleX(-1);
   }
 }

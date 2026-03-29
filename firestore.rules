@@ -4,9 +4,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * ALMUSTASHARAI SECURITY RULES - PRODUCTION READY
+     * ALMUSTASHAR AI - SUPREME SECURITY RULES
      * 
-     * هويتنا: السيطرة الكاملة للمالك والحماية التامة للمستخدم.
+     * الهوية: السيطرة السيادية للمالك والحماية المطلقة للمستخدم.
      * المالك: bishoysamy390@gmail.com
      */
 
@@ -28,7 +28,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isSignedIn();
-      allow update: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'status']));
+      allow update: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'status', 'email']));
       allow delete: if isAdmin();
     }
 
@@ -44,7 +44,8 @@ service cloud.firestore {
 
     match /consultations/{consultationId} {
       allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.consultantId == request.auth.uid || isAdmin());
-      allow list, create: if isSignedIn();
+      allow list: if isSignedIn() && (request.query.limit <= 50); 
+      allow create: if isSignedIn();
       allow update, delete: if isAdmin();
 
       match /chat/{messageId} {
@@ -58,6 +59,12 @@ service cloud.firestore {
       allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 20); 
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
+    }
+    
+    // قواعد إضافية للبيانات العامة
+    match /{path=**}/public_data/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

@@ -20,7 +20,8 @@ import {
   History,
   Gift,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  ChevronLeft
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useAuth, useDoc, useFirestore } from "@/firebase";
@@ -52,7 +53,7 @@ export default function Dashboard() {
 
   const handleChargeRequest = async () => {
     if (!chargeAmount || !user || !db) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى إدخال المبلغ المراد شحنه." });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى إدخال المبلغ المراد شحنه أولاً." });
       return;
     }
     
@@ -68,21 +69,21 @@ export default function Dashboard() {
         createdAt: new Date().toISOString()
       });
       toast({
-        title: "تم إرسال الطلب",
-        description: "سيتم مراجعة إيصال التحويل وتحديث رصيدك خلال ١٥ دقيقة.",
+        title: "تم استلام طلب الشحن",
+        description: "سيتم مراجعة التحويل وتحديث رصيدك خلال ١٥ دقيقة كحد أقصى.",
       });
       setChargeAmount("");
     } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في النظام", description: "فشل في إرسال طلب الشحن، يرجى المحاولة لاحقاً." });
+      toast({ variant: "destructive", title: "فشل النظام", description: "تعذر إرسال الطلب، يرجى مراجعة الاتصال." });
     } finally {
       setIsCharging(false);
     }
   };
 
   if (isUserLoading) return (
-    <div className="container py-32 text-center">
-      <div className="inline-flex h-20 w-20 animate-spin rounded-full border-4 border-primary border-t-transparent mb-4" />
-      <p className="text-xl font-bold opacity-50">جاري الاتصال بالنظام الكوني...</p>
+    <div className="container py-40 text-center">
+      <div className="inline-flex h-24 w-24 animate-spin rounded-full border-[6px] border-primary border-t-transparent mb-6 shadow-[0_0_30px_rgba(37,99,235,0.2)]" />
+      <p className="text-2xl font-black text-white/40">جاري استدعاء السجلات السيادية...</p>
     </div>
   );
 
@@ -94,58 +95,59 @@ export default function Dashboard() {
   const isAdmin = user.email === "bishoysamy390@gmail.com";
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl" dir="rtl">
+    <div className="container mx-auto px-6 py-16 max-w-7xl" dir="rtl">
       {isAdmin && (
-        <div className="mb-12 p-8 glass-cosmic rounded-[2.5rem] border-primary/30 flex flex-col md:flex-row items-center justify-between gap-8 animate-in zoom-in duration-700">
-          <div className="flex items-center gap-6">
-             <div className="h-20 w-20 bg-primary/20 rounded-3xl flex items-center justify-center shadow-2xl">
-               <ShieldAlert className="h-10 w-10 text-primary" />
+        <div className="mb-16 p-10 glass-cosmic rounded-[3rem] border-primary/20 flex flex-col md:flex-row items-center justify-between gap-10 animate-in zoom-in duration-1000 shadow-[0_0_50px_rgba(37,99,235,0.1)]">
+          <div className="flex items-center gap-8">
+             <div className="h-24 w-24 bg-primary/20 rounded-[2rem] flex items-center justify-center shadow-2xl border border-primary/30">
+               <ShieldAlert className="h-12 w-12 text-primary" />
              </div>
              <div className="text-right">
-                <h2 className="font-black text-primary text-3xl mb-1">مركز سيادة المالك</h2>
-                <p className="text-lg opacity-70">أهلاً بك يا بيشوي سامي. كل السلطات مفعلة لك حالياً.</p>
+                <h2 className="font-black text-primary text-4xl mb-2">مركز السيطرة العليا</h2>
+                <p className="text-xl text-white/50 font-medium">كامل السلطات مفعلة لك يا سيادة المدير لإدارة الكوكب.</p>
              </div>
           </div>
           <Link href="/admin">
-            <Button size="lg" className="cosmic-gradient rounded-2xl font-black px-12 h-16 text-lg shadow-2xl">
+            <Button size="lg" className="cosmic-gradient rounded-[1.8rem] font-black px-14 h-20 text-xl shadow-2xl hover:scale-[1.05] transition-all">
                دخول غرفة العمليات
             </Button>
           </Link>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
-        <div className="text-right space-y-2">
-          <h1 className="text-5xl font-black text-white">مرحباً، <span className="text-gradient">{profile?.fullName || "مستشار المستقبل"}</span></h1>
-          <p className="text-muted-foreground opacity-60">أهلاً بك في مركز قيادتك القانوني الخاص.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-20">
+        <div className="text-right space-y-3">
+          <h1 className="text-6xl font-black text-white">أهلاً، <span className="text-gradient">{profile?.fullName || "مستشارنا"}</span></h1>
+          <p className="text-xl text-white/30 font-medium">أهلاً بك في فضاء العمل القانوني الخاص بك.</p>
         </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="glass rounded-2xl h-14 border-white/10 hover:bg-white/5" onClick={() => toast({ title: "الإعدادات", description: "سيتم تفعيل تخصيص الحساب قريباً." })}>
-            <Settings className="h-5 w-5 ml-2" /> الإعدادات
+        <div className="flex gap-5">
+          <Button variant="ghost" className="glass rounded-[1.5rem] h-16 px-8 border-white/5 hover:bg-white/5 font-bold" onClick={() => toast({ title: "مركز الإعدادات", description: "سيتم تفعيل ميزات التخصيص قريباً." })}>
+            <Settings className="h-6 w-6 ml-3" /> الإعدادات
           </Button>
-          <Button variant="destructive" className="rounded-2xl h-14 bg-red-600/10 text-red-500 border-none" onClick={handleLogout}>
-            <LogOut className="h-5 w-5 ml-2" /> خروج
+          <Button variant="destructive" className="rounded-[1.5rem] h-16 px-8 bg-red-600/10 text-red-500 border-none font-bold" onClick={handleLogout}>
+            <LogOut className="h-6 w-6 ml-3" /> مغادرة
           </Button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-4 space-y-10">
-          <Card className="glass-cosmic border-none rounded-[3rem] p-10 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[60px]" />
-            <div className="space-y-8 text-center">
-              <div className="h-32 w-32 bg-primary/20 rounded-full mx-auto flex items-center justify-center border-4 border-white/5 shadow-2xl relative">
-                <User className="h-16 w-16 text-primary" />
-                <div className="absolute bottom-1 right-1 h-8 w-8 bg-emerald-500 rounded-full border-4 border-slate-900" />
+      <div className="grid lg:grid-cols-12 gap-12">
+        <div className="lg:col-span-4 space-y-12">
+          {/* Identity & Balance Orb */}
+          <Card className="glass-cosmic border-none rounded-[4rem] p-12 relative overflow-hidden group hover:shadow-primary/10 transition-all duration-700">
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/10 blur-[100px]" />
+            <div className="space-y-10 text-center">
+              <div className="h-40 w-40 bg-white/5 rounded-full mx-auto flex items-center justify-center border-2 border-white/5 shadow-2xl relative">
+                <User className="h-20 w-20 text-white/80" />
+                <div className="absolute bottom-2 right-2 h-10 w-10 bg-emerald-500 rounded-full border-[6px] border-slate-950 shadow-lg" />
               </div>
-              <div className="bg-white/5 p-8 rounded-[2rem] border border-white/5">
-                 <p className="text-xs text-muted-foreground font-black mb-2 uppercase">رصيدك الكوني</p>
-                 <p className="text-5xl font-black text-white">
+              <div className="bg-white/[0.02] p-10 rounded-[3rem] border border-white/5 shadow-inner">
+                 <p className="text-[10px] text-white/30 font-black mb-3 uppercase tracking-[0.3em]">رصيدك الكوني المتاح</p>
+                 <p className="text-6xl font-black text-white">
                    {profile?.balance || 0}
-                   <span className="text-sm text-primary font-bold mr-2">EGP</span>
+                   <span className="text-sm text-primary font-bold mr-3">EGP</span>
                  </p>
                  {profile?.balance === 50 && (
-                   <div className="mt-4 flex items-center gap-2 justify-center text-emerald-400 text-xs font-bold animate-pulse">
+                   <div className="mt-6 flex items-center gap-3 justify-center text-emerald-400 text-xs font-black animate-pulse bg-emerald-500/10 py-2 rounded-full">
                       <Gift className="h-4 w-4" /> رصيد ترحيبي مجاني نشط
                    </div>
                  )}
@@ -153,75 +155,83 @@ export default function Dashboard() {
             </div>
           </Card>
 
-          <Card className="glass-card border-none rounded-[3rem] p-10 space-y-8">
+          {/* Wallet Charge Station */}
+          <Card className="glass-card border-none rounded-[4rem] p-12 space-y-10">
             <div className="flex items-center justify-between">
-              <Wallet className="h-8 w-8 text-primary" />
-              <h3 className="font-black text-2xl">شحن المحفظة</h3>
+              <Wallet className="h-10 w-10 text-primary" />
+              <h3 className="font-black text-3xl text-white">شحن الرصيد</h3>
             </div>
-            <div className="space-y-6">
-              <div className="glass p-5 rounded-2xl text-center border-primary/20 bg-primary/5">
-                <Label className="text-[10px] text-primary font-black block mb-2 uppercase tracking-tighter">رقم التحويل الرسمي</Label>
-                <p className="text-2xl font-black text-white tracking-[0.2em]">01130031531</p>
+            <div className="space-y-8">
+              <div className="glass p-6 rounded-[2rem] text-center border-primary/20 bg-primary/5 shadow-inner">
+                <Label className="text-[10px] text-primary font-black block mb-3 uppercase tracking-widest">رقم التحويل الرسمي</Label>
+                <p className="text-3xl font-black text-white tracking-[0.2em] select-all">01130031531</p>
               </div>
-              <Input 
-                type="number" 
-                placeholder="المبلغ (مثال: 500)" 
-                value={chargeAmount}
-                onChange={(e) => setChargeAmount(e.target.value)}
-                className="glass border-white/5 h-14 rounded-2xl text-xl text-center font-black"
-              />
+              <div className="space-y-3">
+                <Label className="text-white/30 text-xs px-2">المبلغ المراد إضافته</Label>
+                <Input 
+                  type="number" 
+                  placeholder="EGP 500" 
+                  value={chargeAmount}
+                  onChange={(e) => setChargeAmount(e.target.value)}
+                  className="glass border-white/5 h-16 rounded-[1.5rem] text-2xl text-center font-black"
+                />
+              </div>
               <div 
-                className="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center hover:bg-white/5 transition-all cursor-pointer"
-                onClick={() => toast({ title: "رفع الإيصال", description: "يرجى اختيار صورة التحويل من جهازك." })}
+                className="border-2 border-dashed border-white/10 rounded-[2rem] p-8 text-center hover:bg-white/[0.02] transition-all cursor-pointer group"
+                onClick={() => toast({ title: "رفع الإثبات", description: "يرجى اختيار صورة إيصال التحويل." })}
               >
-                <Upload className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                <p className="text-xs font-bold opacity-40">ارفق صورة التحويل للتحقق</p>
+                <Upload className="h-10 w-10 mx-auto mb-3 opacity-20 group-hover:opacity-100 transition-all text-primary" />
+                <p className="text-xs font-black opacity-30 group-hover:opacity-100">ارفق صورة التحويل للمراجعة</p>
               </div>
               <Button 
                 onClick={handleChargeRequest} 
                 disabled={isCharging || !chargeAmount}
-                className="w-full btn-primary h-16 rounded-2xl text-xl font-black shadow-2xl"
+                className="w-full btn-primary h-20 rounded-[2rem] text-2xl font-black shadow-2xl"
               >
-                {isCharging ? "جاري الإرسال..." : "طلب شحن الرصيد"}
+                {isCharging ? "جاري الإرسال..." : "إرسال طلب الشحن"}
               </Button>
             </div>
           </Card>
         </div>
 
-        <div className="lg:col-span-8 space-y-10">
-          <section className="space-y-8">
+        {/* Sessions & History Feed */}
+        <div className="lg:col-span-8 space-y-12">
+          <section className="space-y-10">
             <div className="flex items-center justify-between">
-              <Link href="/consultants" className="text-primary font-black hover:underline flex items-center gap-2">
-                 <ArrowUpRight className="h-5 w-5" /> حجز استشارة ذكية جديدة
+              <Link href="/consultants" className="text-primary font-black hover:scale-105 transition-all flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-full">
+                 <ArrowUpRight className="h-6 w-6" /> حجز استشارة فيديو جديدة
               </Link>
-              <h2 className="text-3xl font-black flex items-center gap-4">الجلسات القادمة <Activity className="h-6 w-6 text-primary animate-pulse" /></h2>
+              <h2 className="text-4xl font-black flex items-center gap-5">الجلسات المجدولة <Activity className="h-8 w-8 text-primary animate-pulse" /></h2>
             </div>
             
-            <Card className="glass-cosmic border-none rounded-[3rem] p-10 hover:shadow-primary/10 transition-all">
+            <Card className="glass-cosmic border-none rounded-[4rem] p-12 hover:shadow-primary/5 transition-all duration-700 relative overflow-hidden">
               <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-                <div className="text-right flex items-center gap-6">
-                  <div className="h-20 w-20 glass rounded-3xl flex items-center justify-center">
-                    <Video className="h-8 w-8 text-primary" />
+                <div className="text-right flex items-center gap-8">
+                  <div className="h-24 w-24 glass rounded-[2.5rem] flex items-center justify-center border border-white/5 shadow-2xl">
+                    <Video className="h-10 w-10 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-black text-white">د. سارة الفهد</h4>
-                    <p className="text-primary font-bold">قانون الشركات</p>
-                    <Badge className="bg-white/5 text-muted-foreground mt-2 border-none">اليوم | 10:00 مساءً</Badge>
+                    <h4 className="text-3xl font-black text-white">د. سارة الفهد</h4>
+                    <p className="text-primary font-black text-lg mt-1">قانون الشركات والنزاعات</p>
+                    <Badge className="bg-white/5 text-white/40 mt-3 border-none px-4 py-1.5 rounded-full font-bold">اليوم | 10:00 مساءً</Badge>
                   </div>
                 </div>
                 <Link href="/consultants/1/call">
-                  <Button className="cosmic-gradient rounded-2xl px-12 h-16 text-xl font-black">دخول الجلسة</Button>
+                  <Button className="cosmic-gradient rounded-[2rem] px-14 h-20 text-2xl font-black shadow-2xl hover:scale-105 transition-all">دخول الجلسة الآن</Button>
                 </Link>
               </div>
             </Card>
           </section>
 
-          <section className="space-y-8">
-            <h2 className="text-3xl font-black flex items-center justify-end gap-4">الأرشيف <History className="h-6 w-6 text-primary opacity-40" /></h2>
-            <Card className="glass border-none rounded-[3rem] p-20 text-center text-muted-foreground bg-white/5">
-               <History className="h-12 w-12 opacity-20 mx-auto mb-4" />
-               <p className="text-xl font-bold opacity-30">سجلك القانوني فارغ حالياً</p>
-               <Button variant="link" className="text-primary mt-4" onClick={() => router.push('/bot')}>ابدأ أول محادثة الآن</Button>
+          <section className="space-y-10">
+            <div className="flex items-center justify-between">
+              <Button variant="link" className="text-white/20 font-bold">عرض الأرشيف الكامل</Button>
+              <h2 className="text-4xl font-black flex items-center gap-5">سجل العمليات <History className="h-8 w-8 text-white/20" /></h2>
+            </div>
+            <Card className="glass border-none rounded-[4rem] py-32 text-center text-white/20 bg-white/[0.01]">
+               <History className="h-20 w-20 opacity-10 mx-auto mb-6" />
+               <p className="text-2xl font-black">سجلك القانوني نظيف تماماً</p>
+               <Button variant="link" className="text-primary mt-6 text-xl font-black" onClick={() => router.push('/bot')}>ابدأ أول محادثة ذكية الآن</Button>
             </Card>
           </section>
         </div>
