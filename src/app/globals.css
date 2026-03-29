@@ -24,29 +24,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
-    --radius: 1rem;
-  }
-
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --radius: 1.25rem;
   }
 }
 
@@ -54,9 +32,9 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background: radial-gradient(at 0% 0%, hsla(217,100%,12%,1) 0, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(222,47%,11%,1) 0, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(199,89%,20%,1) 0, transparent 50%);
+    background: radial-gradient(at 0% 0%, hsla(222,47%,11%,1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(217,91%,20%,1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(199,89%,15%,1) 0, transparent 50%);
     background-attachment: fixed;
   }
 }
@@ -66,18 +44,26 @@
   .font-headline { font-family: 'Cairo', sans-serif; }
   
   .glass {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   
   .glass-card {
-    @apply bg-slate-900/40 backdrop-blur-md border border-slate-800/50 hover:border-primary/50 transition-all duration-300;
+    @apply bg-slate-950/40 backdrop-blur-lg border border-white/5 hover:border-primary/40 transition-all duration-500 shadow-xl;
+  }
+
+  .glass-cosmic {
+    @apply bg-gradient-to-br from-slate-900/80 to-slate-950/90 backdrop-blur-2xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)];
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-primary to-cyan-400;
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all active:scale-95;
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 transition-all active:scale-95 font-bold;
+  }
+
+  .cosmic-gradient {
+    @apply bg-gradient-to-r from-indigo-600 via-primary to-cyan-500 text-white;
   }
 }
