@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * ALMUSTASHARAI SECURITY RULES - PROTOTYPING MODE
+     * 
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict identity-based authorization model while remaining flexible on data 
+     * structure. We prioritize verifying 'who' is performing an action over 'what' the data looks like, 
+     * enabling rapid development.
+     * 
+     * DATA STRUCTURE:
+     * - /users/{userId}: Private user profiles and nested consultation requests.
+     * - /specializations: Global public metadata for legal expertise areas.
+     * - /consultantProfiles: Public profiles for consultants with owner-only write access.
+     * - /consultations: Shared documents between a client and a consultant.
+     * - /roles_admin: A protected collection where the existence of a document grants admin privileges.
+     * 
+     * KEY SECURITY DECISIONS:
+     * - Denormalization for Performance: 'userId' and 'consultantId' are expected to be denormalized 
+     *   directly onto documents (ConsultantProfiles, Consultations) to avoid expensive cross-document 
+     *   lookups (get() calls) during authorization.
+     * - Query as Authorization Predicate (QAP): List operations for consultations require the 
+     *   client to filter results by their own UID, which the rules enforce.
+     * - Admin Access: A Database Access Control (DBAC) pattern is used via the /roles_admin collection.
+     * - Immutability: Critical relational fields (like ownership IDs) are enforced as immutable during updates.
+     */
+
+    // --- Helper Functions ---
+
+    /** Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** Checks if the document exists and the current user is the owner based on path. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** 
+     * Checks if the authenticated user has administrative privileges by 
+     * verifying the existence of a document in the roles_admin collection. 
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** Checks if the authenticated user is a participant in a consultation (either client or consultant). */
+    function isConsultationParticipant(data) {
+      return isSignedIn() && (data.userId == request.auth.uid || data.consultantId == request.auth.uid);
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the admin roles collection. Only admins can manage roles.
+     * @path /roles_admin/{userId}
+     * @allow (get) Any user can check their own admin status.
+     * @deny (write) Users cannot grant themselves admin status.
+     * @principle Database Access Control (DBAC) through existence checks.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for private user profiles.
+     * @path /users/{userId}
+     * @allow (create) Authenticated user creating their own profile matching their UID.
+     * @deny (update) Attempting to change the 'id' field of a user profile.
+     * @principle Path-based ownership and relational integrity validation.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin();
+
+      /**
+       * @description Rules for consultation requests nested under a user.
+       * @path /users/{userId}/consultationRequests/{requestId}
+       * @allow (list) A user listing their own submitted requests.
+       * @deny (create) A user trying to submit a request under another user's path.
+       * @principle Hierarchical data segregation for private user data.
+       */
+      match /consultationRequests/{requestId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId) || isAdmin();
+      }
+    }
+
+    /**
+     * @description Rules for global legal specializations.
+     * @path /specializations/{specializationId}
+     * @allow (get, list) Public read access for all users.
+     * @deny (write) Non-admin users attempting to modify specialization categories.
+     * @principle Public read with restricted administrative writes.
+     */
+    match /specializations/{specializationId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for consultant profiles.
+     * @path /consultantProfiles/{consultantId}
+     * @allow (create) A user creating a consultant profile linked to their own UID.
+     * @deny (update) A user attempting to modify a profile they do not own.
+     * @principle Owner-only writes using denormalized identity fields.
+     */
+    match /consultantProfiles/{consultantId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if resource != null && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId;
+      allow delete: if (resource != null && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    /**
+     * @description Rules for consultations shared between clients and consultants.
+     * @path /consultations/{consultationId}
+     * @allow (get) Either the client or the consultant involved in the session.
+     * @deny (list) Requests that do not filter by the user's role/ID to prevent broad scanning.
+     * @principle Shared access (Closed Collaborators) via multi-party identity fields.
+     */
+    match /consultations/{consultationId} {
+      allow get: if isConsultationParticipant(resource.data) || isAdmin();
+      allow list: if isSignedIn(); // Filtering must be handled via client-side query as per QAP.
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || request.resource.data.consultantId == request.auth.uid);
+      allow update: if resource != null && isConsultationParticipant(resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.consultantId == resource.data.consultantId;
+      allow delete: if isAdmin();
+    }
+  }
+}

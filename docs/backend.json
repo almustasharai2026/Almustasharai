@@ -1,0 +1,393 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a registered user of the Almustasharai platform, including both general users and consultants. This entity stores non-authentication-related user information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The unique email address of the user, used for identification and communication. (Relationship: External Auth 1:1 UserProfile)",
+          "format": "email"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's contact phone number."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        },
+        "languagePreference": {
+          "type": "string",
+          "description": "The preferred language for the user interface (e.g., 'ar' for Arabic, 'en' for English)."
+        },
+        "dateJoined": {
+          "type": "string",
+          "description": "The timestamp when the user registered on the platform.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "languagePreference",
+        "dateJoined"
+      ]
+    },
+    "Specialization": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Specialization",
+      "type": "object",
+      "description": "Defines a specific area of legal expertise or a category for consultation topics.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Specialization entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the legal specialization (e.g., 'Family Law', 'Criminal Law')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the legal specialization."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "ConsultantProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsultantProfile",
+      "type": "object",
+      "description": "Contains specific professional details for a legal consultant on the Almustasharai platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ConsultantProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the associated UserProfile for this consultant. (Relationship: UserProfile 1:1 ConsultantProfile)"
+        },
+        "bio": {
+          "type": "string",
+          "description": "A brief biography or professional summary of the consultant."
+        },
+        "experienceYears": {
+          "type": "number",
+          "description": "The number of years of professional experience the consultant has."
+        },
+        "hourlyRate": {
+          "type": "number",
+          "description": "The consultant's standard hourly rate for consultations."
+        },
+        "specializationIds": {
+          "type": "array",
+          "description": "References to the Specialization entities representing the consultant's areas of expertise. (Relationship: ConsultantProfile N:N Specialization)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "education": {
+          "type": "array",
+          "description": "A list of educational qualifications and degrees of the consultant.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "certifications": {
+          "type": "array",
+          "description": "A list of professional certifications or licenses held by the consultant.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The average rating received by the consultant from users. (Can be derived)."
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Indicates whether the consultant's profile and credentials have been verified by the platform."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "bio",
+        "experienceYears",
+        "hourlyRate",
+        "specializationIds",
+        "education",
+        "isVerified"
+      ]
+    },
+    "ConsultationRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsultationRequest",
+      "type": "object",
+      "description": "Stores a user's initial request for a consultation, used for AI-powered consultant matching.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ConsultationRequest entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who submitted the request. (Relationship: UserProfile 1:N ConsultationRequest)"
+        },
+        "title": {
+          "type": "string",
+          "description": "A brief title or subject for the consultation request."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the legal issue or need submitted by the user for AI analysis."
+        },
+        "preferredSpecializationIds": {
+          "type": "array",
+          "description": "References to Specialization entities that the user believes are relevant to their request. (Relationship: ConsultationRequest N:N Specialization)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "The timestamp when the consultation request was submitted.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the request (e.g., 'Pending Matching', 'Matched', 'Booked', 'Archived')."
+        },
+        "suggestedConsultantIds": {
+          "type": "array",
+          "description": "References to ConsultantProfile entities suggested by the AI matching system. (Relationship: ConsultationRequest N:N ConsultantProfile)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "description",
+        "preferredSpecializationIds",
+        "submissionDate",
+        "status"
+      ]
+    },
+    "Consultation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Consultation",
+      "type": "object",
+      "description": "Represents a scheduled and completed legal consultation between a user and a consultant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Consultation entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who booked the consultation. (Relationship: UserProfile 1:N Consultation)"
+        },
+        "consultantId": {
+          "type": "string",
+          "description": "Reference to the ConsultantProfile providing the consultation. (Relationship: ConsultantProfile 1:N Consultation)"
+        },
+        "consultationRequestId": {
+          "type": "string",
+          "description": "Optional reference to the ConsultationRequest that led to this booking. (Relationship: ConsultationRequest 1:1 Consultation)"
+        },
+        "scheduledStartTime": {
+          "type": "string",
+          "description": "The scheduled date and time for the start of the consultation.",
+          "format": "date-time"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The planned duration of the consultation in minutes."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the consultation (e.g., 'Upcoming', 'Completed', 'Canceled', 'Rescheduled')."
+        },
+        "platformMeetingLink": {
+          "type": "string",
+          "description": "The URL for the online meeting platform where the consultation will take place.",
+          "format": "uri"
+        },
+        "priceCharged": {
+          "type": "number",
+          "description": "The total price charged for this consultation."
+        },
+        "userRating": {
+          "type": "number",
+          "description": "The rating given by the user for the consultation (1-5)."
+        },
+        "userReview": {
+          "type": "string",
+          "description": "The textual review provided by the user after the consultation."
+        },
+        "consultantRating": {
+          "type": "number",
+          "description": "The rating given by the consultant for the user/consultation (1-5)."
+        },
+        "consultantReview": {
+          "type": "string",
+          "description": "The textual review provided by the consultant after the consultation."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the consultation record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The timestamp when the consultation record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "consultantId",
+        "scheduledStartTime",
+        "durationMinutes",
+        "status",
+        "platformMeetingLink",
+        "priceCharged",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user profiles. Each document ID is the user's Firebase Authentication UID. This collection is private, with documents accessible only by their respective owners. Ensures path-based ownership for authorization.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier (Firebase Auth UID) of the user, matching the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/specializations/{specializationId}",
+        "definition": {
+          "entityName": "Specialization",
+          "schema": {
+            "$ref": "#/backend/entities/Specialization"
+          },
+          "description": "Defines global categories for legal expertise. These documents are publicly readable by all users to facilitate browsing and searching for consultants.",
+          "params": [
+            {
+              "name": "specializationId",
+              "description": "The unique identifier for a legal specialization."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/consultantProfiles/{consultantId}",
+        "definition": {
+          "entityName": "ConsultantProfile",
+          "schema": {
+            "$ref": "#/backend/entities/ConsultantProfile"
+          },
+          "description": "Contains professional details for legal consultants. These profiles are publicly readable for searching and viewing, but only the consultant who owns the profile (identified by 'userId' field) or an administrator can edit them. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "consultantId",
+              "description": "The unique identifier for the consultant profile, matching the user's Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/consultationRequests/{requestId}",
+        "definition": {
+          "entityName": "ConsultationRequest",
+          "schema": {
+            "$ref": "#/backend/entities/ConsultationRequest"
+          },
+          "description": "Stores private consultation requests submitted by a specific user. This subcollection is nested under the user's profile path, making it accessible only by the submitting user. The 'userId' is also explicitly included in the document for robust path-based authorization.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier (Firebase Auth UID) of the user who submitted the request."
+            },
+            {
+              "name": "requestId",
+              "description": "The unique identifier for the consultation request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/consultations/{consultationId}",
+        "definition": {
+          "entityName": "Consultation",
+          "schema": {
+            "$ref": "#/backend/entities/Consultation"
+          },
+          "description": "Represents scheduled or completed legal consultations. These documents are accessible by both the client ('userId') and the consultant ('consultantId') involved in the consultation. Critically, both 'userId' and 'consultantId' are denormalized into the document for authorization independence. Read access for lists requires client-side queries to filter by either 'userId' or 'consultantId' matching 'request.auth.uid' to satisfy QAP.",
+          "params": [
+            {
+              "name": "consultationId",
+              "description": "The unique identifier for the consultation booking."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "This collection signifies administrative privileges. The mere existence of a document at this path for a specific 'userId' grants that user admin rights. Used for Database Access Control (DBAC) through existence checks.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier (Firebase Auth UID) of a user granted administrator privileges."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for Almustasharai prioritizes security, scalability, and debuggability by adhering to core design principles. This is achieved primarily through **Authorization Independence via Denormalization** and enabling **Query as Authorization Predicate (QAP)**.\n\n**Authorization Independence:**\n*   **Consultation:** To avoid expensive and fragile `get()` operations in security rules, each `/consultations/{consultationId}` document denormalizes the `userId` (client) and `consultantId`. This allows security rules to directly check `request.auth.uid == resource.data.userId || request.auth.uid == resource.data.consultantId` for read/write access, making authorization atomic and easier to debug without relying on parent data.\n*   **ConsultantProfile:** The `/consultantProfiles/{consultantId}` collection includes the `userId` field within each document. This directly links the consultant profile to its owner, allowing the consultant to modify their profile using a simple rule check against `request.auth.uid == resource.data.userId`, ensuring authorization independence.\n\n**Query as Authorization Predicate (QAP):**\n*   **Path-Based Ownership (Implicit QAP):** For private user-owned data like `UserProfile` and `ConsultationRequest`, the structure utilizes hierarchical paths: `/users/{userId}` and `/users/{userId}/consultationRequests/{requestId}`. This inherently supports QAPs for `list` operations, as users can only list documents within their own `/users/{userId}` path, where `{userId}` must match `request.auth.uid`. Rules can then simply verify `userId == request.auth.uid`.\n*   **Collaborative Data (Explicit QAP):** For the `/consultations/{consultationId}` collection, which involves two parties (client and consultant), security rules will enforce that `list` queries *must* include a filter for either `userId` or `consultantId` that matches `request.auth.uid`. For example, a user listing their consultations must query `where('userId', '==', request.auth.uid)` or `where('consultantId', '==', request.auth.uid)`. The rules then ensure that the incoming query's filter value aligns with `request.auth.uid` and that the returned documents match this filter, preventing users from arbitrarily listing all consultations.\n*   **Global Public Data:** Collections like `/specializations` and `/consultantProfiles` are designed for public read access. QAP is trivially satisfied for `list` operations as no filtering is required by rules; all documents are accessible by everyone.\n\n**Structural Segregation & DBAC:**\n*   Data is segregated into collections based on security posture: private user data (`/users`), global public data (`/specializations`, `/consultantProfiles`), and collaborative data (`/consultations`).\n*   Administrative roles are implemented using the Database Access Control (DBAC) pattern via existence checks in `/roles_admin/{userId}`. This makes role management explicit and easily verifiable in rules based on `request.auth.uid`."
+  }
+}
