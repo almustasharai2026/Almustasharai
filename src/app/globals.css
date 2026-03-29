@@ -57,3 +57,12 @@
     @apply bg-background text-foreground font-body antialiased;
   }
 }
+
+@layer utilities {
+  .font-body {
+    font-family: 'Cairo', sans-serif;
+  }
+  .font-headline {
+    font-family: 'Cairo', sans-serif;
+  }
+}
