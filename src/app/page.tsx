@@ -2,121 +2,141 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
-  ShieldCheck, 
-  Calendar, 
-  BrainCircuit, 
-  Sparkles,
-  Gavel,
-  Scale,
-  ArrowRight,
+  Scale, 
+  ArrowRight, 
+  Globe, 
+  Smartphone, 
+  Palette, 
+  Database,
+  Search,
   Zap,
-  Lock,
-  Globe
+  ChevronRight
 } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function CosmicHome() {
-  const heroImg = PlaceHolderImages.find(img => img.id === "hero-bg");
+export default function ReplitStyleHome() {
+  const [prompt, setPrompt] = useState("");
+  const router = useRouter();
+
+  const handleStart = () => {
+    if (prompt.trim()) {
+      router.push(`/bot?query=${encodeURIComponent(prompt)}`);
+    } else {
+      router.push("/bot");
+    }
+  };
 
   return (
-    <div className="flex flex-col overflow-hidden">
-      {/* Epic Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-24 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,rgba(90,50,255,0.1),transparent_70%)] -z-10" />
-        
-        <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-10 text-right animate-in slide-in-from-right-20 duration-1000">
-            <Badge className="px-6 py-2 rounded-full bg-accent/20 text-accent border-accent/40 font-bold tracking-widest uppercase">
-              <Zap className="h-4 w-4 ml-2 animate-pulse" />
-              أفق جديد للعدالة الرقمية
-            </Badge>
-            <h1 className="text-6xl lg:text-8xl font-black leading-[1.1] text-primary tracking-tighter">
-              المستقبل <br />
-              <span className="text-transparent bg-clip-text cosmic-gradient">
-                قانوني وذكي
-              </span>
-            </h1>
-            <p className="text-2xl text-muted-foreground max-w-xl leading-relaxed font-medium">
-              تخطى حدود المحاماة التقليدية. اكتشف المنصة التي تدمج الذكاء الكوني مع الخبرة البشرية لتمنحك حماية غير مسبوقة.
-            </p>
-            <div className="flex flex-wrap gap-6 justify-end pt-4">
-              <Link href="/auth/signup">
-                <Button size="lg" className="rounded-[2rem] h-20 px-12 text-2xl font-black cosmic-gradient shadow-2xl shadow-primary/30 hover:scale-110 transition-transform">
-                  ابدأ رحلتك الآن
-                </Button>
-              </Link>
-              <Link href="/bot">
-                <Button size="lg" variant="outline" className="rounded-[2rem] h-20 px-12 text-2xl font-bold border-4 hover:bg-accent/10">
-                  تحدث مع البوت
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="flex items-center gap-10 justify-end pt-12">
-              <div className="text-center group cursor-pointer">
-                <Globe className="h-8 w-8 mx-auto text-accent mb-2 group-hover:rotate-180 transition-transform duration-1000" />
-                <p className="text-3xl font-black">24/7</p>
-                <p className="text-xs font-bold opacity-60">تغطية عالمية</p>
-              </div>
-              <div className="w-px h-16 bg-border" />
-              <div className="text-center group cursor-pointer">
-                <Lock className="h-8 w-8 mx-auto text-accent mb-2 group-hover:scale-125 transition-transform" />
-                <p className="text-3xl font-black">100%</p>
-                <p className="text-xs font-bold opacity-60">خصوصية مطلقة</p>
-              </div>
-            </div>
+    <div className="flex flex-col items-center min-h-screen pt-20 pb-20 px-4 bg-background">
+      {/* Banner */}
+      <div className="w-full max-w-4xl mb-12">
+        <Link href="/auth/signup" className="block">
+          <div className="bg-primary/5 hover:bg-primary/10 transition-colors border border-primary/20 rounded-xl p-3 text-center text-sm font-medium text-primary">
+            لفترة محدودة: احصل على استشارة أولى مجانية عند دعوة صديق. <span className="underline font-bold">اشترك الآن</span>
           </div>
+        </Link>
+      </div>
 
-          <div className="relative group perspective-1000">
-            <div className="absolute -inset-20 bg-primary/20 rounded-full blur-[150px] group-hover:bg-accent/20 transition-colors duration-1000" />
-            <div className="relative glass-cosmic p-6 rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.2)] rotate-3 group-hover:rotate-0 transition-all duration-1000">
-              <div className="absolute -top-10 -left-10 glass-cosmic p-8 rounded-[2rem] animate-bounce [animation-duration:5s]">
-                <Scale className="h-12 w-12 text-accent" />
+      {/* Main Hero */}
+      <div className="text-center space-y-8 max-w-3xl w-full mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <h1 className="text-5xl md:text-7xl font-black tracking-tight text-foreground">
+          ماذا تريد أن تبني قانونياً؟
+        </h1>
+        <p className="text-xl text-muted-foreground font-medium">
+          حول أفكارك ونزاعاتك إلى حلول قانونية في دقائق — لا حاجة لخبرة سابقة.
+        </p>
+
+        {/* Replit Style Input */}
+        <div className="relative group max-w-2xl mx-auto mt-12">
+          <div className="absolute inset-0 bg-orange-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative flex items-center bg-card border-2 border-muted-foreground/20 rounded-2xl p-2 shadow-2xl focus-within:border-orange-500 transition-all">
+            <div className="px-4 text-muted-foreground">
+              <span className="text-2xl">+</span>
+            </div>
+            <Input 
+              placeholder="صف قضيتك، وسيقوم المستشار بإحضار الحل..." 
+              className="border-none bg-transparent text-xl h-14 focus-visible:ring-0 placeholder:text-muted-foreground/50 text-right"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleStart()}
+            />
+            <Button 
+              onClick={handleStart}
+              className="h-12 w-12 rounded-xl bg-orange-500 hover:bg-orange-600 shadow-lg"
+            >
+              <ArrowRight className="h-6 w-6 rotate-180" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Categories Icons */}
+        <div className="grid grid-cols-4 gap-4 mt-12 max-w-xl mx-auto">
+          <CategoryIcon icon={<Scale className="h-6 w-6" />} label="قانوني" />
+          <CategoryIcon icon={<Smartphone className="h-6 w-6" />} label="جنائي" />
+          <CategoryIcon icon={<Palette className="h-6 w-6" />} label="تجاري" />
+          <CategoryIcon icon={<Database className="h-6 w-6" />} label="عقاري" />
+        </div>
+
+        {/* Examples */}
+        <div className="pt-8 space-y-4">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+            جرب مثالاً للاستشارة <Zap className="h-3 w-3 text-orange-500" />
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <ExampleChip label="عقد تأسيس شركة تقنية" onClick={() => setPrompt("أريد صياغة عقد تأسيس لشركة تقنية ناشئة")} />
+            <ExampleChip label="نزاع عقاري على إيجار" onClick={() => setPrompt("لدي مشكلة في عقد إيجار سكني")} />
+            <ExampleChip label="حماية علامة تجارية" onClick={() => setPrompt("كيف أحمي علامتي التجارية في السعودية؟")} />
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Section */}
+      <section className="w-full max-w-5xl grid md:grid-cols-2 gap-8 pt-20">
+        <div className="bg-orange-100 dark:bg-orange-950/30 rounded-[2.5rem] p-12 space-y-6 flex flex-col justify-center">
+          <span className="text-orange-600 font-bold uppercase tracking-widest text-sm">مساحة لا نهائية</span>
+          <h2 className="text-4xl font-black text-orange-900 dark:text-orange-400">صمم بحرية</h2>
+          <p className="text-lg text-orange-800/70 dark:text-orange-400/70 leading-relaxed">
+            نقدم لك مساحة جديدة تسمح لك باستكشاف وتعديل القضايا قانونياً بشكل مرئي، ثم تطبيقها مباشرة في عقودك الرسمية.
+          </p>
+        </div>
+        <div className="bg-muted/50 rounded-[2.5rem] p-12 border-2 border-dashed border-muted flex items-center justify-center">
+          <div className="space-y-4 w-full">
+            <div className="h-12 w-full bg-background rounded-xl border-2 flex items-center px-4 justify-between">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
               </div>
-              <div className="absolute -bottom-10 -right-10 glass-cosmic p-8 rounded-[2rem] animate-bounce [animation-duration:4s] [animation-delay:1s]">
-                <Gavel className="h-12 w-12 text-primary" />
-              </div>
-              <Image 
-                src={heroImg?.imageUrl || ""} 
-                alt="Legal Nebula" 
-                width={800} 
-                height={600}
-                className="rounded-[2.5rem] object-cover shadow-2xl"
-                priority
-              />
+              <span className="text-xs font-bold opacity-40">Contract_v1.pdf</span>
+            </div>
+            <div className="h-40 w-full bg-background rounded-xl border-2 p-4 space-y-2">
+              <div className="h-2 w-3/4 bg-muted rounded" />
+              <div className="h-2 w-1/2 bg-muted rounded" />
+              <div className="h-2 w-5/6 bg-muted rounded" />
+              <div className="h-2 w-2/3 bg-muted rounded" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Galaxy Features */}
-      <section className="py-40 bg-muted/20 relative">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto mb-24 space-y-6">
-            <h2 className="text-5xl font-black text-primary">قدرات كوكبية بين يديك</h2>
-            <p className="text-xl text-muted-foreground font-bold italic">نظام متكامل يغير مفهوم الاستشارة القانونية للأبد.</p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-12">
-            <CosmicFeature 
-              icon={<ShieldCheck className="h-12 w-12 text-white" />}
-              title="دفاع فائق"
-              desc="أنظمة حماية متقدمة تضمن أن تظل أسرارك القانونية مدفونة في أعماق التشفير الرقمي."
-            />
-            <CosmicFeature 
-              icon={<BrainCircuit className="h-12 w-12 text-white" />}
-              title="نواة Gemini"
-              desc="نستخدم أقوى نماذج الذكاء الاصطناعي لتحليل كل ثغرة وكل مادة قانونية بدقة مذهلة."
-            />
-            <CosmicFeature 
-              icon={<Sparkles className="h-12 w-12 text-white" />}
-              title="توقعات دقيقة"
-              desc="بناءً على آلاف القضايا، يتوقع نظامنا نتائج نزاعاتك القانونية بنسبة نجاح تفوق الخبراء."
-            />
+      {/* "Meet the Agent" Style Section */}
+      <section className="w-full max-w-5xl mt-20 text-center space-y-4">
+        <h2 className="text-6xl font-black">قابل <span className="text-orange-500">المستشار ٤</span></h2>
+        <p className="text-2xl text-muted-foreground">الإبداع القانوني ينطلق من هنا.</p>
+        <div className="mt-12 bg-orange-500 rounded-[3rem] h-[500px] overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-12 left-12 right-12 text-right text-white space-y-4">
+            <h3 className="text-4xl font-black">تصميم حر</h3>
+            <p className="text-xl opacity-80 max-w-xl mr-auto">
+              نظام ذكاء اصطناعي يفهم أبعاد القانون ويحولها إلى نماذج قابلة للتنفيذ.
+            </p>
+            <Button size="lg" className="rounded-full bg-white text-orange-500 font-black px-10 hover:bg-orange-50">
+              جربه الآن
+            </Button>
           </div>
         </div>
       </section>
@@ -124,16 +144,24 @@ export default function CosmicHome() {
   );
 }
 
-function CosmicFeature({ icon, title, desc }: any) {
+function CategoryIcon({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="glass-cosmic p-12 rounded-[3rem] hover:-translate-y-6 transition-all duration-700 border-none group cursor-pointer">
-      <div className="w-24 h-24 cosmic-gradient rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl group-hover:rotate-12 transition-transform">
+    <div className="flex flex-col items-center gap-2 group cursor-pointer">
+      <div className="h-16 w-16 rounded-2xl bg-card border-2 border-muted flex items-center justify-center text-muted-foreground group-hover:border-orange-500 group-hover:text-orange-500 transition-all shadow-sm">
         {icon}
       </div>
-      <h3 className="text-3xl font-black text-primary mb-6">{title}</h3>
-      <p className="text-lg text-muted-foreground leading-relaxed font-medium">
-        {desc}
-      </p>
+      <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
     </div>
+  );
+}
+
+function ExampleChip({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="px-4 py-2 rounded-xl bg-card border-2 border-muted text-sm font-bold hover:border-orange-500 hover:text-orange-500 transition-all shadow-sm"
+    >
+      {label}
+    </button>
   );
 }

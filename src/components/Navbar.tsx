@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Scale, Menu, BrainCircuit, Sun, Moon, Languages, User, LayoutDashboard, FileText, MessageSquare, Sparkles } from "lucide-react";
+import { Scale, Menu, Sun, Moon, Languages, User, LayoutDashboard, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useUser } from "@/firebase";
@@ -43,77 +43,70 @@ export function Navbar() {
   const isAdmin = user?.email === "bishoysamy390@gmail.com";
 
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-7xl">
-      <div className="glass h-20 rounded-[1.5rem] px-6 flex items-center justify-between border-white/40 dark:border-white/10 shadow-2xl">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="bg-primary p-2.5 rounded-2xl group-hover:rotate-12 transition-transform duration-500 shadow-lg shadow-primary/20">
-            <Scale className="h-6 w-6 text-white" />
+    <nav className="fixed top-0 left-0 right-0 z-[100] border-b bg-background/80 backdrop-blur-md">
+      <div className="container mx-auto h-16 px-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="bg-orange-500 p-1.5 rounded-lg shadow-lg shadow-orange-500/20">
+            <Scale className="h-5 w-5 text-white" />
           </div>
-          <span className="font-black font-headline text-2xl tracking-tighter text-primary">
-            المستشار <span className="text-accent">AI</span>
+          <span className="font-black text-xl tracking-tight text-foreground">
+            المستشار <span className="text-orange-500">AI</span>
           </span>
         </Link>
 
-        <div className="hidden lg:flex items-center gap-10">
+        <div className="hidden lg:flex items-center gap-8">
           <NavLink href="/consultants" label={isArabic ? "المستشارون" : "Consultants"} />
-          <NavLink href="/match" label={isArabic ? "المطابقة" : "AI Match"} icon={<BrainCircuit className="h-4 w-4" />} />
-          <NavLink href="/templates" label={isArabic ? "النماذج" : "Templates"} icon={<FileText className="h-4 w-4" />} />
-          <Link href="/bot" className="relative glass px-6 py-2.5 rounded-2xl font-black text-accent border-accent/20 hover:bg-accent hover:text-white transition-all duration-500 group">
-            <Sparkles className="h-4 w-4 inline-block ml-2 group-hover:animate-spin" />
-            {isArabic ? "البوت الذكي" : "Smart Bot"}
+          <NavLink href="/match" label={isArabic ? "المطابقة" : "AI Match"} />
+          <NavLink href="/templates" label={isArabic ? "النماذج" : "Templates"} />
+          <Link href="/bot" className="bg-orange-500/10 text-orange-600 px-4 py-1.5 rounded-full text-sm font-black hover:bg-orange-500 hover:text-white transition-all">
+            <Sparkles className="h-4 w-4 inline-block ml-1" />
+            {isArabic ? "العميل" : "Agent"}
+            <span className="bg-orange-500 text-white px-2 py-0.5 rounded-md text-[10px] mr-2">٤</span>
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="rounded-2xl hover:bg-accent/10" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-            {theme === "dark" ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-primary" />}
+          <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           
-          <Button variant="ghost" size="icon" className="rounded-2xl hover:bg-accent/10" onClick={toggleLanguage}>
-            <Languages className="h-5 w-5 text-accent" />
+          <Button variant="ghost" size="icon" className="rounded-xl" onClick={toggleLanguage}>
+            <Languages className="h-4 w-4" />
           </Button>
 
-          <div className="h-6 w-px bg-border mx-2 hidden sm:block" />
+          <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" className="rounded-2xl h-12 gap-3 px-6 shadow-lg shadow-primary/20">
+                <Button variant="ghost" className="rounded-xl h-10 gap-2 px-3 border">
                   <User className="h-4 w-4" /> 
-                  <span className="hidden sm:inline-block font-bold">{isArabic ? "حسابي" : "Account"}</span>
+                  <span className="hidden sm:inline-block font-bold text-xs">{isArabic ? "حسابي" : "Account"}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 rounded-[1.5rem] p-3 shadow-2xl border-white/20 glass" dir={isArabic ? "rtl" : "ltr"}>
-                <div className="px-3 py-2 mb-2">
-                  <p className="text-xs text-muted-foreground">أهلاً بك</p>
-                  <p className="text-sm font-black truncate">{user.email}</p>
-                </div>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-accent/10">
+                  <Link href="/dashboard" className="flex items-center gap-2 p-3 rounded-xl cursor-pointer">
                     <LayoutDashboard className="h-4 w-4" /> {isArabic ? "لوحة التحكم" : "Dashboard"}
                   </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex items-center gap-3 p-3 rounded-xl text-accent font-black cursor-pointer hover:bg-accent/10">
+                    <Link href="/admin" className="flex items-center gap-2 p-3 rounded-xl text-orange-500 font-black cursor-pointer">
                       <Scale className="h-4 w-4" /> {isArabic ? "إدارة المنصة" : "Admin Panel"}
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="flex items-center gap-3 p-3 rounded-xl text-red-500 cursor-pointer hover:bg-red-50">
+                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="text-red-500 p-3 rounded-xl cursor-pointer">
                   {isArabic ? "تسجيل الخروج" : "Logout"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex gap-2">
-              <Link href="/auth/login">
-                <Button variant="ghost" className="rounded-2xl h-12 font-bold">{isArabic ? "دخول" : "Login"}</Button>
-              </Link>
               <Link href="/auth/signup">
-                <Button className="rounded-2xl h-12 px-8 font-black shadow-lg shadow-primary/20">{isArabic ? "اشترك" : "Join"}</Button>
+                <Button className="rounded-xl h-10 px-6 font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20">{isArabic ? "ابدأ الآن" : "Start now"}</Button>
               </Link>
             </div>
           )}
@@ -121,16 +114,14 @@ export function Navbar() {
           <div className="lg:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-2xl">
-                  <Menu className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="rounded-xl">
+                  <Menu className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 rounded-[1.5rem] glass p-3 shadow-2xl" dir={isArabic ? "rtl" : "ltr"}>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl">
                 <DropdownMenuItem asChild><Link href="/consultants" className="p-3 rounded-xl">{isArabic ? "المستشارون" : "Consultants"}</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/match" className="p-3 rounded-xl">{isArabic ? "المطابقة الذكية" : "AI Match"}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/match" className="p-3 rounded-xl">{isArabic ? "المطابقة" : "AI Match"}</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/templates" className="p-3 rounded-xl">{isArabic ? "النماذج" : "Templates"}</Link></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/bot" className="p-3 rounded-xl font-black text-accent">{isArabic ? "البوت الذكي" : "Smart Bot"}</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -140,12 +131,10 @@ export function Navbar() {
   );
 }
 
-function NavLink({ href, label, icon }: { href: string; label: string; icon?: React.ReactNode }) {
+function NavLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors relative group">
-      {icon}
+    <Link href={href} className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
       {label}
-      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full" />
     </Link>
   );
 }

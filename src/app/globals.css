@@ -5,47 +5,47 @@
 
 @layer base {
   :root {
-    --background: 230 40% 98%;
-    --foreground: 224 71% 4%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-    --primary: 245 80% 50%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 8% 46%;
-    --accent: 190 95% 45%;
-    --accent-foreground: 210 20% 98%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 20 100% 50%; /* Replit Orange */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 20 100% 50%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 245 80% 50%;
-    --radius: 1.5rem;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 20 100% 50%;
+    --radius: 1rem;
   }
   .dark {
-    --background: 240 50% 4%;
-    --foreground: 210 40% 98%;
-    --card: 240 40% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 40% 6%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 245 80% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 240 30% 12%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 240 30% 12%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 190 95% 45%;
-    --accent-foreground: 210 40% 98%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 20 100% 50%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 20 100% 50%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 30% 18%;
-    --input: 240 30% 18%;
-    --ring: 245 80% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 20 100% 50%;
   }
 }
 
@@ -53,38 +53,15 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background: 
-      radial-gradient(circle at 10% 20%, rgba(90, 50, 255, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(0, 200, 255, 0.05) 0%, transparent 40%),
-      var(--background);
+    background-image: radial-gradient(circle at 2px 2px, rgba(0,0,0,0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  .dark body {
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
   }
 }
 
 @layer utilities {
   .font-body { font-family: 'Cairo', sans-serif; }
   .font-headline { font-family: 'Cairo', sans-serif; }
-  
-  .glass-cosmic {
-    @apply bg-white/40 dark:bg-black/40 backdrop-blur-[30px] border border-white/20 dark:border-white/5 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
-  }
-
-  .neon-border {
-    @apply relative overflow-hidden after:absolute after:inset-0 after:border-2 after:border-accent/50 after:rounded-[inherit] after:animate-pulse;
-  }
-
-  .cosmic-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  }
-
-  .animate-spin-slow {
-    animation: spin 8s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
