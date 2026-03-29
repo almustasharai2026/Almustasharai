@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Gavel, Mail, Phone, MapPin, Sparkles, AlertTriangle, Github, Twitter, Linkedin } from "lucide-react";
+import { Gavel, Mail, Phone, MapPin, Sparkles, AlertTriangle, Github, Twitter, Linkedin, ShieldCheck } from "lucide-react";
 
 export function Footer() {
   return (
@@ -15,8 +15,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-20 mb-24">
           <div className="space-y-10">
             <Link href="/" className="flex items-center gap-5 group">
-              <div className="bg-primary p-4 rounded-3xl group-hover:rotate-[360deg] transition-transform duration-1000 shadow-[0_0_40px_rgba(37,99,235,0.5)]">
-                <Gavel className="h-10 w-10 text-white" />
+              <div className="relative">
+                <div className="bg-primary p-4 rounded-3xl group-hover:rotate-[360deg] transition-transform duration-1000 shadow-[0_0_40px_rgba(37,99,235,0.5)]">
+                  <Gavel className="h-10 w-10 text-white" />
+                </div>
+                <div className="absolute inset-0 bg-primary blur-[20px] opacity-20" />
               </div>
               <span className="font-black text-4xl text-white tracking-tighter">
                  المستشار <span className="text-primary">AI</span>
