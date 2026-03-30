@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,41 +14,25 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isSignedIn();
-      allow update: if (isOwner(userId) && isNotBanned() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'role', 'digitalId', 'isBanned'])) || isAdmin();
-      
-      match /transactions/{id} { allow read: if isOwner(userId) || isAdmin(); }
+      allow update: if (isOwner(userId) && isNotBanned()) || isAdmin();
     }
 
-    // Consultant Profiles & Sovereign Ratings
-    match /consultants/{id} {
-      allow read: if isSignedIn();
-      allow update: if (isSignedIn() && isNotBanned() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews'])) || isAdmin();
-      allow create, delete: if isAdmin();
-    }
-
-    // Wallets & Transactions
+    // Wallets Protocol (Owner read/write access)
     match /wallets/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isAdmin();
-      
-      match /transactions/{id} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create: if isAdmin();
-      }
+      allow read, write: if isOwner(userId) && isNotBanned();
+      allow read, write: if isAdmin();
     }
 
-    // Bookings
+    // Bookings Protocol (Signed-in access)
     match /bookings/{id} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow create: if isSignedIn() && isNotBanned() && request.resource.data.userId == request.auth.uid;
+      allow create, read: if isSignedIn() && isNotBanned();
       allow update, delete: if isAdmin();
     }
 
-    // Payment Requests
-    match /paymentRequests/{id} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow create: if isSignedIn() && isNotBanned();
-      allow update, delete: if isAdmin();
+    // Consultants Registry (Public read, Admin write)
+    match /consultants/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Global Moderation System
