@@ -5,13 +5,14 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { 
   Send, Sparkles, Plus, History, Camera, Mic, 
   Paperclip, ChevronLeft, Menu, X, 
   Loader2, Gavel, User, LayoutGrid, Scale,
   MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight,
   Coins, Settings, UserPlus, AlignLeft, Lightbulb, Terminal, FileText, AudioLines, Trash2, ArrowUp,
-  Target, ShieldAlert, BarChart3, BrainCircuit, Activity
+  Target, ShieldAlert, BarChart3, BrainCircuit, Activity, Lock
 } from "lucide-react";
 import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot, deleteDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -19,6 +20,7 @@ import { executeDecisionEngine, type DecisionOutput } from "@/ai/flows/decision-
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import Link from "next/link";
 
 const AI_LAYERS = [
@@ -53,7 +55,7 @@ export default function SovereignDecisionBot() {
       }
     });
     return () => unsub();
-  }, [db, user]);
+  }, [db, user, toast]);
 
   const wordsQuery = useMemoFirebase(() => collection(db!, "settings", "moderation", "forbiddenWords"), [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);

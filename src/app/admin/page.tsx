@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { 
   Users, Gavel, ShieldAlert, Settings, 
   Trash2, Ban, CheckCircle, Search, Activity, UserPlus, X, Plus,
-  BarChart3, Wallet, TrendingUp, AlertTriangle, Terminal, Eye
+  BarChart3, Wallet, TrendingUp, AlertTriangle, Terminal, Eye, Lock, CreditCard
 } from "lucide-react";
-import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, limit } from "firebase/firestore";
+import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, limit, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +128,6 @@ export default function MasterCommandPanel() {
             </motion.div>
           )}
 
-          {/* Other tabs follow similar premium patterns... */}
           {activeTab === "users" && (
             <motion.div key="users" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
                <Card className="glass-cosmic border-none rounded-[4rem] p-14 shadow-2xl">
