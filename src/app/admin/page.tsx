@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  Users, Gavel, ShieldAlert, Trash2, Search, Terminal, Wallet, X, CreditCard, Activity, Lock, Plus
+  Users, Gavel, ShieldAlert, Trash2, Search, Terminal, Wallet, X, CreditCard, Activity, Lock, Plus, UserCheck, UserMinus, Star
 } from "lucide-react";
 import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -14,11 +14,13 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
+type AdminTab = "users" | "finance" | "moderation" | "consultants";
+
 export default function MasterCommandPanel() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"users" | "finance" | "moderation">("users");
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const [newWord, setNewWord] = useState("");
 
   const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
@@ -29,6 +31,9 @@ export default function MasterCommandPanel() {
 
   const payReqQuery = useMemoFirebase(() => db ? query(collection(db, "paymentRequests"), orderBy("createdAt", "desc")) : null, [db]);
   const { data: paymentRequests } = useCollection(payReqQuery);
+
+  const consultantsQuery = useMemoFirebase(() => db ? collection(db, "consultantProfiles") : null, [db]);
+  const { data: allConsultants } = useCollection(consultantsQuery);
 
   if (user?.email !== "bishoysamy390@gmail.com") {
     return (
@@ -53,6 +58,15 @@ export default function MasterCommandPanel() {
       toast({ title: "تم التفعيل", description: "تمت إضافة الرصيد للمواطن بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الإجراء" });
+    }
+  };
+
+  const approveConsultant = async (id: string) => {
+    try {
+      await updateDoc(doc(db!, "consultantProfiles", id), { isApproved: true });
+      toast({ title: "تم الاعتماد", description: "المستشار الآن نشط في سوق الخبراء." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "خطأ في الاعتماد" });
     }
   };
 
@@ -82,8 +96,9 @@ export default function MasterCommandPanel() {
            </div>
         </div>
         
-        <div className="flex gap-2 glass-cosmic p-2.5 rounded-[3rem] border-white/10 shadow-3xl">
+        <div className="flex gap-2 glass-cosmic p-2.5 rounded-[3rem] border-white/10 shadow-3xl overflow-x-auto max-w-full">
           <TabBtn active={activeTab === "users"} onClick={() => setActiveTab("users")} icon={<Users className="h-5 w-5" />} label="المواطنون" />
+          <TabBtn active={activeTab === "consultants"} onClick={() => setActiveTab("consultants")} icon={<Gavel className="h-5 w-5" />} label="الخبراء" />
           <TabBtn active={activeTab === "finance"} onClick={() => setActiveTab("finance")} icon={<Wallet className="h-5 w-5" />} label="المالية" badge={paymentRequests?.filter(r => r.status === 'pending').length} />
           <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert className="h-5 w-5" />} label="الرقابة" />
         </div>
@@ -167,6 +182,42 @@ export default function MasterCommandPanel() {
             </motion.div>
           )}
 
+          {activeTab === "consultants" && (
+            <motion.div key="consultants" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
+               <Card className="glass-cosmic border-none rounded-[4rem] p-16 shadow-3xl">
+                  <h3 className="text-4xl font-black text-white mb-16 flex items-center gap-6"><Gavel className="text-primary h-10 w-10" /> هيئة الخبراء المعتمدين</h3>
+                  <div className="space-y-6">
+                    {allConsultants?.map(c => (
+                      <div key={c.id} className="flex items-center justify-between p-10 glass rounded-[3.5rem] border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group">
+                         <div className="flex items-center gap-10">
+                            <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center font-black text-primary text-3xl shadow-inner border border-white/5">{c.name?.charAt(0) || "C"}</div>
+                            <div>
+                               <p className="text-3xl font-black text-white">{c.name || "خبير جديد"}</p>
+                               <p className="text-xs text-primary font-bold uppercase mt-2 tracking-widest">{c.specialty}</p>
+                               <div className="flex items-center gap-2 mt-2">
+                                  <Star className="h-3 w-3 fill-primary text-primary" />
+                                  <span className="text-xs text-white/40 font-bold">{c.rating || "5.0"} Rating</span>
+                               </div>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-8">
+                            {!c.isApproved ? (
+                              <Button onClick={() => approveConsultant(c.id)} className="bg-primary text-slate-950 rounded-[1.5rem] h-14 px-10 font-black text-sm shadow-2xl">اعتماد الخبير</Button>
+                            ) : (
+                              <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-8 py-3 rounded-2xl font-black uppercase text-[10px]">Verified Expert</Badge>
+                            )}
+                            <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(db!, "consultantProfiles", c.id))} className="h-14 w-14 rounded-2xl text-white/10 hover:text-red-500 transition-colors">
+                               <UserMinus className="h-6 w-6" />
+                            </Button>
+                         </div>
+                      </div>
+                    ))}
+                    {allConsultants?.length === 0 && <div className="text-center py-20 opacity-20"><Gavel className="h-16 w-16 mx-auto mb-4" /><p className="font-black text-xl">لا يوجد خبراء مسجلون حالياً</p></div>}
+                  </div>
+               </Card>
+            </motion.div>
+          )}
+
           {activeTab === "moderation" && (
             <motion.div key="moderation" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
                <Card className="glass-cosmic border-none rounded-[4rem] p-16 shadow-3xl">
@@ -206,7 +257,7 @@ export default function MasterCommandPanel() {
 
 function TabBtn({ active, onClick, icon, label, badge }: any) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-5 px-12 py-5 rounded-[2.5rem] text-sm font-black transition-all relative ${active ? 'bg-primary text-slate-950 shadow-[0_0_40px_rgba(99,102,241,0.4)]' : 'text-white/20 hover:text-white hover:bg-white/5'}`}>
+    <button onClick={onClick} className={`flex items-center gap-5 px-12 py-5 rounded-[2.5rem] text-sm font-black transition-all relative whitespace-nowrap ${active ? 'bg-primary text-slate-950 shadow-[0_0_40px_rgba(99,102,241,0.4)]' : 'text-white/20 hover:text-white hover:bg-white/5'}`}>
       {icon}
       {label}
       {badge > 0 && <span className="absolute -top-3 -left-3 h-8 w-8 bg-red-600 text-white rounded-full flex items-center justify-center text-[11px] font-black animate-pulse shadow-3xl border-2 border-[#020617]">{badge}</span>}
