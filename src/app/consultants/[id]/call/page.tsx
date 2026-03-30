@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -13,9 +12,10 @@ import {
 import { useRouter, useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
-import { doc, addDoc, collection, query, orderBy, limit, updateDoc, setDoc } from "firebase/firestore";
+import { doc, collection, query, orderBy, limit, updateDoc, setDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { motion, AnimatePresence } from "framer-motion";
+import { sendSovereignLiveMessage } from "@/lib/sovereign-live-chat";
 
 export default function ProfessionalLiveRoom() {
   const params = useParams();
@@ -33,7 +33,6 @@ export default function ProfessionalLiveRoom() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Corrected collection name to match rules and backend schema
   const consultantRef = useMemoFirebase(() => {
     if (!db || !params.id) return null;
     return doc(db, "consultants", params.id as string);
@@ -85,6 +84,7 @@ export default function ProfessionalLiveRoom() {
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !user || !db || hasViolated) return;
 
+    // الدرع الواقي (Sovereign Moderation)
     const violation = forbiddenWords?.find(fw => chatMessage.toLowerCase().includes(String(fw.word).toLowerCase()));
     
     if (violation) {
@@ -96,13 +96,15 @@ export default function ProfessionalLiveRoom() {
       return;
     }
 
-    addDoc(collection(db, "liveConsultations", params.id as string, "messages"), {
-      text: chatMessage,
-      senderId: user.uid,
-      senderName: user.displayName || "عميل",
-      timestamp: new Date().toISOString(),
-      role: "user"
-    });
+    // إطلاق بروتوكول الإرسال السيادي
+    sendSovereignLiveMessage(
+      db, 
+      params.id as string, 
+      user.uid, 
+      user.displayName || "مواطن سيادي", 
+      chatMessage
+    );
+    
     setChatMessage("");
   };
 
@@ -199,7 +201,7 @@ export default function ProfessionalLiveRoom() {
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="glass border-white/10 h-16 rounded-2xl pr-6 pl-16"
+                  className="glass border-white/10 h-16 rounded-2xl pr-6 pl-16 text-right"
                 />
                 <Button 
                   onClick={handleSendMessage} 
