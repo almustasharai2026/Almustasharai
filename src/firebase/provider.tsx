@@ -59,16 +59,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان ظهور الواجهة (Emergency Safety Valve)
+    // 🔥 FORCE STOP LOADING بعد 3 ثوانٍ لضمان ظهور الواجهة (Sovereign Safety Valve)
     const safetyTimer = setTimeout(() => {
       setUserAuthState(prev => {
         if (prev.isUserLoading) {
-          console.warn("Sovereign Safety Trigger: Forced loading completion after timeout.");
+          console.warn("Sovereign Safety Trigger: Forced loading completion after 3s timeout.");
           return { ...prev, isUserLoading: false };
         }
         return prev;
       });
-    }, 2000);
+    }, 3000);
 
     if (!auth) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service unavailable.") });
