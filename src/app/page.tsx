@@ -1,12 +1,13 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
   Plus, Mic, ArrowUp, Star, MoreHorizontal, 
   Search, Scale, Share2, Sparkles, Map, Paperclip, 
-  MessageSquare, Clock, BookOpen, Layers
+  MessageSquare, Clock, BookOpen, Layers, AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -16,18 +17,34 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
 export default function LovableInspiredPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const [activeTab, setActiveTab] = useState("my-projects");
   const [prompt, setInput] = useState("");
+  const [showError, setShowError] = useState(false);
 
-  const sessionsQuery = useMemoFirebase(() => user ? query(
-    collection(db!, "users", user.uid, "chatSessions"), 
-    orderBy("lastMessageAt", "desc"),
-    limit(6)
-  ) : null, [db, user]);
+  // Safety Timeout for loading states
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isUserLoading) setShowError(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [isUserLoading]);
+
+  const sessionsQuery = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    try {
+      return query(
+        collection(db, "users", user.uid, "chatSessions"), 
+        orderBy("lastMessageAt", "desc"),
+        limit(6)
+      );
+    } catch (e) {
+      return null;
+    }
+  }, [db, user]);
   
-  const { data: recentSessions } = useCollection(sessionsQuery);
+  const { data: recentSessions, isLoading: sessionsLoading } = useCollection(sessionsQuery);
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
@@ -45,7 +62,6 @@ export default function LovableInspiredPage() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center space-y-12 mb-24"
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
@@ -72,9 +88,6 @@ export default function LovableInspiredPage() {
               />
 
               <div className="flex items-center gap-1.5 ml-2">
-                <MediaAction icon={<Map />} />
-                <MediaAction icon={<Mic />} />
-                <MediaAction icon={<Paperclip />} />
                 <Link href={`/bot?q=${encodeURIComponent(prompt)}`}>
                   <Button className="h-14 w-14 rounded-[1.8rem] bg-white text-black hover:bg-indigo-50 shadow-2xl hover:scale-105 active:scale-95 transition-all">
                     <ArrowUp className="h-7 w-7" />
@@ -87,58 +100,29 @@ export default function LovableInspiredPage() {
 
         {/* Dashboard Grid Section */}
         <section className="space-y-12">
-          
-          {/* Navigation Tabs */}
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              <TabButton 
-                active={activeTab === "my-projects"} 
-                onClick={() => setActiveTab("my-projects")}
-                label="استشاراتي"
-                icon={<MessageSquare className="h-4 w-4" />}
-              />
-              <TabButton 
-                active={activeTab === "templates"} 
-                onClick={() => setActiveTab("templates")}
-                label="المكتبة السيادية"
-                icon={<BookOpen className="h-4 w-4" />}
-              />
-              <TabButton 
-                active={activeTab === "shared"} 
-                onClick={() => setActiveTab("shared")}
-                label="الملفات المشتركة"
-                icon={<Layers className="h-4 w-4" />}
-              />
-            </div>
-            <div className="hidden md:flex items-center gap-4 text-white/20 text-xs font-bold uppercase tracking-widest">
-              <Search className="h-4 w-4" />
-              <span>بحث في الأرشيف</span>
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <TabButton active={activeTab === "my-projects"} onClick={() => setActiveTab("my-projects")} label="استشاراتي" />
+              <TabButton active={activeTab === "templates"} onClick={() => setActiveTab("templates")} label="المكتبة السيادية" />
             </div>
           </div>
 
-          {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <AnimatePresence mode="popLayout">
-              {activeTab === "my-projects" && recentSessions && recentSessions.length > 0 ? (
+            <AnimatePresence mode="wait">
+              {showError ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-20 text-center glass-card rounded-[3rem] border-red-500/20">
+                   <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                   <p className="text-white/40 font-bold">تعذر الاتصال بالخدمات السحابية. يرجى مراجعة الاتصال.</p>
+                   <Button variant="ghost" onClick={() => window.location.reload()} className="mt-4 text-primary">إعادة المحاولة</Button>
+                </motion.div>
+              ) : activeTab === "my-projects" && recentSessions && recentSessions.length > 0 ? (
                 recentSessions.map((session, i) => (
-                  <motion.div
-                    key={session.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
+                  <motion.div key={session.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                     <CardProject session={session} />
                   </motion.div>
                 ))
-              ) : activeTab === "my-projects" && (
-                <motion.div 
-                  key="empty-state"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10"
-                >
+              ) : activeTab === "my-projects" && !sessionsLoading && (
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10">
                    <Scale className="h-16 w-16 text-white/5 mx-auto" />
                    <p className="text-white/20 font-bold">لا يوجد سجل استشارات حتى الآن</p>
                    <Link href="/bot">
@@ -154,25 +138,9 @@ export default function LovableInspiredPage() {
   );
 }
 
-function MediaAction({ icon }: { icon: React.ReactNode }) {
+function TabButton({ active, onClick, label }: any) {
   return (
-    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white hover:bg-white/5 transition-all">
-      {icon}
-    </Button>
-  );
-}
-
-function TabButton({ active, onClick, label, icon }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-3 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
-        active 
-        ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]' 
-        : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10 hover:text-white'
-      }`}
-    >
-      {icon}
+    <button onClick={onClick} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${active ? 'bg-indigo-600 text-white border-indigo-500 shadow-xl' : 'bg-white/5 text-white/40 border-white/5 hover:text-white'}`}>
       {label}
     </button>
   );
@@ -182,46 +150,13 @@ function CardProject({ session }: any) {
   return (
     <div className="group relative flex flex-col gap-5 p-2 rounded-[2.5rem] glass-card transition-all cursor-pointer">
       <div className="relative aspect-video rounded-[2.2rem] overflow-hidden bg-slate-900 border border-white/5">
-        <Image 
-          src={`https://picsum.photos/seed/${session.id}/1200/675`} 
-          alt="Preview" 
-          fill 
-          className="object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
-        />
+        <Image src={`https://picsum.photos/seed/${session.id}/1200/675`} alt="Preview" fill className="object-cover opacity-40 group-hover:opacity-60 transition-all duration-700" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        
-        {/* Star Icon */}
-        <button className="absolute top-6 right-6 h-10 w-10 glass border border-white/10 rounded-xl flex items-center justify-center text-white/20 hover:text-amber-400 transition-colors">
-          <Star className="h-5 w-5" />
-        </button>
-
-        {/* Info Overlay */}
         <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
-           <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Active Case</span>
-              </div>
-              <h3 className="text-xl font-black text-white truncate max-w-[250px]">{session.title || "استشارة بدون عنوان"}</h3>
-           </div>
-           <Badge variant="outline" className="bg-black/40 backdrop-blur-xl border-white/10 text-[9px] font-bold py-1.5 px-4 rounded-full">
+           <h3 className="text-xl font-black text-white truncate max-w-[250px]">{session.title || "استشارة بدون عنوان"}</h3>
+           <Badge variant="outline" className="bg-black/40 border-white/10 text-[9px] font-bold py-1.5 px-4 rounded-full">
              {new Date(session.lastMessageAt).toLocaleDateString('ar-EG')}
            </Badge>
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between px-6 pb-4">
-        <div className="flex items-center gap-4">
-          <div className="h-9 w-9 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-black text-xs text-indigo-400">
-            {session.title?.charAt(0) || "M"}
-          </div>
-          <div className="space-y-0.5 text-right">
-            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.2em]">آخر نشاط منذ يومين</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="h-9 w-9 flex items-center justify-center text-white/10 hover:text-white transition-all"><Share2 className="h-4 w-4" /></button>
-          <button className="h-9 w-9 flex items-center justify-center text-white/10 hover:text-white transition-all"><MoreHorizontal className="h-4 w-4" /></button>
         </div>
       </div>
     </div>
