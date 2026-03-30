@@ -6,11 +6,6 @@ import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
-interface UserAuthState {
-  user: User | null;
-  isUserLoading: boolean;
-}
-
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
@@ -28,20 +23,19 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   firestore,
   auth,
 }) => {
-  const [userAuthState, setUserAuthState] = useState<UserAuthState>({
-    user: null,
-    isUserLoading: true,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 صمام أمان لكسر حلقة التحميل (2 ثانية)
+    // 🔥 صمام أمان سيادي: إنهاء حالة التحميل قسرياً بعد 2 ثانية
     const safetyTimer = setTimeout(() => {
-      setUserAuthState(prev => ({ ...prev, isUserLoading: false }));
-    }, 2500);
+      setIsUserLoading(false);
+    }, 2000);
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setUserAuthState({ user: firebaseUser, isUserLoading: false });
+      setUser(firebaseUser);
+      setIsUserLoading(false);
       clearTimeout(safetyTimer);
     });
 
@@ -51,26 +45,28 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     };
   }, [auth]);
 
-  // مزامنة الملف الشخصي اللحظية
+  // مزامنة الملف الشخصي اللحظية في الخلفية
   useEffect(() => {
-    if (!firestore || !userAuthState.user) {
+    if (!firestore || !user) {
       setProfile(null);
       return;
     }
-    const unsub = onSnapshot(doc(firestore, "users", userAuthState.user.uid), (doc) => {
+    const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
       if (doc.exists()) setProfile(doc.data());
+    }, (err) => {
+      console.warn("Profile sync paused:", err.message);
     });
     return () => unsub();
-  }, [firestore, userAuthState.user]);
+  }, [firestore, user]);
 
   const contextValue = useMemo(() => ({
     firebaseApp,
     firestore,
     auth,
-    user: userAuthState.user,
-    isUserLoading: userAuthState.isUserLoading,
+    user,
+    isUserLoading,
     profile
-  }), [firebaseApp, firestore, auth, userAuthState, profile]);
+  }), [firebaseApp, firestore, auth, user, isUserLoading, profile]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
