@@ -32,7 +32,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 Sovereign Safety Valve: Force end loading state after 3 seconds
+    // 🔥 Sovereign Safety Valve
     const safetyTimer = setTimeout(() => {
       setIsUserLoading(false);
     }, 3000);
@@ -41,6 +41,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       setUser(firebaseUser);
       
       if (firebaseUser) {
+        // 🔥 Role Detection Logic
         if (firebaseUser.email === 'bishoysamy390@gmail.com') {
           setRole("admin");
         } else if (firebaseUser.email?.includes("consultant")) {
@@ -62,7 +63,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     };
   }, [auth]);
 
-  // Real-time profile sync with robust error handling
+  // Real-time profile sync
   useEffect(() => {
     if (!firestore || !user) {
       setProfile(null);
@@ -77,7 +78,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       });
       return () => unsub();
     } catch (e) {
-      console.error("Firestore sync critical error:", e);
+      console.error("Firestore sync error:", e);
     }
   }, [firestore, user]);
 
