@@ -3,7 +3,7 @@
 import { useUser } from "@/firebase";
 import { motion } from "framer-motion";
 import { 
-  Shield, Wallet, Zap, FileCheck, ChevronLeft, Fingerprint, Sparkles, Lock, Activity, LayoutDashboard, Terminal, Gavel
+  Shield, Wallet, Zap, FileCheck, ChevronLeft, ChevronRight, Fingerprint, Sparkles, Lock, Activity, LayoutDashboard, Terminal, Gavel
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,7 +90,7 @@ export default function SovereignEcosystemHub() {
               <PortalCard 
                 href="/consultants" 
                 title="مجلس الخبراء" 
-                desc="اتصال فيديو مباشر ومشفر مع كبار المستشارين." 
+                desc="اتصال فيديو مباشر ومشفر مع كبال المستشارين." 
                 icon={<Gavel className="h-8 w-8" />} 
                 color="from-purple-500 to-pink-600"
               />
