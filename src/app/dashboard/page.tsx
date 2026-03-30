@@ -10,16 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 
-/**
- * لوحة التحكم السيادية: تعمل في وضع "الرندرة الفورية"
- * لا يتم حجب الواجهة بسبب التحميل، بل يتم عرض البيانات تدريجياً.
- */
 export default function SovereignEcosystemHub() {
   const { user, profile, isUserLoading } = useUser();
 
-  // بيانات افتراضية لضمان عمل الواجهة حتى في وضع الأمان
+  // بيانات افتراضية لضمان عمل الواجهة حتى في وضع الأمان أو التحميل
   const displayProfile = profile || { 
-    balance: user ? "جاري التحديث..." : 0, 
+    balance: user ? "..." : 0, 
     trustScore: 100, 
     digitalId: user ? `SOV-${user.uid.substring(0,8).toUpperCase()}` : "GUEST-ID" 
   };
@@ -27,7 +23,6 @@ export default function SovereignEcosystemHub() {
   return (
     <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans overflow-hidden" dir="rtl">
       
-      {/* Background Elements */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-600/5 blur-[150px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full" />
@@ -35,7 +30,6 @@ export default function SovereignEcosystemHub() {
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         
-        {/* Hub Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div className="flex items-center gap-6">
             <div className="h-20 w-20 rounded-[2rem] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.3)] border border-white/10">
@@ -57,23 +51,16 @@ export default function SovereignEcosystemHub() {
                 </Button>
               </Link>
             )}
-            {!user && !isUserLoading && (
-              <Link href="/auth/login">
-                <Button className="btn-primary h-14 px-10 rounded-2xl">تسجيل الدخول</Button>
-              </Link>
-            )}
           </div>
         </header>
 
-        {/* Global Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <StatCard label="الرصيد السيادي" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
           <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} />
-          <StatCard label="حالة الامتثال" value={displayProfile.isBanned ? "محظور" : "آمن"} icon={<Lock className={displayProfile.isBanned ? "text-red-400" : "text-amber-400"} />} />
+          <StatCard label="حالة الامتثال" value={profile?.isBanned ? "محظور" : "آمن"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} />
           <StatCard label="المستشارين" value="١٢ خبير" icon={<Gavel className="text-purple-400" />} />
         </div>
 
-        {/* Main Ecosystem Services */}
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-10">
             <h2 className="text-3xl font-black flex items-center gap-4"><Sparkles className="text-primary" /> البوابات النشطة</h2>
@@ -128,9 +115,6 @@ export default function SovereignEcosystemHub() {
                         <p className="text-[10px] text-emerald-400 font-black uppercase mt-1">Active & Protected</p>
                      </div>
                   </div>
-               </div>
-               <div className="mt-10 p-6 bg-indigo-600/10 rounded-[2rem] border border-indigo-500/20 text-center">
-                  <p className="text-xs font-black text-indigo-400 uppercase tracking-widest">✅ No Infinite Loading Detected</p>
                </div>
             </Card>
           </div>

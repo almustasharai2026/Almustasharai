@@ -32,7 +32,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 صمام أمان سيادي: إنهاء حالة التحميل قسرياً بعد 3 ثوانٍ
+    // 🔥 Sovereign Safety Valve: Force end loading state after 3 seconds
     const safetyTimer = setTimeout(() => {
       setIsUserLoading(false);
     }, 3000);
@@ -40,7 +40,6 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       
-      // تحديد الدور السيادي بناءً على البريد الإلكتروني
       if (firebaseUser) {
         if (firebaseUser.email === 'bishoysamy390@gmail.com') {
           setRole("admin");
@@ -63,18 +62,23 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     };
   }, [auth]);
 
-  // مزامنة الملف الشخصي اللحظية في الخلفية (Non-blocking)
+  // Real-time profile sync with robust error handling
   useEffect(() => {
     if (!firestore || !user) {
       setProfile(null);
       return;
     }
-    const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
-      if (doc.exists()) setProfile(doc.data());
-    }, (err) => {
-      console.warn("Profile sync paused:", err.message);
-    });
-    return () => unsub();
+    
+    try {
+      const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
+        if (doc.exists()) setProfile(doc.data());
+      }, (err) => {
+        console.warn("Sovereign Profile sync paused:", err.message);
+      });
+      return () => unsub();
+    } catch (e) {
+      console.error("Firestore sync critical error:", e);
+    }
   }, [firestore, user]);
 
   const contextValue = useMemo(() => ({

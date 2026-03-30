@@ -26,7 +26,7 @@ export default function RootLayout({
       <body className="antialiased selection:bg-primary/30 bg-black">
         <FirebaseClientProvider>
           <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
-            <div className="bg-indigo-600/10 border-b border-white/5 py-2 px-4 text-center text-[9px] text-indigo-400 font-black flex items-center justify-center gap-3 relative z-[110] backdrop-blur-3xl">
+            <div className="bg-indigo-600/10 border-b border-white/5 py-2 px-4 text-center text-[9px] text-indigo-400 font-black flex items-center justify-center gap-3 relative z-[150] backdrop-blur-3xl">
               <ShieldCheck className="h-3 w-3" />
               SOVEREIGN ENCRYPTION ACTIVE
             </div>

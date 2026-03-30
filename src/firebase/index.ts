@@ -2,35 +2,40 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+
+// 🔥 Sovereign Singleton Cache
+// Preventing "Internal Assertion Failed" by caching instances at module level
+let cachedApp: FirebaseApp | undefined;
+let cachedAuth: Auth | undefined;
+let cachedDb: Firestore | undefined;
 
 /**
- * دالة التهيئة الآمنة: تمنع انهيار التطبيق الناتج عن إعادة التهيئة المتكررة
- * وتضمن وصولاً فورياً لكافة الخدمات السيادية.
+ * دالة التهيئة السيادية: تضمن عدم تكرار النداءات لخدمات Firebase
+ * وتوفر وصولاً آمناً ومستقراً لكافة مكونات النظام البيئي.
  */
 export function initializeFirebase() {
-  let firebaseApp: FirebaseApp;
+  if (!cachedApp) {
+    cachedApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  }
 
-  if (!getApps().length) {
-    try {
-      firebaseApp = initializeApp(firebaseConfig);
-    } catch (e) {
-      console.error("Firebase Init Error:", e);
-      firebaseApp = getApp();
-    }
-  } else {
-    firebaseApp = getApp();
+  if (!cachedAuth) {
+    cachedAuth = getAuth(cachedApp);
+  }
+
+  if (!cachedDb) {
+    cachedDb = getFirestore(cachedApp);
   }
 
   return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firebaseApp: cachedApp,
+    auth: cachedAuth,
+    firestore: cachedDb
   };
 }
 
-// تصدير الخدمات الأساسية لضمان التوافقية
+// تصدير الخدمات والخطافات السيادية
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
