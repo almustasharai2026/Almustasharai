@@ -1,10 +1,20 @@
+
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Scale, Sparkles, ShieldCheck, ArrowRight, Gavel, Video, FileText, MessageSquare, Star, Zap, Globe } from "lucide-react";
+import { Sparkles, ShieldCheck, ArrowRight, Gavel, Video, FileText, MessageSquare, Star, Zap, Globe, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+const SovereignLogo = () => (
+  <svg viewBox="0 0 100 100" className="h-24 w-24 drop-shadow-[0_0_30px_rgba(37,99,235,0.6)]">
+    <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
+    <path d="M50 15 L80 30 L80 70 L50 85 L20 70 L20 30 Z" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
+    <path d="M35 45 H65 M50 45 V70 M35 45 L30 55 M65 45 L70 55" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary" />
+    <circle cx="50" cy="35" r="4" fill="currentColor" className="text-accent" />
+  </svg>
+);
 
 export default function LandingPage() {
   return (
@@ -22,6 +32,10 @@ export default function LandingPage() {
         transition={{ duration: 1 }}
         className="text-center space-y-10 max-w-5xl relative z-10"
       >
+        <div className="flex justify-center mb-8">
+           <SovereignLogo />
+        </div>
+
         <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full glass-cosmic border-primary/20 text-primary text-xs font-black tracking-wide shadow-2xl">
           <Star className="h-4 w-4 fill-primary animate-pulse" />
           أول نظام قانوني سيادي مدعوم بالذكاء الاصطناعي الفائق
@@ -39,7 +53,7 @@ export default function LandingPage() {
         <div className="flex flex-wrap justify-center gap-6 mt-16">
           <Link href="/auth/signup">
             <Button className="h-20 px-14 rounded-[2rem] btn-primary text-2xl font-black gap-4 group hover:scale-105 transition-all">
-              انضم للسيادة <ArrowRight className="h-7 w-7 rotate-180 group-hover:-translate-x-3 transition-transform" />
+              ابدأ رحلتك الآن <ArrowRight className="h-7 w-7 rotate-180 group-hover:-translate-x-3 transition-transform" />
             </Button>
           </Link>
           <Link href="/bot">

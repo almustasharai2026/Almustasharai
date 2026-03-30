@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, Languages, User, LayoutDashboard, Sparkles, Lock, Gavel, Coins } from "lucide-react";
+import { Sun, Moon, Languages, User, LayoutDashboard, Sparkles, Lock, Coins } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useUser, useFirestore } from "@/firebase";
@@ -14,6 +15,22 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+
+// Custom Sovereign Logo Component
+const SovereignLogo = () => (
+  <svg viewBox="0 0 100 100" className="h-10 w-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+    <defs>
+      <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
+        <stop offset="100%" style={{ stopColor: '#fbbi05', stopOpacity: 1 }} />
+      </linearGradient>
+    </defs>
+    <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
+    <path d="M50 15 L80 30 L80 70 L50 85 L20 70 L20 30 Z" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
+    <path d="M35 45 H65 M50 45 V70 M35 45 L30 55 M65 45 L70 55" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary" />
+    <circle cx="50" cy="35" r="4" fill="currentColor" className="text-accent" />
+  </svg>
+);
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -45,17 +62,17 @@ export function Navbar() {
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-7xl">
       <div className="glass-cosmic h-20 px-8 rounded-[2.5rem] flex items-center justify-between border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)]">
         
-        {/* Modern Sovereign Gavel Logo */}
+        {/* Modern Sovereign Logo */}
         <Link href="/" className="flex items-center gap-4 group">
           <div className="relative">
-            <div className="bg-primary p-3.5 rounded-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)] group-hover:rotate-[360deg] transition-transform duration-1000 flex items-center justify-center relative z-10">
-              <Gavel className="h-6 w-6 text-white" />
+            <div className="transition-transform duration-1000 group-hover:scale-110">
+              <SovereignLogo />
             </div>
-            <div className="absolute inset-0 bg-primary blur-[20px] opacity-20 animate-pulse" />
           </div>
-          <span className="font-black text-2xl tracking-tighter text-white flex items-baseline gap-1">
-            المستشار <span className="text-primary text-3xl">AI</span>
-          </span>
+          <div className="flex flex-col -space-y-1">
+            <span className="font-black text-xl tracking-tighter text-white">المستشار</span>
+            <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em]">Sovereign AI</span>
+          </div>
         </Link>
 
         {/* Central Hub Links */}
@@ -63,9 +80,9 @@ export function Navbar() {
           <NavLink href="/consultants" label="الاستشارات" />
           <NavLink href="/templates" label="المكتبة" />
           <NavLink href="/pricing" label="العروض" />
-          <Link href="/bot" className="flex items-center gap-3 bg-primary/5 hover:bg-primary text-white px-8 py-3 rounded-2xl font-black transition-all border border-primary/20 group shadow-lg active:scale-95">
+          <Link href="/bot" className="flex items-center gap-3 bg-primary/10 hover:bg-primary text-white px-8 py-3 rounded-2xl font-black transition-all border border-primary/20 group shadow-lg active:scale-95">
             <Sparkles className="h-4 w-4 text-primary group-hover:text-white" />
-            مركز القيادة الذكي
+            مركز القيادة
           </Link>
         </div>
 
@@ -83,10 +100,6 @@ export function Navbar() {
             {theme === "dark" ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
           </Button>
           
-          <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 glass border-white/5 hidden sm:flex">
-            <Languages className="h-5 w-5 text-primary" />
-          </Button>
-
           <div className="h-8 w-px bg-white/10 mx-1 hidden sm:block" />
 
           {user ? (
@@ -119,7 +132,7 @@ export function Navbar() {
           ) : (
             <Link href="/auth/signup">
               <Button className="rounded-2xl h-12 px-10 font-black cosmic-gradient hover:scale-105 shadow-xl transition-all border border-white/5 active:scale-95">
-                ابدأ رحلتك
+                انضم الآن
               </Button>
             </Link>
           )}

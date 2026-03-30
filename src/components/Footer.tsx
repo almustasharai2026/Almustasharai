@@ -1,7 +1,17 @@
+
 "use client";
 
 import Link from "next/link";
 import { Gavel, Mail, Phone, MapPin, Sparkles, AlertTriangle, Github, Twitter, Linkedin, ShieldCheck, Heart } from "lucide-react";
+
+const SovereignLogo = () => (
+  <svg viewBox="0 0 100 100" className="h-16 w-16 drop-shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+    <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/5" />
+    <path d="M50 15 L80 30 L80 70 L50 85 L20 70 L20 30 Z" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
+    <path d="M35 45 H65 M50 45 V70 M35 45 L30 55 M65 45 L70 55" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary" />
+    <circle cx="50" cy="35" r="4" fill="currentColor" className="text-accent" />
+  </svg>
+);
 
 export function Footer() {
   return (
@@ -14,13 +24,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-24 mb-32">
           
           <div className="space-y-12">
-            <Link href="/" className="flex items-center gap-5 group">
-              <div className="relative">
-                <div className="bg-primary p-4 rounded-3xl group-hover:rotate-[360deg] transition-transform duration-1000 shadow-[0_0_40px_rgba(37,99,235,0.5)] flex items-center justify-center">
-                  <Gavel className="h-10 w-10 text-white" />
-                </div>
-                <div className="absolute inset-0 bg-primary blur-[20px] opacity-20" />
-              </div>
+            <Link href="/" className="flex flex-col gap-6 group">
+              <SovereignLogo />
               <span className="font-black text-4xl text-white tracking-tighter">
                  المستشار <span className="text-primary">AI</span>
               </span>
