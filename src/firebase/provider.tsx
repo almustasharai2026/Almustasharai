@@ -6,11 +6,14 @@ import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
+export type UserRole = "user" | "consultant" | "admin";
+
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
   user: User | null;
+  role: UserRole;
   isUserLoading: boolean;
   profile: any | null;
 }
@@ -24,17 +27,32 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   auth,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<UserRole>("user");
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 صمام أمان سيادي: إنهاء حالة التحميل قسرياً بعد 2 ثانية
+    // 🔥 صمام أمان سيادي: إنهاء حالة التحميل قسرياً بعد 3 ثوانٍ
     const safetyTimer = setTimeout(() => {
       setIsUserLoading(false);
-    }, 2000);
+    }, 3000);
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
+      
+      // تحديد الدور السيادي بناءً على البريد الإلكتروني
+      if (firebaseUser) {
+        if (firebaseUser.email === 'bishoysamy390@gmail.com') {
+          setRole("admin");
+        } else if (firebaseUser.email?.includes("consultant")) {
+          setRole("consultant");
+        } else {
+          setRole("user");
+        }
+      } else {
+        setRole("user");
+      }
+
       setIsUserLoading(false);
       clearTimeout(safetyTimer);
     });
@@ -45,7 +63,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     };
   }, [auth]);
 
-  // مزامنة الملف الشخصي اللحظية في الخلفية
+  // مزامنة الملف الشخصي اللحظية في الخلفية (Non-blocking)
   useEffect(() => {
     if (!firestore || !user) {
       setProfile(null);
@@ -64,9 +82,10 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     firestore,
     auth,
     user,
+    role,
     isUserLoading,
     profile
-  }), [firebaseApp, firestore, auth, user, isUserLoading, profile]);
+  }), [firebaseApp, firestore, auth, user, role, isUserLoading, profile]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -80,6 +99,7 @@ export const useUser = () => {
   const context = useContext(FirebaseContext);
   return { 
     user: context?.user || null, 
+    role: context?.role || "user",
     isUserLoading: context?.isUserLoading ?? true,
     profile: context?.profile || null
   };
