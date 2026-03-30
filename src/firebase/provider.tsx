@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -60,16 +59,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
+    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان عدم تجمد الواجهة
+    const safetyTimer = setTimeout(() => {
+      setUserAuthState(prev => {
+        if (prev.isUserLoading) {
+          console.warn("Sovereign Safety Trigger: Forcing end of loading state.");
+          return { ...prev, isUserLoading: false };
+        }
+        return prev;
+      });
+    }, 2000);
+
     if (!auth) {
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not available.") });
+      clearTimeout(safetyTimer);
       return;
     }
-
-    // CRITICAL: Safety timeout to prevent infinite loading screen
-    // Force isUserLoading to false after 5 seconds regardless of Firebase response
-    const safetyTimer = setTimeout(() => {
-      setUserAuthState(prev => prev.isUserLoading ? { ...prev, isUserLoading: false } : prev);
-    }, 5000);
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -79,10 +84,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       },
       (error) => {
         clearTimeout(safetyTimer);
-        console.error("FirebaseProvider error:", error);
+        console.error("Firebase Auth Error:", error);
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
+
     return () => {
       unsubscribe();
       clearTimeout(safetyTimer);
@@ -130,7 +136,7 @@ export const useAuth = (): Auth => useFirebase().auth;
 export const useFirestore = (): Firestore => useFirebase().firestore;
 export const useFirebaseApp = (): FirebaseApp => useFirebase().firebaseApp;
 
-type MemoFirebase <T> = T & {__memo?: boolean};
+type MemoFirebase<T> = T & {__memo?: boolean};
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
   const memoized = useMemo(factory, deps);
@@ -140,6 +146,7 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
 }
 
 export const useUser = (): UserHookResult => {
-  const { user, isUserLoading, userError } = useFirebase();
-  return { user, isUserLoading, userError };
+  const context = useContext(FirebaseContext);
+  if (context === undefined) return { user: null, isUserLoading: true, userError: null };
+  return { user: context.user, isUserLoading: context.isUserLoading, userError: context.userError };
 };

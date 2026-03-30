@@ -1,17 +1,14 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Shield, Wallet, Zap, Gavel, FileCheck, Activity, 
-  ArrowUpRight, Lock, Sparkles, Star, Bell,
-  ChevronRight, ArrowDownRight, TrendingUp, Fingerprint, AlertCircle
+  Shield, Wallet, Zap, FileCheck, Activity, 
+  ChevronRight, Fingerprint, AlertCircle, Sparkles, Lock, Coins
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { doc, onSnapshot, collection, query, orderBy, limit } from "firebase/firestore";
@@ -21,59 +18,47 @@ export default function SovereignEcosystemHub() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const [profile, setProfile] = useState<any>(null);
-  const [loadingError, setLoadingError] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
 
-  // FORCE UNSTICK: Handle profile loading with safety timeout
+  // Monitor profile without blocking
   useEffect(() => {
-    if (!db || !user) return;
+    if (!db || !user) {
+      setIsSyncing(false);
+      return;
+    }
     
-    // If we don't get a profile doc in 5 seconds, show error/fallback
-    const timeout = setTimeout(() => {
-      if (!profile) setLoadingError(true);
-    }, 5000);
-
     const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
       setProfile(doc.data());
-      setLoadingError(false);
-      clearTimeout(timeout);
+      setIsSyncing(false);
+    }, (err) => {
+      console.warn("Profile sync limited:", err);
+      setIsSyncing(false);
     });
-    return () => {
-      unsub();
-      clearTimeout(timeout);
-    };
-  }, [db, user, profile]);
+    return () => unsub();
+  }, [db, user]);
 
-  const transQuery = useMemoFirebase(() => user ? query(
-    collection(db!, "users", user.uid, "transactions"), 
-    orderBy("timestamp", "desc"), 
-    limit(5)
-  ) : null, [db, user]);
+  const transQuery = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return query(
+      collection(db, "users", user.uid, "transactions"), 
+      orderBy("timestamp", "desc"), 
+      limit(5)
+    );
+  }, [db, user]);
   const { data: recentTransactions } = useCollection(transQuery);
 
-  if (loadingError) {
-    return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center p-10 text-center space-y-6">
-        <AlertCircle className="h-16 w-16 text-red-500 animate-pulse" />
-        <h2 className="text-2xl font-bold">تعذر تحميل الملف السيادي</h2>
-        <p className="text-white/40 max-w-xs">يبدو أن هناك مشكلة في الاتصال بقاعدة البيانات المركزية.</p>
-        <Button onClick={() => window.location.reload()} variant="outline" className="border-white/10 font-bold">إعادة محاولة الاتصال</Button>
-      </div>
-    );
-  }
-
-  // If still strictly loading from auth and not timed out
-  if (!profile) return (
-    <div className="h-screen bg-black flex flex-col items-center justify-center gap-4">
-      <Activity className="animate-spin text-primary h-12 w-12" />
-      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Syncing Identity...</span>
-    </div>
-  );
+  // Default values for initial render
+  const displayProfile = profile || {
+    balance: 0,
+    trustScore: 0,
+    digitalId: "SYS-SYNC-PENDING"
+  };
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans selection:bg-primary/30" dir="rtl">
+    <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans" dir="rtl">
       {/* Atmosphere Backdrop */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-20% w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full" />
+        <div className="absolute top-[-10%] left-[20%] w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full" />
       </div>
 
       <main className="max-w-7xl mx-auto relative z-10 space-y-12">
@@ -85,7 +70,10 @@ export default function SovereignEcosystemHub() {
               </div>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter text-white">الكيان السيادي <span className="text-primary"> الرقمي</span></h1>
-                <p className="text-white/30 text-sm font-bold tracking-[0.2em] uppercase">User ID: {profile.digitalId || 'Unknown'}</p>
+                <p className="text-white/30 text-sm font-bold tracking-[0.2em] uppercase flex items-center gap-2">
+                  User ID: {displayProfile.digitalId}
+                  {isSyncing && <Activity className="h-3 w-3 animate-spin opacity-50" />}
+                </p>
               </div>
             </div>
           </div>
@@ -93,9 +81,9 @@ export default function SovereignEcosystemHub() {
 
         {/* Vital Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard label="رصيد المحفظة" value={`${profile.balance || 0} EGP`} icon={<Wallet className="text-emerald-400" />} color="emerald" />
-          <StatCard label="معدل الموثوقية" value={`${profile.trustScore || 0}%`} icon={<Shield className="text-indigo-400" />} progress={profile.trustScore} color="indigo" />
-          <StatCard label="الحالة الأمنية" value="Safe" icon={<Lock className="text-amber-400" />} color="amber" />
+          <StatCard label="رصيد المحفظة" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} color="emerald" />
+          <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} color="indigo" />
+          <StatCard label="الحالة الأمنية" value={profile?.isBanned ? "Banned" : "Safe"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} color={profile?.isBanned ? "red" : "amber"} />
           <StatCard label="الذكاء النشط" value="Ready" icon={<Sparkles className="text-purple-400" />} color="purple" />
         </div>
 
@@ -111,12 +99,16 @@ export default function SovereignEcosystemHub() {
             <Card className="glass-cosmic border-none rounded-[3rem] p-8 shadow-2xl">
                <h3 className="text-xl font-black mb-6">سجل العمليات المالي</h3>
                <div className="space-y-4">
-                  {recentTransactions?.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                       <p className="text-xs font-black text-white/80">{t.service}</p>
-                       <span className={`font-black text-sm ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{t.amount}</span>
-                    </div>
-                  ))}
+                  {recentTransactions && recentTransactions.length > 0 ? (
+                    recentTransactions.map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                         <p className="text-xs font-black text-white/80">{t.service}</p>
+                         <span className={`font-black text-sm ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{t.amount}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] text-white/20 text-center py-10 font-bold uppercase tracking-widest">لا توجد معاملات حديثة</p>
+                  )}
                </div>
             </Card>
           </div>
