@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -99,19 +100,19 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 rounded-[2.5rem] p-4 glass-cosmic border-white/10 shadow-2xl mt-4">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-white/10 font-bold transition-colors">
-                    <LayoutDashboard className="h-4 w-4 text-primary" /> لوحة التحكم
+                  <Link href="/dashboard" className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-white/10 font-bold transition-colors text-right">
+                    <LayoutDashboard className="h-4 w-4 text-primary ml-4" /> لوحة التحكم
                   </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex items-center gap-4 p-4 rounded-2xl text-primary font-black cursor-pointer bg-primary/10 hover:bg-primary/20 border border-primary/20 mt-1 transition-all">
-                      <Lock className="h-4 w-4" /> غرفة القيادة العليا
+                    <Link href="/admin" className="flex items-center gap-4 p-4 rounded-2xl text-primary font-black cursor-pointer bg-primary/10 hover:bg-primary/20 border border-primary/20 mt-1 transition-all text-right">
+                      <Lock className="h-4 w-4 ml-4" /> غرفة القيادة العليا
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator className="bg-white/5 my-3" />
-                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="text-red-500 p-4 rounded-2xl cursor-pointer hover:bg-red-500/10 font-black transition-colors">
+                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="text-red-500 p-4 rounded-2xl cursor-pointer hover:bg-red-500/10 font-black transition-colors text-right justify-end">
                   تسجيل الخروج
                 </DropdownMenuItem>
               </DropdownMenuContent>

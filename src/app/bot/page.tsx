@@ -1,17 +1,18 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Send, Sparkles, Plus, History, Camera, Mic, 
   Paperclip, Wallet, ChevronLeft, Menu, X, Trash2, 
   Loader2, Gavel, User, LayoutGrid, Scale, CreditCard,
-  MessageCircle, AlertCircle, ShoppingBag, Trash
+  MessageCircle, AlertCircle, ShoppingBag, MicOff,
+  Files, Image as ImageIcon, Archive
 } from "lucide-react";
-import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, deleteDoc, limit, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { processLegalQuery } from "@/ai/flows/legal-chat-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,11 @@ export default function UltimateChatHub() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Real-time user data for balance
   useEffect(() => {
@@ -63,7 +69,6 @@ export default function UltimateChatHub() {
   const handleSend = async () => {
     if (!input.trim() || isLoading || !user || !userData) return;
     
-    // Strict Credit Check
     if (userData.balance < activeChar.cost && userData.role !== 'admin') {
       toast({ 
         variant: "destructive", 
@@ -88,28 +93,24 @@ export default function UltimateChatHub() {
         setSessionId(currentSessId);
       }
 
-      // 1. Add User Message
       await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
         role: "user",
         content: input,
         timestamp: serverTimestamp()
       });
 
-      // 2. AI Processing
       const result = await processLegalQuery({
         prompt: input,
         characterName: activeChar.name,
         characterDesc: activeChar.desc
       });
 
-      // 3. Add AI Response
       await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
         role: "assistant",
         content: result.response,
         timestamp: serverTimestamp()
       });
 
-      // 4. Update Session & Deduct Credits
       await updateDoc(doc(db!, "users", user.uid, "chatSessions", currentSessId), {
         lastMessageAt: serverTimestamp()
       });
@@ -123,9 +124,35 @@ export default function UltimateChatHub() {
       setInput("");
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "فشل الإرسال", description: "حدث خطأ غير متوقع في الكوكب." });
+      toast({ variant: "destructive", title: "فشل الإرسال", description: "حدث خطأ في النظام." });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      toast({ variant: "destructive", title: "غير مدعوم", description: "متصفحك لا يدعم التعرف على الصوت." });
+      return;
+    }
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => prev + " " + transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInput(prev => prev + ` [تم إرفاق: ${file.name}] `);
+      toast({ title: "تم إرفاق الملف", description: "سيقوم المستشار بتحليله عند الإرسال." });
     }
   };
 
@@ -134,64 +161,57 @@ export default function UltimateChatHub() {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#050505] overflow-hidden" dir="rtl">
       
-      {/* SaaS Premium Sidebar */}
+      {/* Sidebar Replit Style */}
       <AnimatePresence mode="wait">
         {isSidebarOpen && (
           <motion.aside 
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
+            animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="border-l border-white/[0.03] bg-[#080808] flex flex-col p-5 z-50 shadow-2xl relative"
+            className="border-l border-white/[0.03] bg-[#0a0a0a] flex flex-col z-50 shadow-2xl relative"
           >
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">مركز العمليات</h3>
-               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="h-8 w-8 rounded-full hover:bg-white/5 text-white/20">
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-               </Button>
+            {/* Quick Actions Icons */}
+            <div className="flex gap-4 p-5 border-b border-white/[0.03] justify-center">
+               <IconButton icon={<Archive />} tooltip="الأرشيف" />
+               <IconButton icon={<Files />} tooltip="المستندات" />
+               <IconButton icon={<ImageIcon />} tooltip="الصور" />
+               <IconButton icon={<LayoutGrid />} tooltip="التطبيقات" />
             </div>
 
-            <Button 
-              onClick={() => {setSessionId(null); setInput("");}} 
-              className="w-full h-14 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] gap-4 font-black text-[13px] mb-10 border border-white/5 shadow-xl transition-all active:scale-95"
-            >
-              <Plus className="h-5 w-5 text-primary" /> محادثة قانونية جديدة
-            </Button>
+            <div className="p-5">
+              <Button 
+                onClick={() => {setSessionId(null); setInput("");}} 
+                className="w-full h-12 rounded-xl bg-primary text-white gap-3 font-black text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+              >
+                <Plus className="h-4 w-4" /> محادثة جديدة
+              </Button>
+            </div>
 
-            <ScrollArea className="flex-1 -mx-2 px-2">
-              <div className="space-y-2">
+            <ScrollArea className="flex-1 px-4">
+              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4 px-2">سجلات المحادثة</p>
+              <div className="space-y-1">
                 {sessions?.map(s => (
                   <button 
                     key={s.id} 
                     onClick={() => setSessionId(s.id)}
-                    className={`w-full text-right p-4 rounded-2xl text-xs transition-all group flex items-center gap-4 ${sessionId === s.id ? 'bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5' : 'text-white/30 hover:bg-white/[0.02] border border-transparent'}`}
+                    className={`w-full text-right p-3 rounded-xl text-[11px] transition-all flex items-center gap-3 ${sessionId === s.id ? 'bg-white/[0.05] text-primary border border-white/5' : 'text-white/40 hover:bg-white/[0.02] border border-transparent'}`}
                   >
-                    <MessageCircle className={`h-4 w-4 shrink-0 ${sessionId === s.id ? 'text-primary' : 'text-white/10'}`} />
-                    <span className="truncate font-bold">{s.title || "بدون عنوان"}</span>
+                    <MessageCircle className="h-3.5 w-3.5 opacity-50" />
+                    <span className="truncate font-bold">{s.title || "استشارة جديدة"}</span>
                   </button>
                 ))}
-                {(!sessions || sessions.length === 0) && (
-                  <div className="py-10 text-center opacity-10">
-                    <History className="h-10 w-10 mx-auto mb-2" />
-                    <p className="text-[10px] font-bold">لا يوجد سجلات</p>
-                  </div>
-                )}
               </div>
             </ScrollArea>
 
-            {/* Premium Features Quick Access */}
-            <div className="mt-8 pt-8 border-t border-white/[0.03] space-y-3">
-               <SidebarAction icon={<ShoppingBag />} label="المكتبة القانونية" href="/templates" />
-               <SidebarAction icon={<LayoutGrid />} label="باقات الشحن" href="/pricing" />
-               
-               <div className="mt-6 p-6 glass-cosmic rounded-[2.5rem] border-primary/10 overflow-hidden relative">
-                  <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 blur-3xl rounded-full" />
-                  <p className="text-[9px] text-white/30 font-black uppercase mb-2 tracking-widest">رصيدك السيادي</p>
+            <div className="p-5 border-t border-white/[0.03] bg-black/20">
+               <div className="p-4 glass-cosmic rounded-2xl border-primary/10">
+                  <p className="text-[9px] text-white/20 font-black uppercase mb-2">رصيدك الحالي</p>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-4xl font-black text-white tabular-nums">{userData?.balance || 0}</p>
-                    <span className="text-[10px] text-primary font-black">EGP</span>
+                    <span className="text-2xl font-black text-white">{userData?.balance || 0}</span>
+                    <span className="text-[9px] text-primary font-black">EGP</span>
                   </div>
                   <Link href="/pricing">
-                    <Button variant="ghost" className="w-full h-10 mt-4 rounded-xl bg-primary/10 text-primary text-[10px] font-black hover:bg-primary/20">شحن فوري</Button>
+                    <Button variant="ghost" className="w-full h-8 mt-3 rounded-lg bg-primary/10 text-primary text-[10px] font-black">ترقية الرصيد</Button>
                   </Link>
                </div>
             </div>
@@ -200,27 +220,27 @@ export default function UltimateChatHub() {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col relative">
-        <header className="h-16 border-b border-white/[0.03] flex items-center justify-between px-8 bg-black/40 backdrop-blur-3xl z-10">
-          <div className="flex items-center gap-6">
+        <header className="h-16 border-b border-white/[0.03] flex items-center justify-between px-6 bg-black/40 backdrop-blur-3xl z-10">
+          <div className="flex items-center gap-4">
             {!isSidebarOpen && (
               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="text-white/20 hover:text-white">
                 <Menu className="h-5 w-5" />
               </Button>
             )}
-            <div className="flex items-center gap-4">
-               <div className="h-10 w-10 rounded-xl glass-cosmic flex items-center justify-center text-lg shadow-xl">{activeChar.emoji}</div>
+            <div className="flex items-center gap-3">
+               <div className="h-9 w-9 rounded-xl glass-cosmic flex items-center justify-center text-sm shadow-xl border-white/5">{activeChar.emoji}</div>
                <div>
-                 <h2 className="text-sm font-black text-white">{activeChar.name}</h2>
-                 <p className="text-[10px] text-white/30 font-medium">نشط الآن</p>
+                 <h2 className="text-xs font-black text-white">{activeChar.name}</h2>
+                 <p className="text-[9px] text-white/30 font-bold uppercase tracking-tighter">AI AGENT ACTIVE</p>
                </div>
             </div>
           </div>
           
-          <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
+          <div className="flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
              {CHARACTERS.map(c => (
                <button 
                 key={c.id} 
-                className={`h-10 px-5 rounded-xl text-[11px] font-black transition-all flex items-center gap-2 ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-white/30 hover:bg-white/5'}`}
+                className={`h-8 px-4 rounded-lg text-[10px] font-black transition-all ${activeChar.id === c.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-white/30 hover:bg-white/5'}`}
                 onClick={() => {setActiveChar(c); setSessionId(null);}}
                >
                  {c.name}
@@ -229,23 +249,16 @@ export default function UltimateChatHub() {
           </div>
         </header>
 
-        <ScrollArea className="flex-1 p-8">
-          <div className="max-w-4xl mx-auto space-y-12 pb-32">
+        <ScrollArea className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto space-y-10 pb-32">
             {(!messages || messages.length === 0) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-24 text-center space-y-8">
-                 <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(37,99,235,0.2)]">
-                    <Sparkles className="h-12 w-12 text-primary animate-pulse" />
+              <div className="py-20 text-center space-y-6">
+                 <div className="h-20 w-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(37,99,235,0.1)] border border-primary/20">
+                    <Sparkles className="h-10 w-10 text-primary animate-pulse" />
                  </div>
-                 <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في غرفة الاستشارة</h3>
-                 <p className="text-white/20 text-lg max-w-md mx-auto leading-relaxed font-medium">أنا {activeChar.name}. كيف يمكنني تحليل قضيتك أو مساعدتك قانونياً اليوم؟</p>
-                 
-                 <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto pt-10">
-                    <QuickPrompt text="تحليل عقد إيجار قديم" icon="📜" onClick={setInput} />
-                    <QuickPrompt text="خطوات خلع الزوج" icon="⚖️" onClick={setInput} />
-                    <QuickPrompt text="مطالبة مالية من شركة" icon="🏢" onClick={setInput} />
-                    <QuickPrompt text="تحقق من صحة توقيع" icon="✒️" onClick={setInput} />
-                 </div>
-              </motion.div>
+                 <h3 className="text-3xl font-black text-white tracking-tighter">غرفة الاستشارة الاحترافية</h3>
+                 <p className="text-white/20 text-sm max-w-xs mx-auto leading-relaxed">أنا {activeChar.name}، جاهز لتحليل استفساراتك القانونية بدقة فائقة.</p>
+              </div>
             )}
             
             {messages?.map((msg, i) => (
@@ -253,72 +266,77 @@ export default function UltimateChatHub() {
                 key={i} 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-8 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                className={`flex gap-5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all ${msg.role === 'user' ? 'bg-primary border-primary/20 text-white shadow-lg' : 'glass-cosmic border-white/10 text-primary shadow-xl'}`}>
-                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Gavel className="h-6 w-6" />}
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${msg.role === 'user' ? 'bg-primary border-white/10 text-white shadow-lg' : 'glass-cosmic border-white/10 text-primary shadow-xl'}`}>
+                  {msg.role === 'user' ? <User className="h-5 w-5" /> : <Gavel className="h-5 w-5" />}
                 </div>
-                <div className={`p-7 rounded-[2.5rem] text-[15px] leading-8 shadow-2xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
+                <div className={`p-6 rounded-[2rem] text-sm leading-7 shadow-xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
                   {msg.content}
                 </div>
               </motion.div>
             ))}
             
             {isLoading && (
-              <div className="flex gap-8">
-                <div className="h-12 w-12 rounded-2xl glass-cosmic border-2 border-primary/20 flex items-center justify-center text-primary">
-                   <Loader2 className="h-6 w-6 animate-spin" />
+              <div className="flex gap-5">
+                <div className="h-10 w-10 rounded-xl glass-cosmic border border-primary/20 flex items-center justify-center text-primary">
+                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
-                <div className="glass-cosmic p-7 rounded-[2.5rem] rounded-tl-none w-32 flex justify-center gap-2 border-white/5">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-150" />
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-300" />
+                <div className="glass-cosmic p-6 rounded-[2rem] rounded-tl-none border-white/5 flex gap-1.5 items-center">
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" />
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce delay-100" />
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce delay-200" />
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        {/* Dynamic Input System */}
-        <div className="p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
-          <div className="max-w-4xl mx-auto relative">
+        {/* Floating Input Controller */}
+        <div className="p-6 bg-gradient-to-t from-black via-black/80 to-transparent absolute bottom-0 inset-x-0">
+          <div className="max-w-3xl mx-auto relative">
             
-            {/* Barrier for zero balance */}
             {isBalanceZero && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex flex-col items-center justify-center gap-4 border-red-500/30 p-10 text-center"
-              >
-                <AlertCircle className="h-12 w-12 text-red-500 animate-bounce" />
-                <h4 className="text-xl font-black text-white">عذراً، رصيدك انتهى!</h4>
-                <p className="text-white/40 text-sm">يجب شحن الرصيد للاستمرار في استخدام ميزات الكوكب السيادي.</p>
+              <div className="absolute inset-0 z-20 glass-cosmic rounded-[2.5rem] flex items-center justify-between px-10 border-red-500/20 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                  <AlertCircle className="h-6 w-6 text-red-500" />
+                  <p className="text-xs font-black text-white">رصيدك لا يسمح بالاستمرار. يرجى الشحن.</p>
+                </div>
                 <Link href="/pricing">
-                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black">اشحن الآن <CreditCard className="mr-3 h-4 w-4" /></Button>
+                  <Button className="btn-primary px-8 h-10 rounded-xl font-black text-[10px]">اشحن الآن</Button>
                 </Link>
-              </motion.div>
+              </div>
             )}
 
-            <div className={`glass-cosmic rounded-[3rem] p-3 flex items-end gap-3 border-white/5 focus-within:border-primary/40 transition-all shadow-[0_0_100px_rgba(0,0,0,0.5)] ${isBalanceZero ? 'blur-md grayscale' : ''}`}>
-              <div className="flex items-center gap-1.5 p-2 bg-white/[0.02] rounded-[2rem] border border-white/5">
-                 <MediaButton icon={<Camera />} tooltip="التقاط مستند" />
-                 <MediaButton icon={<Mic />} tooltip="إملاء صوتي" />
-                 <MediaButton icon={<Paperclip />} tooltip="إرفاق ملف" />
+            <div className={`glass-cosmic rounded-[2.5rem] p-2 flex items-center gap-2 border-white/5 shadow-2xl ${isBalanceZero ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
+              <div className="flex items-center gap-1 p-1 bg-white/[0.02] rounded-2xl border border-white/5">
+                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                 <input type="file" ref={cameraInputRef} capture="environment" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                 
+                 <MediaBtn icon={<Camera />} tooltip="التقاط" onClick={() => cameraInputRef.current?.click()} />
+                 <MediaBtn 
+                    icon={isListening ? <MicOff className="animate-pulse text-red-500" /> : <Mic />} 
+                    tooltip="صوت" 
+                    onClick={startListening} 
+                 />
+                 <MediaBtn icon={<Paperclip />} tooltip="ملف" onClick={() => fileInputRef.current?.click()} />
               </div>
-              <textarea 
-                placeholder={`اطرح استفسارك لـ ${activeChar.name}...`}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-[17px] font-medium text-right p-5 min-h-[64px] max-h-48 resize-none text-white/90 placeholder:text-white/10"
+              
+              <input 
+                placeholder={`اسأل ${activeChar.name} عن أي موضوع قانوني...`}
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-right p-4 text-white/90 placeholder:text-white/10"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                disabled={isBalanceZero}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               />
-              <Button onClick={handleSend} disabled={!input.trim() || isLoading || isBalanceZero} className="h-16 w-16 rounded-[2.2rem] btn-primary shrink-0 group">
-                {isLoading ? <Loader2 className="animate-spin" /> : <Send className="h-7 w-7 rotate-180 group-hover:-translate-x-1 group-hover:translate-y-1 transition-transform" />}
+
+              <Button onClick={handleSend} disabled={!input.trim() || isLoading} className="h-12 w-12 rounded-2xl btn-primary shrink-0 transition-transform active:scale-90">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rotate-180" />}
               </Button>
             </div>
-            <div className="flex justify-between items-center px-8 mt-4">
-               <p className="text-[10px] text-white/10 font-bold uppercase tracking-[0.3em]">AI Protocol v4.0 Sovereign</p>
-               <p className="text-[10px] text-white/10 font-bold">كل رسالة تستهلك {activeChar.cost} EGP من رصيدك</p>
+            <div className="flex justify-between items-center px-6 mt-3 opacity-20">
+               <p className="text-[8px] font-black uppercase tracking-[0.2em]">Sovereign AI Protocol</p>
+               <p className="text-[8px] font-black uppercase tracking-[0.2em]">Cost: {activeChar.cost} EGP / Msg</p>
             </div>
           </div>
         </div>
@@ -327,36 +345,26 @@ export default function UltimateChatHub() {
   );
 }
 
-function SidebarAction({ icon, label, href }: any) {
-  return (
-    <Link href={href} className="w-full">
-      <Button variant="ghost" className="w-full justify-start h-12 rounded-xl text-white/40 hover:text-primary hover:bg-primary/10 gap-4 font-bold text-xs">
-        <span className="opacity-50">{icon}</span>
-        {label}
-      </Button>
-    </Link>
-  );
-}
-
-function QuickPrompt({ text, icon, onClick }: any) {
-  return (
-    <button 
-      onClick={() => onClick(text)}
-      className="p-5 glass-cosmic rounded-3xl text-right border-white/5 hover:border-primary/20 hover:bg-white/[0.02] transition-all group"
-    >
-      <span className="text-xl mb-3 block">{icon}</span>
-      <p className="text-sm font-black text-white/40 group-hover:text-white transition-colors leading-snug">{text}</p>
-    </button>
-  );
-}
-
-function MediaButton({ icon, tooltip }: any) {
+function MediaBtn({ icon, tooltip, onClick }: any) {
   return (
     <div className="group relative">
-      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-full text-white/20 hover:text-primary hover:bg-white/5 transition-all">
+      <Button variant="ghost" size="icon" onClick={onClick} className="h-9 w-9 rounded-xl text-white/20 hover:text-primary hover:bg-white/5 transition-all">
         {icon}
       </Button>
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 glass-cosmic border-primary/20 text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 glass rounded-md text-[8px] font-black px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+        {tooltip}
+      </div>
+    </div>
+  );
+}
+
+function IconButton({ icon, tooltip }: any) {
+  return (
+    <div className="group relative">
+      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-white/[0.02] border border-white/5 text-white/30 hover:text-primary hover:bg-white/5 transition-all">
+        {icon}
+      </Button>
+      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 glass rounded-md text-[8px] font-black px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
         {tooltip}
       </div>
     </div>
