@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut } from "lucide-react";
+import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut, Gavel } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useUser, useFirestore } from "@/firebase";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const SovereignLogo = () => (
-  <svg viewBox="0 0 100 100" className="h-10 w-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+  <svg viewBox="0 0 100 100" className="h-12 w-12 drop-shadow-[0_0_20px_rgba(37,99,235,0.6)]">
     <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
     <path d="M50 15 L80 30 L80 70 L50 85 L20 70 L20 30 Z" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
     <path d="M35 45 H65 M50 45 V70 M35 45 L30 55 M65 45 L70 55" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary" />
@@ -57,18 +57,18 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-4 group">
           <SovereignLogo />
           <div className="flex flex-col -space-y-1">
-            <span className="font-black text-xl tracking-tighter text-white">المستشار</span>
-            <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em]">Sovereign AI</span>
+            <span className="font-black text-2xl tracking-tighter text-white">المستشار <span className="text-primary">AI</span></span>
+            <span className="text-primary text-[8px] font-black uppercase tracking-[0.4em] opacity-50">Sovereign Legal SaaS</span>
           </div>
         </Link>
 
         <div className="hidden lg:flex items-center gap-10">
-          <NavLink href="/consultants" label="الاستشارات" />
+          <NavLink href="/consultants" label="هيئة الخبراء" />
           <NavLink href="/templates" label="المكتبة" />
-          <NavLink href="/pricing" label="العروض" />
+          <NavLink href="/pricing" label="الباقات" />
           <Link href="/bot" className="flex items-center gap-3 bg-primary/10 hover:bg-primary text-white px-8 py-3 rounded-2xl font-black transition-all border border-primary/20 group shadow-lg active:scale-95">
             <Sparkles className="h-4 w-4 text-primary group-hover:text-white" />
-            مركز القيادة
+            مركز القيادة الذكي
           </Link>
         </div>
 
@@ -95,7 +95,12 @@ export function Navbar() {
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-4 glass-cosmic border-white/10 shadow-2xl mt-4">
+              <DropdownMenuContent align="end" className="w-64 rounded-[2.5rem] p-4 glass-cosmic border-white/10 shadow-2xl mt-4">
+                <div className="px-4 py-3 mb-2">
+                   <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">المواطن</p>
+                   <p className="text-sm font-black text-white truncate">{userData?.fullName || user.email}</p>
+                </div>
+                <DropdownMenuSeparator className="bg-white/5 mb-2" />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="flex items-center gap-4 p-4 rounded-xl cursor-pointer hover:bg-white/5 font-bold transition-colors">
                     <LayoutDashboard className="h-4 w-4 text-primary" /> لوحة التحكم
@@ -117,7 +122,7 @@ export function Navbar() {
           ) : (
             <Link href="/auth/signup">
               <Button className="rounded-2xl h-12 px-10 font-black btn-primary active:scale-95 shadow-xl transition-all">
-                انضم الآن
+                انضم للسيادة
               </Button>
             </Link>
           )}

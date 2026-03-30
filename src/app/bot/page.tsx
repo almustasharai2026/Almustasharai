@@ -8,7 +8,7 @@ import {
   Send, Sparkles, Plus, History, Camera, Mic, 
   Paperclip, ChevronLeft, Menu, X, 
   Loader2, Gavel, User, LayoutGrid, Scale,
-  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2
+  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight
 } from "lucide-react";
 import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -19,9 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 const CHARACTERS = [
-  { id: "legal-advisor", name: "المستشار الذكي", icon: <Sparkles />, emoji: "🤖", cost: 1, desc: "خبير شامل لكافة الاستشارات القانونية الأولية." },
-  { id: "lawyer", name: "المحامي الفائق", icon: <Gavel />, emoji: "⚖️", cost: 5, desc: "متخصص في بناء استراتيجيات الدفاع والنزاعات المعقدة." },
-  { id: "notary", name: "الكاتب العدل", icon: <Scale />, emoji: "✒️", cost: 1, desc: "متخصص في تدقيق العقود وصحة المستندات الرسمية." }
+  { id: "legal-advisor", name: "المستشار الذكي", icon: <Sparkles className="h-4 w-4" />, emoji: "🤖", cost: 1, desc: "خبير شامل لكافة الاستشارات القانونية الأولية.", color: "from-blue-500 to-blue-700" },
+  { id: "lawyer", name: "المحامي الفائق", icon: <Gavel className="h-4 w-4" />, emoji: "⚖️", cost: 5, desc: "متخصص في بناء استراتيجيات الدفاع والنزاعات المعقدة.", color: "from-amber-500 to-amber-700" },
+  { id: "notary", name: "الكاتب العدل", icon: <Scale className="h-4 w-4" />, emoji: "✒️", cost: 1, desc: "متخصص في تدقيق العقود وصحة المستندات الرسمية.", color: "from-emerald-500 to-emerald-700" }
 ];
 
 export default function UltimateChatHub() {
@@ -179,23 +179,26 @@ export default function UltimateChatHub() {
             exit={{ width: 0, opacity: 0 }}
             className="border-l border-white/5 bg-slate-950/50 flex flex-col z-50 backdrop-blur-3xl shadow-2xl"
           >
-            <div className="flex gap-4 p-6 border-b border-white/5 justify-center">
-               <SidebarQuickAction icon={<Archive />} label="الأرشيف" />
-               <SidebarQuickAction icon={<ImageIcon />} label="المستندات" />
-               <SidebarQuickAction icon={<LayoutGrid />} label="التطبيقات" />
+            <div className="px-6 py-8 flex items-center justify-between border-b border-white/5">
+               <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><History className="h-4 w-4" /></div>
+                  <span className="font-black text-sm text-white/60 tracking-widest uppercase">تاريخ السيادة</span>
+               </div>
+               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-white/20 hover:text-white rounded-xl">
+                 <X className="h-5 w-5" />
+               </Button>
             </div>
 
             <div className="p-6">
               <Button 
                 onClick={() => {setSessionId(null); setInput("");}} 
-                className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white gap-3 font-black shadow-lg shadow-primary/20"
+                className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white gap-3 font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
               >
                 <Plus className="h-5 w-5" /> محادثة جديدة
               </Button>
             </div>
 
             <ScrollArea className="flex-1 px-4">
-              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4 px-4">السجل السيادي</p>
               <div className="space-y-1">
                 {sessions?.map(s => (
                   <button 
@@ -204,7 +207,7 @@ export default function UltimateChatHub() {
                     className={`w-full text-right p-4 rounded-2xl text-xs transition-all flex items-center gap-4 ${sessionId === s.id ? 'bg-white/5 text-primary border border-white/5' : 'text-white/40 hover:bg-white/[0.02] border border-transparent'}`}
                   >
                     <MessageCircle className="h-4 w-4 opacity-50" />
-                    <span className="truncate font-bold">{s.title || "استشارة جديدة"}</span>
+                    <span className="truncate font-bold">{s.title || "استشارة سيادية"}</span>
                   </button>
                 ))}
               </div>
@@ -212,13 +215,16 @@ export default function UltimateChatHub() {
 
             <div className="p-6 border-t border-white/5">
                <div className="p-5 glass-cosmic rounded-3xl border-primary/10 bg-primary/5">
-                  <p className="text-[9px] text-white/20 font-black uppercase mb-2">رصيدك المتاح</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">رصيدك المتاح</p>
+                    <Coins className="h-3 w-3 text-primary animate-pulse" />
+                  </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-white tabular-nums">{userData?.balance || 0}</span>
                     <span className="text-[10px] text-primary font-black uppercase">EGP</span>
                   </div>
                   <Link href="/pricing" className="block mt-4">
-                    <Button variant="ghost" className="w-full h-10 rounded-xl bg-white/5 text-white/60 hover:text-white font-black text-[10px]">شحن رصيد جديد</Button>
+                    <Button variant="ghost" className="w-full h-10 rounded-xl bg-white/5 text-white/60 hover:text-white font-black text-[10px] gap-2">شحن رصيد الآن <ChevronRight className="h-3 w-3" /></Button>
                   </Link>
                </div>
             </div>
@@ -226,53 +232,49 @@ export default function UltimateChatHub() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col relative">
-        <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-slate-950/40 backdrop-blur-3xl z-10">
-          <div className="flex items-center gap-4">
-            {!isSidebarOpen && (
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="text-white/20 hover:text-white rounded-xl">
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            <div className="flex items-center gap-3">
-               <div className="h-10 w-10 rounded-xl glass-cosmic flex items-center justify-center text-lg">{activeChar.emoji}</div>
-               <div>
-                 <h2 className="text-sm font-black text-white">{activeChar.name}</h2>
-                 <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black py-0 px-2 h-4">Active</Badge>
-               </div>
-            </div>
-          </div>
-          
-          <div className="hidden sm:flex gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/5">
+      <main className="flex-1 flex flex-col relative bg-[#020617]">
+        {!isSidebarOpen && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsSidebarOpen(true)} 
+            className="absolute top-4 right-4 z-50 h-10 w-10 glass border border-white/10 rounded-xl text-white/40 hover:text-white"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+
+        <header className="h-16 border-b border-white/5 flex items-center justify-center px-6 bg-slate-950/40 backdrop-blur-3xl z-10">
+          <div className="flex gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/5">
              {CHARACTERS.map(c => (
                <button 
                 key={c.id} 
-                className={`h-9 px-5 rounded-xl text-[10px] font-black transition-all ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl' : 'text-white/30 hover:bg-white/5'}`}
+                className={`h-9 px-6 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl' : 'text-white/30 hover:bg-white/5'}`}
                 onClick={() => {setActiveChar(c); setSessionId(null);}}
                >
-                 {c.name}
+                 {c.icon} {c.name}
                </button>
              ))}
           </div>
         </header>
 
-        <ScrollArea ref={scrollRef} className="flex-1 p-6">
-          <div className="max-w-3xl mx-auto space-y-12 pb-40 pt-10">
+        <ScrollArea ref={scrollRef} className="flex-1">
+          <div className="max-w-3xl mx-auto space-y-12 pb-40 pt-10 px-6">
             {(!messages || messages.length === 0) && (
-              <div className="py-20 text-center space-y-8 animate-in fade-in zoom-in duration-700">
-                 <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl border border-primary/20">
-                    <Sparkles className="h-12 w-12 text-primary animate-pulse" />
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center space-y-8">
+                 <div className={`h-24 w-24 bg-gradient-to-br ${activeChar.color} rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl border border-white/10`}>
+                    <span className="text-4xl">{activeChar.emoji}</span>
                  </div>
                  <div className="space-y-3">
-                    <h3 className="text-4xl font-black text-white tracking-tighter">مركز الاستشارات الذكي</h3>
-                    <p className="text-white/20 text-lg font-bold max-w-sm mx-auto leading-relaxed">أنا {activeChar.name}، خبيرك القانوني الرقمي المعتمد. اطرح سؤالك الآن.</p>
+                    <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في البوابة القانونية</h3>
+                    <p className="text-white/20 text-lg font-bold max-w-sm mx-auto leading-relaxed">أنا {activeChar.name}. كيف يمكنني خدمتك سيادياً اليوم؟</p>
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto pt-4">
                     {["كيف أبدأ إجراءات التأسيس؟", "تحليل عقد إيجار قديم", "خطوات الطلاق للضرر", "حقوق الموظف في الاستقالة"].map(q => (
-                      <button key={q} onClick={() => setInput(q)} className="text-right p-4 glass-cosmic rounded-2xl text-xs font-bold text-white/30 hover:text-primary hover:border-primary/30 transition-all">{q}</button>
+                      <button key={q} onClick={() => setInput(q)} className="text-right p-5 glass-cosmic rounded-[1.8rem] text-xs font-bold text-white/30 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.02] shadow-xl">{q}</button>
                     ))}
                  </div>
-              </div>
+              </motion.div>
             )}
             
             {messages?.map((msg, i) => (
@@ -283,7 +285,7 @@ export default function UltimateChatHub() {
                 className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${msg.role === 'user' ? 'bg-primary border-white/10 text-white' : 'glass-cosmic border-white/10 text-primary'}`}>
-                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Gavel className="h-6 w-6" />}
+                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Scale className="h-6 w-6" />}
                 </div>
                 <div className={`p-8 rounded-[2.5rem] text-sm leading-relaxed shadow-2xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
                   {msg.content}
@@ -310,15 +312,15 @@ export default function UltimateChatHub() {
           <div className="max-w-3xl mx-auto relative">
             
             {isBalanceZero && (
-              <div className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex items-center justify-between px-12 border-red-500/20 backdrop-blur-xl">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex items-center justify-between px-12 border-red-500/20 backdrop-blur-xl">
                 <div className="flex items-center gap-5">
                   <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center"><AlertCircle className="h-6 w-6 text-red-500" /></div>
-                  <p className="text-sm font-black text-white">رصيدك لا يكفي للمتابعة السيادية.</p>
+                  <p className="text-sm font-black text-white">الرصيد المتاح غير كافٍ. يرجى الشحن للمتابعة.</p>
                 </div>
                 <Link href="/pricing">
-                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black text-xs">شحن الآن</Button>
+                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black text-xs">شحن الرصيد</Button>
                 </Link>
-              </div>
+              </motion.div>
             )}
 
             <div className={`glass-cosmic rounded-[3rem] p-2.5 flex items-center gap-3 border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] ${isBalanceZero ? 'opacity-20 pointer-events-none' : ''}`}>
@@ -340,7 +342,7 @@ export default function UltimateChatHub() {
                 className="flex-1 bg-transparent border-none focus:ring-0 text-base font-bold text-right p-4 text-white/90 placeholder:text-white/10"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               />
 
               <Button onClick={handleSend} disabled={!input.trim() || isLoading} className="h-14 w-14 rounded-[1.8rem] btn-primary shrink-0 transition-transform active:scale-90">
@@ -348,8 +350,8 @@ export default function UltimateChatHub() {
               </Button>
             </div>
             <div className="flex justify-between items-center px-10 mt-4 opacity-20">
-               <p className="text-[8px] font-black uppercase tracking-[0.3em]">Encrypted Core</p>
-               <p className="text-[8px] font-black uppercase tracking-[0.3em]">{activeChar.cost} EGP / Msg</p>
+               <p className="text-[8px] font-black uppercase tracking-[0.3em]">Sovereign Encryption Protocol</p>
+               <p className="text-[8px] font-black uppercase tracking-[0.3em]">{activeChar.cost} EGP / الرسالة</p>
             </div>
           </div>
         </div>
@@ -366,19 +368,6 @@ function MediaBtn({ icon, tooltip, onClick }: any) {
       </Button>
       <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 glass px-3 py-1.5 rounded-xl text-[9px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap">
         {tooltip}
-      </div>
-    </div>
-  );
-}
-
-function SidebarQuickAction({ icon, label }: any) {
-  return (
-    <div className="group relative">
-      <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-white/5 border border-white/5 text-white/30 hover:text-primary hover:bg-white/10 transition-all">
-        {icon}
-      </Button>
-      <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 glass px-3 py-1.5 rounded-xl text-[9px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100]">
-        {label}
       </div>
     </div>
   );
