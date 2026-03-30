@@ -1,424 +1,364 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { 
-  Send, 
-  User, 
-  Trash2,
-  Loader2,
-  Plus,
-  Sparkles,
-  Wallet,
-  Scale,
-  MessageSquare,
-  Camera,
-  Mic,
-  XCircle,
-  Clock,
-  Menu,
-  Paperclip,
-  History,
-  LayoutGrid,
-  Image as ImageIcon,
-  Zap,
-  ChevronLeft
+  Send, Sparkles, Plus, History, Camera, Mic, 
+  Paperclip, Wallet, ChevronLeft, Menu, X, Trash2, 
+  Loader2, Gavel, User, LayoutGrid, Scale, CreditCard,
+  MessageCircle, AlertCircle, ShoppingBag, Trash
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { processLegalQuery } from "@/ai/flows/legal-chat-flow";
-import { useUser, useFirestore, useCollection, useDoc } from "@/firebase";
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp, 
-  doc, 
-  updateDoc, 
-  increment,
-  deleteDoc
-} from "firebase/firestore";
+import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, deleteDoc, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
-import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { processLegalQuery } from "@/ai/flows/legal-chat-flow";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 const CHARACTERS = [
-  { id: "ai-standard", name: "المستشار الذكي", icon: "🤖", cost: 1, desc: "إجابات سريعة وذكية لكافة التساؤلات" },
-  { id: "lawyer", name: "المحامي الفائق", icon: "⚖️", cost: 5, desc: "خبير القضايا والنزاعات المعقدة" },
-  { id: "notary", name: "الكاتب العدل", icon: "✒️", cost: 1, desc: "صحة وتوثيق المستندات" },
-  { id: "judge", name: "خبير القضاء", icon: "👨‍⚖️", cost: 5, desc: "رؤية ثاقبة من منصة الحكم" },
+  { id: "legal-advisor", name: "المستشار الذكي", icon: <Sparkles />, emoji: "🤖", cost: 1, desc: "خبير شامل لكافة الاستشارات القانونية الأولية." },
+  { id: "lawyer", name: "المحامي الفائق", icon: <Gavel />, emoji: "⚖️", cost: 5, desc: "متخصص في بناء استراتيجيات الدفاع والنزاعات المعقدة." },
+  { id: "notary", name: "الكاتب العدل", icon: <Scale />, emoji: "✒️", cost: 1, desc: "متخصص في تدقيق العقود وصحة المستندات الرسمية." }
 ];
 
-const DISCLAIMER_TEXT = "\n\n--- \n⚠️ إخلاء مسؤولية: تحليل ذكاء اصطناعي لأغراض استرشادية فقط.";
-
-export default function BotPage() {
+export default function UltimateChatHub() {
   const { user } = useUser();
   const db = useFirestore();
-  const router = useRouter();
   const { toast } = useToast();
   
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeChar, setActiveChar] = useState(CHARACTERS[0]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [showLowBalance, setShowLowBalance] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Real-time user data for balance
+  useEffect(() => {
+    if (!db || !user) return;
+    const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
+      setUserData(doc.data());
+    });
+    return () => unsub();
+  }, [db, user]);
 
-  // User Profile
-  const userDocRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user]);
-  const { data: profile } = useDoc(userDocRef);
+  // Queries for History
+  const sessionsQuery = useMemoFirebase(() => user ? query(
+    collection(db!, "users", user.uid, "chatSessions"), 
+    orderBy("lastMessageAt", "desc"),
+    limit(20)
+  ) : null, [db, user]);
+  const { data: sessions } = useCollection(sessionsQuery);
 
-  // History Sessions
-  const historyQuery = useMemoFirebase(() => user ? query(collection(db!, "users", user.uid, "chatSessions"), orderBy("lastMessageAt", "desc")) : null, [db, user]);
-  const { data: sessions } = useCollection(historyQuery);
-
-  // Current Messages
-  const messagesQuery = useMemoFirebase(() => (user && sessionId) ? query(collection(db!, "users", user.uid, "chatSessions", sessionId, "messages"), orderBy("timestamp", "asc")) : null, [db, user, sessionId]);
+  const messagesQuery = useMemoFirebase(() => (user && sessionId) ? query(
+    collection(db!, "users", user.uid, "chatSessions", sessionId, "messages"), 
+    orderBy("timestamp", "asc")
+  ) : null, [db, user, sessionId]);
   const { data: messages } = useCollection(messagesQuery);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (viewport) viewport.scrollTop = viewport.scrollHeight;
-    }
-  }, [messages, isLoading]);
-
-  const startNewSession = async () => {
-    if (!user || !db) return;
-    const sessionRef = await addDoc(collection(db, "users", user.uid, "chatSessions"), {
-      title: "محادثة جديدة",
-      characterId: activeChar.id,
-      lastMessageAt: serverTimestamp(),
-      createdAt: serverTimestamp()
-    });
-    setSessionId(sessionRef.id);
-  };
-
-  const deleteSession = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user || !db) return;
-    await deleteDoc(doc(db, "users", user.uid, "chatSessions", id));
-    if (sessionId === id) setSessionId(null);
-  };
-
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !user || !db) return;
-    const cost = activeChar.cost;
-    const currentBalance = profile?.balance || 0;
-
-    if (currentBalance < cost) {
-      setShowLowBalance(true);
+    if (!input.trim() || isLoading || !user || !userData) return;
+    
+    // Strict Credit Check
+    if (userData.balance < activeChar.cost && userData.role !== 'admin') {
+      toast({ 
+        variant: "destructive", 
+        title: "رصيد غير كافٍ", 
+        description: `تحتاج إلى ${activeChar.cost} EGP للرد من ${activeChar.name}. رصيدك الحالي: ${userData.balance} EGP.` 
+      });
       return;
     }
 
     setIsLoading(true);
     let currentSessId = sessionId;
 
-    if (!currentSessId) {
-      const sessionRef = await addDoc(collection(db, "users", user.uid, "chatSessions"), {
-        title: input.slice(0, 30),
-        characterId: activeChar.id,
-        lastMessageAt: serverTimestamp(),
-        createdAt: serverTimestamp()
-      });
-      currentSessId = sessionRef.id;
-      setSessionId(currentSessId);
-    }
-
     try {
-      await updateDoc(doc(db, "users", user.uid), { balance: increment(-cost) });
-      await addDoc(collection(db, "users", user.uid, "chatSessions", currentSessId, "messages"), {
+      if (!currentSessId) {
+        const sessRef = await addDoc(collection(db!, "users", user.uid, "chatSessions"), {
+          title: input.slice(0, 40),
+          characterId: activeChar.id,
+          lastMessageAt: serverTimestamp(),
+          createdAt: serverTimestamp()
+        });
+        currentSessId = sessRef.id;
+        setSessionId(currentSessId);
+      }
+
+      // 1. Add User Message
+      await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
         role: "user",
         content: input,
         timestamp: serverTimestamp()
       });
 
+      // 2. AI Processing
       const result = await processLegalQuery({
         prompt: input,
         characterName: activeChar.name,
         characterDesc: activeChar.desc
       });
 
-      await addDoc(collection(db, "users", user.uid, "chatSessions", currentSessId, "messages"), {
-        role: "bot",
-        content: result.response + DISCLAIMER_TEXT,
-        timestamp: serverTimestamp(),
-        character: activeChar.name
+      // 3. Add AI Response
+      await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
+        role: "assistant",
+        content: result.response,
+        timestamp: serverTimestamp()
       });
 
-      await updateDoc(doc(db, "users", user.uid, "chatSessions", currentSessId), {
-        lastMessageAt: serverTimestamp(),
-        title: (messages?.length || 0) <= 2 ? input.slice(0, 40) : undefined
+      // 4. Update Session & Deduct Credits
+      await updateDoc(doc(db!, "users", user.uid, "chatSessions", currentSessId), {
+        lastMessageAt: serverTimestamp()
       });
+
+      if (userData.role !== 'admin') {
+        await updateDoc(doc(db!, "users", user.uid), {
+          balance: increment(-activeChar.cost)
+        });
+      }
 
       setInput("");
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل في معالجة الطلب." });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "فشل الإرسال", description: "حدث خطأ غير متوقع في الكوكب." });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleCamera = async () => {
-    if (!isCameraOpen) {
-      setIsCameraOpen(true);
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch (err) {
-        toast({ variant: "destructive", title: "الكاميرا", description: "يرجى السماح بالوصول للكاميرا." });
-      }
-    } else {
-      setIsCameraOpen(false);
-      const stream = videoRef.current?.srcObject as MediaStream;
-      stream?.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const handleVoiceTyping = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      toast({ title: "جاري الاستماع", description: "تحدث الآن ليتم تحويل صوتك لنص..." });
-      // In a real app, integrate Web Speech API here
-      setTimeout(() => setIsRecording(false), 3000); 
-    }
-  };
+  const isBalanceZero = (userData?.balance || 0) <= 0 && userData?.role !== 'admin';
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] w-full overflow-hidden bg-[#0a0a0a]" dir="rtl">
+    <div className="flex h-[calc(100vh-4rem)] bg-[#050505] overflow-hidden" dir="rtl">
       
-      {/* Sidebar - Pro History & Navigation */}
-      <aside className={`transition-all duration-300 ease-in-out border-l border-white/[0.03] bg-[#0d0d0d] flex flex-col relative z-50 ${isSidebarOpen ? 'w-[300px]' : 'w-0 opacity-0 overflow-hidden'}`}>
-        <div className="p-4 flex flex-col h-full">
-          <Button onClick={startNewSession} className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] gap-3 font-bold text-xs mb-6 shadow-sm">
-            <Plus className="h-4 w-4" /> محادثة جديدة
-          </Button>
-          
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-2 mb-4">
-               <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">تاريخ الدردشات</p>
-               <History className="h-3 w-3 text-white/10" />
+      {/* SaaS Premium Sidebar */}
+      <AnimatePresence mode="wait">
+        {isSidebarOpen && (
+          <motion.aside 
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 320, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            className="border-l border-white/[0.03] bg-[#080808] flex flex-col p-5 z-50 shadow-2xl relative"
+          >
+            <div className="flex items-center justify-between mb-8">
+               <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">مركز العمليات</h3>
+               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="h-8 w-8 rounded-full hover:bg-white/5 text-white/20">
+                  <ChevronLeft className="h-4 w-4 rotate-180" />
+               </Button>
             </div>
-            
-            <ScrollArea className="flex-1">
-              <div className="space-y-1 pr-2">
-                {sessions?.map((sess) => (
-                  <div
-                    key={sess.id}
-                    onClick={() => setSessionId(sess.id)}
-                    className={`w-full text-right p-3 rounded-xl text-[13px] transition-all truncate flex items-center justify-between group cursor-pointer border ${sessionId === sess.id ? 'bg-primary/5 text-primary border-primary/20 shadow-lg' : 'text-white/40 border-transparent hover:bg-white/[0.02]'}`}
+
+            <Button 
+              onClick={() => {setSessionId(null); setInput("");}} 
+              className="w-full h-14 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] gap-4 font-black text-[13px] mb-10 border border-white/5 shadow-xl transition-all active:scale-95"
+            >
+              <Plus className="h-5 w-5 text-primary" /> محادثة قانونية جديدة
+            </Button>
+
+            <ScrollArea className="flex-1 -mx-2 px-2">
+              <div className="space-y-2">
+                {sessions?.map(s => (
+                  <button 
+                    key={s.id} 
+                    onClick={() => setSessionId(s.id)}
+                    className={`w-full text-right p-4 rounded-2xl text-xs transition-all group flex items-center gap-4 ${sessionId === s.id ? 'bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5' : 'text-white/30 hover:bg-white/[0.02] border border-transparent'}`}
                   >
-                    <div className="flex items-center gap-3 truncate">
-                      <MessageSquare className={`h-3.5 w-3.5 ${sessionId === sess.id ? 'text-primary' : 'text-white/20'}`} />
-                      <span className="truncate">{sess.title}</span>
-                    </div>
-                    <button onClick={(e) => deleteSession(sess.id, e)} className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all p-1">
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
+                    <MessageCircle className={`h-4 w-4 shrink-0 ${sessionId === s.id ? 'text-primary' : 'text-white/10'}`} />
+                    <span className="truncate font-bold">{s.title || "بدون عنوان"}</span>
+                  </button>
                 ))}
+                {(!sessions || sessions.length === 0) && (
+                  <div className="py-10 text-center opacity-10">
+                    <History className="h-10 w-10 mx-auto mb-2" />
+                    <p className="text-[10px] font-bold">لا يوجد سجلات</p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
-          </div>
 
-          <div className="mt-auto pt-6 border-t border-white/[0.03] space-y-4">
-             <div className="grid grid-cols-4 gap-2 mb-4">
-                <NavIcon icon={<LayoutGrid />} label="المشاريع" />
-                <NavIcon icon={<ImageIcon />} label="الصور" />
-                <NavIcon icon={<Plus />} label="التطبيقات" />
-                <NavIcon icon={<Zap />} label="الترقية" onClick={() => router.push('/pricing')} />
-             </div>
-             
-             <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl flex items-center justify-between">
-                <div className="text-right">
-                   <p className="text-[8px] text-white/30 font-black uppercase">الرصيد الكوني</p>
-                   <p className="text-lg font-black text-white">{profile?.balance || 0} <span className="text-[10px] text-primary">EGP</span></p>
-                </div>
-                <Wallet className="h-5 w-5 text-primary" />
-             </div>
-          </div>
-        </div>
-      </aside>
+            {/* Premium Features Quick Access */}
+            <div className="mt-8 pt-8 border-t border-white/[0.03] space-y-3">
+               <SidebarAction icon={<ShoppingBag />} label="المكتبة القانونية" href="/templates" />
+               <SidebarAction icon={<LayoutGrid />} label="باقات الشحن" href="/pricing" />
+               
+               <div className="mt-6 p-6 glass-cosmic rounded-[2.5rem] border-primary/10 overflow-hidden relative">
+                  <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 blur-3xl rounded-full" />
+                  <p className="text-[9px] text-white/30 font-black uppercase mb-2 tracking-widest">رصيدك السيادي</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-black text-white tabular-nums">{userData?.balance || 0}</p>
+                    <span className="text-[10px] text-primary font-black">EGP</span>
+                  </div>
+                  <Link href="/pricing">
+                    <Button variant="ghost" className="w-full h-10 mt-4 rounded-xl bg-primary/10 text-primary text-[10px] font-black hover:bg-primary/20">شحن فوري</Button>
+                  </Link>
+               </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col relative bg-[#0a0a0a]">
-        <header className="h-14 border-b border-white/[0.03] flex items-center justify-between px-6 bg-[#0a0a0a]/80 backdrop-blur-md z-30">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="rounded-lg hover:bg-white/[0.03]">
-              <Menu className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-3">
-               <span className="text-lg">{activeChar.icon}</span>
-               <h1 className="text-[13px] font-bold text-white/80">{activeChar.name}</h1>
+      <main className="flex-1 flex flex-col relative">
+        <header className="h-16 border-b border-white/[0.03] flex items-center justify-between px-8 bg-black/40 backdrop-blur-3xl z-10">
+          <div className="flex items-center gap-6">
+            {!isSidebarOpen && (
+              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="text-white/20 hover:text-white">
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="flex items-center gap-4">
+               <div className="h-10 w-10 rounded-xl glass-cosmic flex items-center justify-center text-lg shadow-xl">{activeChar.emoji}</div>
+               <div>
+                 <h2 className="text-sm font-black text-white">{activeChar.name}</h2>
+                 <p className="text-[10px] text-white/30 font-medium">نشط الآن</p>
+               </div>
             </div>
           </div>
           
-          <div className="flex gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/[0.05]">
+          <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
              {CHARACTERS.map(c => (
-               <Button 
+               <button 
                 key={c.id} 
-                variant="ghost" 
-                size="sm" 
-                className={`h-8 px-3 rounded-lg text-[11px] transition-all font-bold ${activeChar.id === c.id ? 'bg-primary text-white shadow-lg' : 'text-white/30 hover:bg-white/5'}`}
-                onClick={() => setActiveChar(c)}
+                className={`h-10 px-5 rounded-xl text-[11px] font-black transition-all flex items-center gap-2 ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-white/30 hover:bg-white/5'}`}
+                onClick={() => {setActiveChar(c); setSessionId(null);}}
                >
-                 <span className="ml-1.5">{c.icon}</span>
                  {c.name}
-               </Button>
+               </button>
              ))}
           </div>
         </header>
 
-        <ScrollArea className="flex-1" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto p-6 space-y-10 pb-20">
-            {messages?.length === 0 && (
-              <div className="py-20 text-center space-y-8 animate-in fade-in duration-1000">
-                 <div className="inline-flex p-8 rounded-[3rem] bg-white/[0.02] border border-white/[0.05] mb-4">
-                    <Sparkles className="h-14 w-14 text-primary animate-pulse" />
+        <ScrollArea className="flex-1 p-8">
+          <div className="max-w-4xl mx-auto space-y-12 pb-32">
+            {(!messages || messages.length === 0) && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-24 text-center space-y-8">
+                 <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(37,99,235,0.2)]">
+                    <Sparkles className="h-12 w-12 text-primary animate-pulse" />
                  </div>
-                 <h2 className="text-4xl font-black text-white/90 tracking-tighter">أهلاً بك في فضاء العدالة</h2>
-                 <p className="text-[15px] text-white/30 max-w-sm mx-auto leading-relaxed">أنا رفيقك القانوني الذكي. اطرح سؤالك لنبدأ التحليل الاحترافي فوراً.</p>
-              </div>
+                 <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في غرفة الاستشارة</h3>
+                 <p className="text-white/20 text-lg max-w-md mx-auto leading-relaxed font-medium">أنا {activeChar.name}. كيف يمكنني تحليل قضيتك أو مساعدتك قانونياً اليوم؟</p>
+                 
+                 <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto pt-10">
+                    <QuickPrompt text="تحليل عقد إيجار قديم" icon="📜" onClick={setInput} />
+                    <QuickPrompt text="خطوات خلع الزوج" icon="⚖️" onClick={setInput} />
+                    <QuickPrompt text="مطالبة مالية من شركة" icon="🏢" onClick={setInput} />
+                    <QuickPrompt text="تحقق من صحة توقيع" icon="✒️" onClick={setInput} />
+                 </div>
+              </motion.div>
             )}
-            {messages?.map((msg) => (
-              <div key={msg.id} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} animate-in fade-in slide-in-from-bottom-2`}>
-                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border ${
-                  msg.role === 'bot' ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-primary border-primary/20 text-white shadow-xl'
-                }`}>
-                  {msg.role === 'bot' ? <Sparkles className="h-4 w-4 text-primary" /> : <User className="h-4 w-4" />}
+            
+            {messages?.map((msg, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex gap-8 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+              >
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border-2 transition-all ${msg.role === 'user' ? 'bg-primary border-primary/20 text-white shadow-lg' : 'glass-cosmic border-white/10 text-primary shadow-xl'}`}>
+                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Gavel className="h-6 w-6" />}
                 </div>
-                <div className={`max-w-[85%] space-y-1 ${msg.role === 'user' ? 'text-left' : 'text-right'}`}>
-                  <div className={`p-5 rounded-2xl text-[15px] leading-relaxed border transition-all ${
-                    msg.role === 'bot' 
-                    ? 'bg-white/[0.01] border-white/[0.03] text-white/80 rounded-tr-none whitespace-pre-wrap shadow-inner' 
-                    : 'bg-primary/10 border-primary/20 text-white font-medium rounded-tl-none shadow-sm'
-                  }`}>
-                    {msg.content}
-                  </div>
+                <div className={`p-7 rounded-[2.5rem] text-[15px] leading-8 shadow-2xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
+                  {msg.content}
                 </div>
-              </div>
+              </motion.div>
             ))}
+            
             {isLoading && (
-              <div className="flex gap-6 animate-pulse">
-                <div className="h-9 w-9 rounded-xl bg-white/[0.03] border border-white/[0.05]" />
-                <div className="bg-white/[0.01] p-5 rounded-xl rounded-tr-none w-24 border border-white/[0.03] flex justify-center gap-1.5 items-center">
-                  <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                  <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+              <div className="flex gap-8">
+                <div className="h-12 w-12 rounded-2xl glass-cosmic border-2 border-primary/20 flex items-center justify-center text-primary">
+                   <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+                <div className="glass-cosmic p-7 rounded-[2.5rem] rounded-tl-none w-32 flex justify-center gap-2 border-white/5">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-150" />
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-300" />
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        {/* Input Area - Camera, Mic, Upload integration */}
-        <div className="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border-t border-white/[0.03]">
-          <div className="max-w-4xl mx-auto space-y-4">
-            <div className="relative flex items-end gap-3 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-2 focus-within:border-primary/40 transition-all shadow-2xl">
-              
-              <div className="flex flex-col flex-1">
-                 <textarea 
-                  placeholder={`اطرح سؤالك على ${activeChar.name}...`} 
-                  className="w-full bg-transparent border-none focus:ring-0 text-[16px] text-right p-4 min-h-[56px] max-h-40 resize-none text-white/90 placeholder:text-white/10"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                 />
-                 
-                 <div className="flex items-center justify-between p-2 mt-2">
-                    <div className="flex items-center gap-1">
-                       <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]" title="رفع ملف">
-                          <Paperclip className="h-4 w-4" />
-                       </Button>
-                       <Button variant="ghost" size="icon" onClick={toggleCamera} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]" title="كاميرا">
-                          <Camera className="h-4 w-4" />
-                       </Button>
-                       <Button variant="ghost" size="icon" onClick={handleVoiceTyping} className={`h-9 w-9 rounded-lg transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-white/20 hover:text-primary hover:bg-white/[0.03]'}`} title="تحدث">
-                          <Mic className="h-4 w-4" />
-                       </Button>
-                       <input type="file" ref={fileInputRef} className="hidden" />
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/20">
-                          <Clock className="h-3.5 w-3.5" /> تكلفة الرد: {activeChar.cost} EGP
-                       </div>
-                       <Button 
-                        onClick={handleSend} 
-                        disabled={isLoading || !input.trim()}
-                        className={`h-10 px-6 rounded-xl transition-all ${
-                          input.trim() ? 'bg-primary text-white shadow-xl' : 'bg-white/[0.03] text-white/10'
-                        }`}
-                       >
-                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rotate-180" />}
-                       </Button>
-                    </div>
-                 </div>
-              </div>
-            </div>
+        {/* Dynamic Input System */}
+        <div className="p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
+          <div className="max-w-4xl mx-auto relative">
             
-            <p className="text-center text-[10px] text-white/10 font-medium">كافة الاستشارات لأغراض استرشادية، يرجى مراجعة محامي مختص.</p>
+            {/* Barrier for zero balance */}
+            {isBalanceZero && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex flex-col items-center justify-center gap-4 border-red-500/30 p-10 text-center"
+              >
+                <AlertCircle className="h-12 w-12 text-red-500 animate-bounce" />
+                <h4 className="text-xl font-black text-white">عذراً، رصيدك انتهى!</h4>
+                <p className="text-white/40 text-sm">يجب شحن الرصيد للاستمرار في استخدام ميزات الكوكب السيادي.</p>
+                <Link href="/pricing">
+                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black">اشحن الآن <CreditCard className="mr-3 h-4 w-4" /></Button>
+                </Link>
+              </motion.div>
+            )}
+
+            <div className={`glass-cosmic rounded-[3rem] p-3 flex items-end gap-3 border-white/5 focus-within:border-primary/40 transition-all shadow-[0_0_100px_rgba(0,0,0,0.5)] ${isBalanceZero ? 'blur-md grayscale' : ''}`}>
+              <div className="flex items-center gap-1.5 p-2 bg-white/[0.02] rounded-[2rem] border border-white/5">
+                 <MediaButton icon={<Camera />} tooltip="التقاط مستند" />
+                 <MediaButton icon={<Mic />} tooltip="إملاء صوتي" />
+                 <MediaButton icon={<Paperclip />} tooltip="إرفاق ملف" />
+              </div>
+              <textarea 
+                placeholder={`اطرح استفسارك لـ ${activeChar.name}...`}
+                className="flex-1 bg-transparent border-none focus:ring-0 text-[17px] font-medium text-right p-5 min-h-[64px] max-h-48 resize-none text-white/90 placeholder:text-white/10"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                disabled={isBalanceZero}
+              />
+              <Button onClick={handleSend} disabled={!input.trim() || isLoading || isBalanceZero} className="h-16 w-16 rounded-[2.2rem] btn-primary shrink-0 group">
+                {isLoading ? <Loader2 className="animate-spin" /> : <Send className="h-7 w-7 rotate-180 group-hover:-translate-x-1 group-hover:translate-y-1 transition-transform" />}
+              </Button>
+            </div>
+            <div className="flex justify-between items-center px-8 mt-4">
+               <p className="text-[10px] text-white/10 font-bold uppercase tracking-[0.3em]">AI Protocol v4.0 Sovereign</p>
+               <p className="text-[10px] text-white/10 font-bold">كل رسالة تستهلك {activeChar.cost} EGP من رصيدك</p>
+            </div>
           </div>
         </div>
       </main>
-
-      {/* Camera Dialog */}
-      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
-        <DialogContent className="bg-[#0d0d0d] border-white/10 p-6 rounded-[32px] max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center font-bold text-lg">التقاط مستند أو صورة</DialogTitle>
-          </DialogHeader>
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-white/5 shadow-2xl">
-            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror" />
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-               <Button onClick={toggleCamera} className="h-16 w-16 rounded-full bg-primary text-white shadow-2xl hover:scale-105 transition-all">
-                  <Camera className="h-8 w-8" />
-               </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Low Balance Guard */}
-      {showLowBalance && (
-        <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
-          <div className="bg-[#0d0d0d] p-12 rounded-[40px] text-center max-w-sm border border-white/[0.05] shadow-2xl animate-in zoom-in">
-             <XCircle className="h-16 w-16 text-red-500 mx-auto mb-6" />
-             <h2 className="text-2xl font-black text-white mb-4">نفذ رصيدك المتاح</h2>
-             <p className="text-white/40 text-[13px] mb-8 leading-relaxed">للاستمرار في طرح الأسئلة والحصول على استشارات، يرجى شحن الرصيد من لوحة التحكم.</p>
-             <div className="flex flex-col gap-3">
-               <Button onClick={() => router.push('/pricing')} className="w-full h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl">شحن الرصيد الآن</Button>
-               <Button variant="ghost" onClick={() => setShowLowBalance(false)} className="text-white/20 font-bold">ربما لاحقاً</Button>
-             </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function NavIcon({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
+function SidebarAction({ icon, label, href }: any) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/[0.03] transition-all group">
-       <div className="h-10 w-10 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-center text-white/20 group-hover:text-primary group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
-          {icon}
-       </div>
-       <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{label}</span>
+    <Link href={href} className="w-full">
+      <Button variant="ghost" className="w-full justify-start h-12 rounded-xl text-white/40 hover:text-primary hover:bg-primary/10 gap-4 font-bold text-xs">
+        <span className="opacity-50">{icon}</span>
+        {label}
+      </Button>
+    </Link>
+  );
+}
+
+function QuickPrompt({ text, icon, onClick }: any) {
+  return (
+    <button 
+      onClick={() => onClick(text)}
+      className="p-5 glass-cosmic rounded-3xl text-right border-white/5 hover:border-primary/20 hover:bg-white/[0.02] transition-all group"
+    >
+      <span className="text-xl mb-3 block">{icon}</span>
+      <p className="text-sm font-black text-white/40 group-hover:text-white transition-colors leading-snug">{text}</p>
     </button>
+  );
+}
+
+function MediaButton({ icon, tooltip }: any) {
+  return (
+    <div className="group relative">
+      <Button variant="ghost" size="icon" className="h-11 w-11 rounded-full text-white/20 hover:text-primary hover:bg-white/5 transition-all">
+        {icon}
+      </Button>
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 glass-cosmic border-primary/20 text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+        {tooltip}
+      </div>
+    </div>
   );
 }

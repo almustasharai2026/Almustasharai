@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,6 @@ export default function CheckoutPage() {
   const plan = searchParams.get("plan") || "basic";
   const { toast } = useToast();
   const router = useRouter();
-  const [step, setStep] = useState(1);
 
   const getPrice = () => {
     if (plan === "pro") return "250";
@@ -36,16 +34,16 @@ export default function CheckoutPage() {
       <div className="grid lg:grid-cols-12 gap-10">
         
         <div className="lg:col-span-7 space-y-6">
-          <Card className="glass-card border-none rounded-[2rem] p-8">
+          <Card className="glass-cosmic border-none rounded-[2rem] p-8 shadow-2xl">
             <CardHeader className="p-0 mb-8">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3 justify-end">
                  تأكيد عملية الدفع <Wallet className="h-6 w-6 text-primary" />
               </CardTitle>
-              <CardDescription>اتبع الخطوات لإتمام عملية الشحن بأمان.</CardDescription>
+              <CardDescription className="text-right">اتبع الخطوات لإتمام عملية الشحن بأمان.</CardDescription>
             </CardHeader>
 
             <div className="space-y-8">
-              <div className="p-6 glass rounded-2xl border-primary/20 bg-primary/5 text-center">
+              <div className="p-6 glass-cosmic rounded-2xl border-primary/20 bg-primary/5 text-center">
                 <p className="text-sm opacity-60 mb-2">حول المبلغ المطلوب إلى هذا الرقم</p>
                 <h3 className="text-3xl font-black text-white tracking-widest">01130031531</h3>
                 <p className="text-xs text-primary font-bold mt-2">فودافون كاش / اتصالات كاش</p>
@@ -73,7 +71,7 @@ export default function CheckoutPage() {
         </div>
 
         <div className="lg:col-span-5 space-y-6">
-          <Card className="glass-card border-none rounded-[2rem] p-8 bg-slate-900/80">
+          <Card className="glass-cosmic border-none rounded-[2rem] p-8 bg-slate-900/80">
             <h3 className="text-xl font-bold mb-6 border-b border-white/5 pb-4">ملخص الطلب</h3>
             <div className="space-y-4 text-lg">
               <div className="flex justify-between">
