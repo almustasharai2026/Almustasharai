@@ -9,7 +9,7 @@ import {
   Paperclip, ChevronLeft, Menu, X, 
   Loader2, Gavel, User, LayoutGrid, Scale,
   MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight,
-  Coins
+  Coins, Settings, UserPlus, AlignLeft, Lightbulb, Terminal, FileText, AudioLines
 } from "lucide-react";
 import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -20,12 +20,12 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 const CHARACTERS = [
-  { id: "legal-advisor", name: "المستشار الذكي", icon: <Sparkles className="h-4 w-4" />, emoji: "🤖", cost: 1, desc: "خبير شامل لكافة الاستشارات القانونية الأولية.", color: "from-blue-500 to-blue-700" },
-  { id: "lawyer", name: "المحامي الفائق", icon: <Gavel className="h-4 w-4" />, emoji: "⚖️", cost: 5, desc: "متخصص في بناء استراتيجيات الدفاع والنزاعات المعقدة.", color: "from-amber-500 to-amber-700" },
-  { id: "notary", name: "الكاتب العدل", icon: <Scale className="h-4 w-4" />, emoji: "✒️", cost: 1, desc: "متخصص في تدقيق العقود وصحة المستندات الرسمية.", color: "from-emerald-500 to-emerald-700" }
+  { id: "legal-advisor", name: "المستشار الذكي", emoji: "🤖", cost: 1, desc: "خبير شامل لكافة الاستشارات القانونية.", color: "from-blue-500 to-blue-700" },
+  { id: "lawyer", name: "المحامي الفائق", emoji: "⚖️", cost: 5, desc: "متخصص في النزاعات المعقدة.", color: "from-amber-500 to-amber-700" },
+  { id: "notary", name: "الكاتب العدل", emoji: "✒️", cost: 1, desc: "متخصص في تدقيق العقود.", color: "from-emerald-500 to-emerald-700" }
 ];
 
-export default function UltimateChatHub() {
+export default function ChatGPTStyleChat() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -34,12 +34,10 @@ export default function UltimateChatHub() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeChar, setActiveChar] = useState(CHARACTERS[0]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [isListening, setIsListening] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,13 +47,6 @@ export default function UltimateChatHub() {
     });
     return () => unsub();
   }, [db, user]);
-
-  const sessionsQuery = useMemoFirebase(() => user ? query(
-    collection(db!, "users", user.uid, "chatSessions"), 
-    orderBy("lastMessageAt", "desc"),
-    limit(20)
-  ) : null, [db, user]);
-  const { data: sessions } = useCollection(sessionsQuery);
 
   const messagesQuery = useMemoFirebase(() => (user && sessionId) ? query(
     collection(db!, "users", user.uid, "chatSessions", sessionId, "messages"), 
@@ -80,11 +71,7 @@ export default function UltimateChatHub() {
     if (!input.trim() || isLoading || !user || !userData) return;
     
     if (userData.balance < activeChar.cost && userData.role !== 'admin') {
-      toast({ 
-        variant: "destructive", 
-        title: "رصيد غير كافٍ", 
-        description: `تحتاج إلى ${activeChar.cost} EGP للمتابعة.` 
-      });
+      toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن رصيدك للمتابعة." });
       return;
     }
 
@@ -126,234 +113,139 @@ export default function UltimateChatHub() {
       });
 
       if (userData.role !== 'admin') {
-        await updateDoc(doc(db!, "users", user.uid), {
-          balance: increment(-activeChar.cost)
-        });
+        await updateDoc(doc(db!, "users", user.uid), { balance: increment(-activeChar.cost) });
       }
 
       setInput("");
     } catch (e) {
-      console.error(e);
-      toast({ variant: "destructive", title: "خطأ", description: "تعذر معالجة الاستشارة حالياً." });
+      toast({ variant: "destructive", title: "خطأ", description: "تعذر معالجة الاستشارة." });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast({ variant: "destructive", title: "غير مدعوم", description: "متصفحك لا يدعم التعرف على الصوت." });
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(prev => prev + " " + transcript);
-      setIsListening(false);
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setInput(prev => prev + ` [مرفق: ${file.name}] `);
-      toast({ title: "تم الإرفاق بنجاح" });
     }
   };
 
   const isBalanceZero = (userData?.balance || 0) <= 0 && userData?.role !== 'admin';
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-[#020617] overflow-hidden" dir="rtl">
+    <div className="flex h-screen bg-black text-white overflow-hidden font-sans" dir="rtl">
       
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.aside 
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="border-l border-white/5 bg-slate-950/50 flex flex-col z-50 backdrop-blur-3xl shadow-2xl"
-          >
-            <div className="px-6 py-8 flex items-center justify-between border-b border-white/5">
-               <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><History className="h-4 w-4" /></div>
-                  <span className="font-black text-sm text-white/60 tracking-widest uppercase">تاريخ السيادة</span>
-               </div>
-               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-white/20 hover:text-white rounded-xl">
-                 <X className="h-5 w-5" />
-               </Button>
-            </div>
+      <main className="flex-1 flex flex-col relative">
+        
+        {/* Top Header - Mobile App Style */}
+        <header className="h-16 flex items-center justify-between px-4 z-20">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="text-white/60 rounded-full h-10 w-10 hover:bg-white/10">
+              <Settings className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-white/60 rounded-full h-10 w-10 hover:bg-white/10">
+              <UserPlus className="h-5 w-5" />
+            </Button>
+          </div>
 
-            <div className="p-6">
-              <Button 
-                onClick={() => {setSessionId(null); setInput("");}} 
-                className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white gap-3 font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
-              >
-                <Plus className="h-5 w-5" /> محادثة جديدة
-              </Button>
-            </div>
+          <Link href="/pricing">
+            <Button className="bg-white/5 hover:bg-white/10 text-white rounded-full px-6 h-10 border border-white/10 gap-2 text-xs font-bold transition-all">
+              <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+              اشترك في Plus
+            </Button>
+          </Link>
 
-            <ScrollArea className="flex-1 px-4">
-              <div className="space-y-1">
-                {sessions?.map(s => (
-                  <button 
-                    key={s.id} 
-                    onClick={() => setSessionId(s.id)}
-                    className={`w-full text-right p-4 rounded-2xl text-xs transition-all flex items-center gap-4 ${sessionId === s.id ? 'bg-white/5 text-primary border border-white/5' : 'text-white/40 hover:bg-white/[0.02] border border-transparent'}`}
-                  >
-                    <MessageCircle className="h-4 w-4 opacity-50" />
-                    <span className="truncate font-bold">{s.title || "استشارة سيادية"}</span>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-
-            <div className="p-6 border-t border-white/5">
-               <div className="p-5 glass-cosmic rounded-3xl border-primary/10 bg-primary/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">رصيدك المتاح</p>
-                    <Coins className="h-3 w-3 text-primary animate-pulse" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black text-white tabular-nums">{userData?.balance || 0}</span>
-                    <span className="text-[10px] text-primary font-black uppercase">EGP</span>
-                  </div>
-                  <Link href="/pricing" className="block mt-4">
-                    <Button variant="ghost" className="w-full h-10 rounded-xl bg-white/5 text-white/60 hover:text-white font-black text-[10px] gap-2">شحن رصيد الآن <ChevronRight className="h-3 w-3" /></Button>
-                  </Link>
-               </div>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      <main className="flex-1 flex flex-col relative bg-[#020617]">
-        {!isSidebarOpen && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsSidebarOpen(true)} 
-            className="absolute top-4 right-4 z-50 h-10 w-10 glass border border-white/10 rounded-xl text-white/40 hover:text-white"
-          >
+          <Button variant="ghost" size="icon" className="text-white/60 rounded-full h-10 w-10 hover:bg-white/10">
             <Menu className="h-5 w-5" />
           </Button>
-        )}
-
-        <header className="h-16 border-b border-white/5 flex items-center justify-center px-6 bg-slate-950/40 backdrop-blur-3xl z-10">
-          <div className="flex gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/5">
-             {CHARACTERS.map(c => (
-               <button 
-                key={c.id} 
-                className={`h-9 px-6 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl' : 'text-white/30 hover:bg-white/5'}`}
-                onClick={() => {setActiveChar(c); setSessionId(null);}}
-               >
-                 {c.icon} {c.name}
-               </button>
-             ))}
-          </div>
         </header>
 
-        <ScrollArea ref={scrollRef} className="flex-1">
-          <div className="max-w-3xl mx-auto space-y-12 pb-40 pt-10 px-6">
-            {(!messages || messages.length === 0) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center space-y-8">
-                 <div className={`h-24 w-24 bg-gradient-to-br ${activeChar.color} rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl border border-white/10`}>
-                    <span className="text-4xl">{activeChar.emoji}</span>
-                 </div>
-                 <div className="space-y-3">
-                    <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في البوابة القانونية</h3>
-                    <p className="text-white/20 text-lg font-bold max-w-sm mx-auto leading-relaxed">أنا {activeChar.name}. كيف يمكنني خدمتك سيادياً اليوم؟</p>
-                 </div>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto pt-4">
-                    {["كيف أبدأ إجراءات التأسيس؟", "تحليل عقد إيجار قديم", "خطوات الطلاق للضرر", "حقوق الموظف في الاستقالة"].map(q => (
-                      <button key={q} onClick={() => setInput(q)} className="text-right p-5 glass-cosmic rounded-[1.8rem] text-xs font-bold text-white/30 hover:text-primary hover:border-primary/30 transition-all hover:scale-[1.02] shadow-xl">{q}</button>
-                    ))}
-                 </div>
-              </motion.div>
-            )}
-            
-            {messages?.map((msg, i) => (
+        {/* Chat Area */}
+        <ScrollArea ref={scrollRef} className="flex-1 px-4">
+          <div className="max-w-2xl mx-auto py-10">
+            {(!messages || messages.length === 0) ? (
               <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="min-h-[60vh] flex flex-col items-center justify-center text-center space-y-12"
               >
-                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${msg.role === 'user' ? 'bg-primary border-white/10 text-white' : 'glass-cosmic border-white/10 text-primary'}`}>
-                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Scale className="h-6 w-6" />}
-                </div>
-                <div className={`p-8 rounded-[2.5rem] text-sm leading-relaxed shadow-2xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
-                  {msg.content}
+                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">كيف يمكنني المساعدة؟</h2>
+                
+                <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                  <QuickAction icon={<ImageIcon className="text-emerald-400" />} label="تحليل مستند" onClick={() => setInput("ممكن تحلل لي هالمستند القانوني؟")} />
+                  <QuickAction icon={<FileText className="text-orange-400" />} label="لخص النص" onClick={() => setInput("لخص لي هالنص القانوني بأسلوب بسيط")} />
+                  <QuickAction icon={<Terminal className="text-blue-400" />} label="صياغة عقد" onClick={() => setInput("أريد صياغة عقد إيجار موحد")} />
+                  <QuickAction icon={<Lightbulb className="text-amber-400" />} label="اقترح أفكاراً" onClick={() => setInput("اقترح لي خطة للدفاع في قضية عمالية")} />
                 </div>
               </motion.div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex gap-6 animate-pulse">
-                <div className="h-12 w-12 rounded-2xl glass-cosmic border border-primary/20 flex items-center justify-center text-primary">
-                   <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-                <div className="glass-cosmic p-8 rounded-[2.5rem] rounded-tl-none border-white/5 flex gap-2 items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-100" />
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-200" />
-                </div>
+            ) : (
+              <div className="space-y-8 pb-32">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2f2f2f] text-white rounded-tr-none' : 'text-white/90 leading-loose'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex gap-4 animate-pulse">
+                    <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-white/20 rounded-full animate-bounce delay-200" />
+                  </div>
+                )}
               </div>
             )}
           </div>
         </ScrollArea>
 
-        <div className="p-8 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent absolute bottom-0 inset-x-0">
-          <div className="max-w-3xl mx-auto relative">
+        {/* Pill Input Bar - Bottom Fixed */}
+        <div className="absolute bottom-8 inset-x-0 px-4">
+          <div className="max-w-2xl mx-auto relative">
             
             {isBalanceZero && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex items-center justify-between px-12 border-red-500/20 backdrop-blur-xl">
-                <div className="flex items-center gap-5">
-                  <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center"><AlertCircle className="h-6 w-6 text-red-500" /></div>
-                  <p className="text-sm font-black text-white">الرصيد المتاح غير كافٍ. يرجى الشحن للمتابعة.</p>
-                </div>
-                <Link href="/pricing">
-                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black text-xs">شحن الرصيد</Button>
-                </Link>
-              </motion.div>
+              <div className="absolute bottom-full mb-4 w-full flex justify-center">
+                <Badge variant="destructive" className="py-2 px-6 rounded-full bg-red-500/20 text-red-500 border-none font-bold text-[10px]">الرصيد غير كافٍ للاستمرار</Badge>
+              </div>
             )}
 
-            <div className={`glass-cosmic rounded-[3rem] p-2.5 flex items-center gap-3 border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] ${isBalanceZero ? 'opacity-20 pointer-events-none' : ''}`}>
-              <div className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded-3xl border border-white/5">
-                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                 <input type="file" ref={cameraInputRef} capture="environment" accept="image/*" className="hidden" onChange={handleFileUpload} />
-                 
-                 <MediaBtn icon={<Camera />} tooltip="التقاط" onClick={() => cameraInputRef.current?.click()} />
-                 <MediaBtn 
-                    icon={isListening ? <MicOff className="animate-pulse text-red-500" /> : <Mic />} 
-                    tooltip="إملاء" 
-                    onClick={startListening} 
-                 />
-                 <MediaBtn icon={<Paperclip />} tooltip="مرفق" onClick={() => fileInputRef.current?.click()} />
+            <div className={`bg-[#2f2f2f] rounded-full p-2 flex items-center gap-2 shadow-2xl transition-all ${isBalanceZero ? 'opacity-40 pointer-events-none' : ''}`}>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-white/60 hover:text-white">
+                  <AudioLines className="h-5 w-5" />
+                </Button>
+                <Button onClick={() => toast({title: "قيد التطوير"})} variant="ghost" size="icon" className="h-10 w-10 rounded-full text-white/60 hover:text-white">
+                  <Mic className="h-5 w-5" />
+                </Button>
               </div>
-              
+
               <input 
-                placeholder={`اسأل ${activeChar.name}...`}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-base font-bold text-right p-4 text-white/90 placeholder:text-white/10"
+                placeholder="اطرح سؤالك على المستشار..."
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-white placeholder:text-white/30"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               />
 
-              <Button onClick={handleSend} disabled={!input.trim() || isLoading} className="h-14 w-14 rounded-[1.8rem] btn-primary shrink-0 transition-transform active:scale-90">
-                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 rotate-180" />}
-              </Button>
+              <div className="flex items-center gap-1">
+                <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => setInput(prev => prev + " [ملف مرفق] ")} />
+                <Button 
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-10 w-10 rounded-full text-white/60 hover:text-white"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+                {input.trim() && (
+                  <Button 
+                    onClick={handleSend}
+                    disabled={isLoading}
+                    className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90 p-0"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between items-center px-10 mt-4 opacity-20">
-               <p className="text-[8px] font-black uppercase tracking-[0.3em]">Sovereign Encryption Protocol</p>
-               <p className="text-[8px] font-black uppercase tracking-[0.3em]">{activeChar.cost} EGP / الرسالة</p>
-            </div>
+            
+            <p className="text-[9px] text-center text-white/20 font-bold mt-4">
+              يمكن لـ المستشار AI ارتكاب أخطاء. تحقق من المعلومات الهامة.
+            </p>
           </div>
         </div>
       </main>
@@ -361,15 +253,25 @@ export default function UltimateChatHub() {
   );
 }
 
-function MediaBtn({ icon, tooltip, onClick }: any) {
+function QuickAction({ icon, label, onClick }: any) {
   return (
-    <div className="group relative">
-      <Button variant="ghost" size="icon" onClick={onClick} className="h-10 w-10 rounded-2xl text-white/20 hover:text-primary hover:bg-white/5 transition-all">
+    <button 
+      onClick={onClick}
+      className="flex items-center gap-3 p-4 rounded-2xl border border-white/10 hover:bg-white/5 transition-all text-right group"
+    >
+      <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
         {icon}
-      </Button>
-      <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 glass px-3 py-1.5 rounded-xl text-[9px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap">
-        {tooltip}
       </div>
-    </div>
+      <span className="text-[11px] font-bold text-white/60 group-hover:text-white">{label}</span>
+    </button>
+  );
+}
+
+function ArrowUp({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
   );
 }
