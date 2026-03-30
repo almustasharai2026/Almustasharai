@@ -3,22 +3,25 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "بيانات المستخدم الأساسية والرصيد المالي وحالة الحظر.",
+      "description": "الملف السيادي للمواطن الرقمي، يضم الرصيد، الهوية الرقمية، ومستوى الثقة.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "digitalId": { "type": "string", "description": "Unique Sovereign ID" },
         "email": { "type": "string", "format": "email" },
         "fullName": { "type": "string" },
-        "balance": { "type": "number" },
-        "role": { "type": "string", "enum": ["user", "admin"] },
+        "balance": { "type": "number", "default": 50 },
+        "role": { "type": "string", "enum": ["user", "consultant", "admin"] },
+        "trustScore": { "type": "number", "default": 100 },
         "isBanned": { "type": "boolean", "default": false },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastActivity": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "email", "fullName", "balance", "role"]
+      "required": ["id", "digitalId", "email", "fullName", "balance", "role"]
     },
     "ConsultantProfile": {
       "title": "ConsultantProfile",
-      "description": "بيانات المستشارين المعتمدين في النظام.",
+      "description": "ملف الخبير المعتمد في المنصة.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -26,52 +29,48 @@
         "specialty": { "type": "string" },
         "bio": { "type": "string" },
         "hourlyRate": { "type": "number" },
-        "rating": { "type": "number" },
-        "image": { "type": "string" },
+        "rating": { "type": "number", "default": 5.0 },
+        "totalSessions": { "type": "number", "default": 0 },
+        "isApproved": { "type": "boolean", "default": false },
         "isOnline": { "type": "boolean", "default": false }
       }
     },
-    "LiveConsultation": {
-      "title": "LiveConsultation",
-      "description": "جلسة استشارة مباشرة بين عميل ومستشار.",
+    "Transaction": {
+      "title": "Transaction",
+      "description": "سجل المعاملات المالية داخل النظام البيئي.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
-        "consultantId": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "terminated", "completed"] },
-        "startedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ChatSession": {
-      "title": "ChatSession",
-      "description": "جلسة محادثة مع البوت الذكي.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "characterId": { "type": "string" },
-        "lastMessageAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ChatMessage": {
-      "title": "ChatMessage",
-      "description": "رسالة فردية داخل جلسة محادثة.",
-      "type": "object",
-      "properties": {
-        "role": { "type": "string", "enum": ["user", "assistant"] },
-        "content": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["recharge", "deduction", "refund"] },
+        "service": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     },
-    "ForbiddenWord": {
-      "title": "ForbiddenWord",
-      "description": "الكلمات المحظورة في النظام الرقابي.",
+    "DecisionResult": {
+      "title": "DecisionResult",
+      "description": "نتيجة تحليل محرك القرار الذكي.",
       "type": "object",
       "properties": {
-        "word": { "type": "string" },
-        "addedAt": { "type": "string", "format": "date-time" }
+        "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "recommendedAction": { "type": "string" },
+        "alternatives": { "type": "array", "items": { "type": "string" } },
+        "confidenceScore": { "type": "number" },
+        "prediction": { "type": "string" }
+      }
+    },
+    "SmartContract": {
+      "title": "SmartContract",
+      "description": "وثيقة قانونية مولدة آلياً ومحفوظة في سجل المستخدم.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "dataSnapshot": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -81,31 +80,27 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "ملفات المستخدمين"
+      "description": "بيانات المواطنين الرقميين"
     },
-    "/users/{userId}/chatSessions/{sessionId}": {
-      "schema": "ChatSession",
-      "description": "جلسات محادثة المستخدم"
+    "/users/{userId}/transactions/{id}": {
+      "schema": "Transaction",
+      "description": "سجل المحاسبة المالية"
     },
-    "/users/{userId}/chatSessions/{sessionId}/messages/{msgId}": {
-      "schema": "ChatMessage",
-      "description": "رسائل المحادثة"
+    "/users/{userId}/contracts/{id}": {
+      "schema": "SmartContract",
+      "description": "أرشيف الوثائق السيادية"
     },
     "/consultantProfiles/{id}": {
       "schema": "ConsultantProfile",
-      "description": "بيانات الخبراء"
+      "description": "هيئة الخبراء"
     },
-    "/liveConsultations/{id}": {
-      "schema": "LiveConsultation",
-      "description": "جلسات البث المباشر"
-    },
-    "/liveConsultations/{id}/messages/{msgId}": {
+    "/system/moderation/forbiddenWords/{id}": {
       "schema": "object",
-      "description": "رسائل الدردشة اللحظية"
+      "description": "قاموس الحظر التلقائي"
     },
-    "/settings/moderation/forbiddenWords/{id}": {
-      "schema": "ForbiddenWord",
-      "description": "قائمة الكلمات المحظورة"
+    "/decisions/{id}": {
+      "schema": "DecisionResult",
+      "description": "سجل مخرجات محرك القرار"
     }
   }
 }
