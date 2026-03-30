@@ -7,17 +7,29 @@
     --background: 222 47% 4%;
     --foreground: 213 31% 91%;
     --card: 222 47% 6%;
-    --card-border: 222 47% 12%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 213 31% 91%;
     --primary: 226 100% 64%;
     --primary-foreground: 210 40% 98%;
-    --accent: 43 100% 50%; /* Golden Accent */
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 43 100% 50%;
+    --accent-foreground: 222 47% 4%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 47% 12%;
+    --input: 222 47% 12%;
+    --ring: 226 100% 64%;
     --radius: 1.5rem;
   }
 }
 
 @layer utilities {
   .glass-cosmic {
-    @apply bg-slate-950/40 backdrop-blur-2xl border border-white/[0.05] shadow-2xl;
+    @apply bg-slate-950/40 backdrop-blur-3xl border border-white/[0.05] shadow-2xl;
   }
   
   .text-gradient {
@@ -28,10 +40,6 @@
     @apply bg-primary text-white hover:bg-primary/90 shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all active:scale-95;
   }
 
-  .cosmic-gradient {
-    @apply bg-gradient-to-br from-indigo-900 via-slate-900 to-black;
-  }
-
   .mirror {
     transform: scaleX(-1);
   }
@@ -39,10 +47,11 @@
 
 body {
   background: radial-gradient(circle at top right, hsla(226, 70%, 15%, 0.4) 0%, transparent 50%),
-              radial-gradient(circle at bottom left, hsla(43, 70%, 5%, 0.2) 0%, transparent 50%),
+              radial-gradient(circle at bottom left, hsla(43, 70%, 5%, 0.1) 0%, transparent 50%),
               hsl(222, 47% , 4%);
   background-attachment: fixed;
   font-family: 'Cairo', sans-serif;
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar {

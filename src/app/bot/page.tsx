@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Send, Sparkles, Plus, History, Camera, Mic, 
-  Paperclip, Wallet, ChevronLeft, Menu, X, Trash2, 
-  Loader2, Gavel, User, LayoutGrid, Scale, CreditCard,
-  MessageCircle, AlertCircle, ShoppingBag, MicOff,
-  Files, Image as ImageIcon, Archive
+  Paperclip, ChevronLeft, Menu, X, 
+  Loader2, Gavel, User, LayoutGrid, Scale,
+  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2
 } from "lucide-react";
 import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -40,9 +39,8 @@ export default function UltimateChatHub() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Real-time user data for balance
   useEffect(() => {
     if (!db || !user) return;
     const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
@@ -51,7 +49,6 @@ export default function UltimateChatHub() {
     return () => unsub();
   }, [db, user]);
 
-  // Queries for History
   const sessionsQuery = useMemoFirebase(() => user ? query(
     collection(db!, "users", user.uid, "chatSessions"), 
     orderBy("lastMessageAt", "desc"),
@@ -65,6 +62,19 @@ export default function UltimateChatHub() {
   ) : null, [db, user, sessionId]);
   const { data: messages } = useCollection(messagesQuery);
 
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading, scrollToBottom]);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading || !user || !userData) return;
     
@@ -72,7 +82,7 @@ export default function UltimateChatHub() {
       toast({ 
         variant: "destructive", 
         title: "رصيد غير كافٍ", 
-        description: `تحتاج إلى ${activeChar.cost} EGP للرد من ${activeChar.name}. رصيدك الحالي: ${userData.balance} EGP.` 
+        description: `تحتاج إلى ${activeChar.cost} EGP للمتابعة.` 
       });
       return;
     }
@@ -123,18 +133,19 @@ export default function UltimateChatHub() {
       setInput("");
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "فشل الإرسال", description: "حدث خطأ في النظام." });
+      toast({ variant: "destructive", title: "خطأ", description: "تعذر معالجة الاستشارة حالياً." });
     } finally {
       setIsLoading(false);
     }
   };
 
   const startListening = () => {
-    if (!('webkitSpeechRecognition' in window)) {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
       toast({ variant: "destructive", title: "غير مدعوم", description: "متصفحك لا يدعم التعرف على الصوت." });
       return;
     }
-    const recognition = new (window as any).webkitSpeechRecognition();
+    const recognition = new SpeechRecognition();
     recognition.lang = 'ar-SA';
     recognition.onstart = () => setIsListening(true);
     recognition.onresult = (event: any) => {
@@ -150,67 +161,64 @@ export default function UltimateChatHub() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setInput(prev => prev + ` [تم إرفاق: ${file.name}] `);
-      toast({ title: "تم إرفاق الملف", description: "سيقوم المستشار بتحليله عند الإرسال." });
+      setInput(prev => prev + ` [مرفق: ${file.name}] `);
+      toast({ title: "تم الإرفاق بنجاح" });
     }
   };
 
   const isBalanceZero = (userData?.balance || 0) <= 0 && userData?.role !== 'admin';
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-[#050505] overflow-hidden" dir="rtl">
+    <div className="flex h-[calc(100vh-4rem)] bg-[#020617] overflow-hidden" dir="rtl">
       
-      {/* Sidebar Replit Style */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {isSidebarOpen && (
           <motion.aside 
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 300, opacity: 1 }}
+            animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="border-l border-white/[0.03] bg-[#0a0a0a] flex flex-col z-50 shadow-2xl relative"
+            className="border-l border-white/5 bg-slate-950/50 flex flex-col z-50 backdrop-blur-3xl shadow-2xl"
           >
-            {/* Quick Actions Icons */}
-            <div className="flex gap-4 p-5 border-b border-white/[0.03] justify-center">
-               <IconButton icon={<Archive />} tooltip="الأرشيف" />
-               <IconButton icon={<Files />} tooltip="المستندات" />
-               <IconButton icon={<ImageIcon />} tooltip="الصور" />
-               <IconButton icon={<LayoutGrid />} tooltip="التطبيقات" />
+            <div className="flex gap-4 p-6 border-b border-white/5 justify-center">
+               <SidebarQuickAction icon={<Archive />} label="الأرشيف" />
+               <SidebarQuickAction icon={<ImageIcon />} label="المستندات" />
+               <SidebarQuickAction icon={<LayoutGrid />} label="التطبيقات" />
             </div>
 
-            <div className="p-5">
+            <div className="p-6">
               <Button 
                 onClick={() => {setSessionId(null); setInput("");}} 
-                className="w-full h-12 rounded-xl bg-primary text-white gap-3 font-black text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white gap-3 font-black shadow-lg shadow-primary/20"
               >
-                <Plus className="h-4 w-4" /> محادثة جديدة
+                <Plus className="h-5 w-5" /> محادثة جديدة
               </Button>
             </div>
 
             <ScrollArea className="flex-1 px-4">
-              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4 px-2">سجلات المحادثة</p>
+              <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4 px-4">السجل السيادي</p>
               <div className="space-y-1">
                 {sessions?.map(s => (
                   <button 
                     key={s.id} 
                     onClick={() => setSessionId(s.id)}
-                    className={`w-full text-right p-3 rounded-xl text-[11px] transition-all flex items-center gap-3 ${sessionId === s.id ? 'bg-white/[0.05] text-primary border border-white/5' : 'text-white/40 hover:bg-white/[0.02] border border-transparent'}`}
+                    className={`w-full text-right p-4 rounded-2xl text-xs transition-all flex items-center gap-4 ${sessionId === s.id ? 'bg-white/5 text-primary border border-white/5' : 'text-white/40 hover:bg-white/[0.02] border border-transparent'}`}
                   >
-                    <MessageCircle className="h-3.5 w-3.5 opacity-50" />
+                    <MessageCircle className="h-4 w-4 opacity-50" />
                     <span className="truncate font-bold">{s.title || "استشارة جديدة"}</span>
                   </button>
                 ))}
               </div>
             </ScrollArea>
 
-            <div className="p-5 border-t border-white/[0.03] bg-black/20">
-               <div className="p-4 glass-cosmic rounded-2xl border-primary/10">
-                  <p className="text-[9px] text-white/20 font-black uppercase mb-2">رصيدك الحالي</p>
+            <div className="p-6 border-t border-white/5">
+               <div className="p-5 glass-cosmic rounded-3xl border-primary/10 bg-primary/5">
+                  <p className="text-[9px] text-white/20 font-black uppercase mb-2">رصيدك المتاح</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-white">{userData?.balance || 0}</span>
-                    <span className="text-[9px] text-primary font-black">EGP</span>
+                    <span className="text-3xl font-black text-white tabular-nums">{userData?.balance || 0}</span>
+                    <span className="text-[10px] text-primary font-black uppercase">EGP</span>
                   </div>
-                  <Link href="/pricing">
-                    <Button variant="ghost" className="w-full h-8 mt-3 rounded-lg bg-primary/10 text-primary text-[10px] font-black">ترقية الرصيد</Button>
+                  <Link href="/pricing" className="block mt-4">
+                    <Button variant="ghost" className="w-full h-10 rounded-xl bg-white/5 text-white/60 hover:text-white font-black text-[10px]">شحن رصيد جديد</Button>
                   </Link>
                </div>
             </div>
@@ -219,27 +227,27 @@ export default function UltimateChatHub() {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col relative">
-        <header className="h-16 border-b border-white/[0.03] flex items-center justify-between px-6 bg-black/40 backdrop-blur-3xl z-10">
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-slate-950/40 backdrop-blur-3xl z-10">
           <div className="flex items-center gap-4">
             {!isSidebarOpen && (
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="text-white/20 hover:text-white">
+              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="text-white/20 hover:text-white rounded-xl">
                 <Menu className="h-5 w-5" />
               </Button>
             )}
             <div className="flex items-center gap-3">
-               <div className="h-9 w-9 rounded-xl glass-cosmic flex items-center justify-center text-sm shadow-xl border-white/5">{activeChar.emoji}</div>
+               <div className="h-10 w-10 rounded-xl glass-cosmic flex items-center justify-center text-lg">{activeChar.emoji}</div>
                <div>
-                 <h2 className="text-xs font-black text-white">{activeChar.name}</h2>
-                 <p className="text-[9px] text-white/30 font-bold uppercase tracking-tighter">AI AGENT ACTIVE</p>
+                 <h2 className="text-sm font-black text-white">{activeChar.name}</h2>
+                 <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black py-0 px-2 h-4">Active</Badge>
                </div>
             </div>
           </div>
           
-          <div className="flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
+          <div className="hidden sm:flex gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/5">
              {CHARACTERS.map(c => (
                <button 
                 key={c.id} 
-                className={`h-8 px-4 rounded-lg text-[10px] font-black transition-all ${activeChar.id === c.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-white/30 hover:bg-white/5'}`}
+                className={`h-9 px-5 rounded-xl text-[10px] font-black transition-all ${activeChar.id === c.id ? 'bg-primary text-white shadow-xl' : 'text-white/30 hover:bg-white/5'}`}
                 onClick={() => {setActiveChar(c); setSessionId(null);}}
                >
                  {c.name}
@@ -248,15 +256,22 @@ export default function UltimateChatHub() {
           </div>
         </header>
 
-        <ScrollArea className="flex-1 p-6">
-          <div className="max-w-3xl mx-auto space-y-10 pb-32">
+        <ScrollArea ref={scrollRef} className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto space-y-12 pb-40 pt-10">
             {(!messages || messages.length === 0) && (
-              <div className="py-20 text-center space-y-6">
-                 <div className="h-20 w-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(37,99,235,0.1)] border border-primary/20">
-                    <Sparkles className="h-10 w-10 text-primary animate-pulse" />
+              <div className="py-20 text-center space-y-8 animate-in fade-in zoom-in duration-700">
+                 <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl border border-primary/20">
+                    <Sparkles className="h-12 w-12 text-primary animate-pulse" />
                  </div>
-                 <h3 className="text-3xl font-black text-white tracking-tighter">غرفة الاستشارة الاحترافية</h3>
-                 <p className="text-white/20 text-sm max-w-xs mx-auto leading-relaxed">أنا {activeChar.name}، جاهز لتحليل استفساراتك القانونية بدقة فائقة.</p>
+                 <div className="space-y-3">
+                    <h3 className="text-4xl font-black text-white tracking-tighter">مركز الاستشارات الذكي</h3>
+                    <p className="text-white/20 text-lg font-bold max-w-sm mx-auto leading-relaxed">أنا {activeChar.name}، خبيرك القانوني الرقمي المعتمد. اطرح سؤالك الآن.</p>
+                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto pt-4">
+                    {["كيف أبدأ إجراءات التأسيس؟", "تحليل عقد إيجار قديم", "خطوات الطلاق للضرر", "حقوق الموظف في الاستقالة"].map(q => (
+                      <button key={q} onClick={() => setInput(q)} className="text-right p-4 glass-cosmic rounded-2xl text-xs font-bold text-white/30 hover:text-primary hover:border-primary/30 transition-all">{q}</button>
+                    ))}
+                 </div>
               </div>
             )}
             
@@ -265,77 +280,76 @@ export default function UltimateChatHub() {
                 key={i} 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${msg.role === 'user' ? 'bg-primary border-white/10 text-white shadow-lg' : 'glass-cosmic border-white/10 text-primary shadow-xl'}`}>
-                  {msg.role === 'user' ? <User className="h-5 w-5" /> : <Gavel className="h-5 w-5" />}
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${msg.role === 'user' ? 'bg-primary border-white/10 text-white' : 'glass-cosmic border-white/10 text-primary'}`}>
+                  {msg.role === 'user' ? <User className="h-6 w-6" /> : <Gavel className="h-6 w-6" />}
                 </div>
-                <div className={`p-6 rounded-[2rem] text-sm leading-7 shadow-xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
+                <div className={`p-8 rounded-[2.5rem] text-sm leading-relaxed shadow-2xl ${msg.role === 'user' ? 'bg-primary/5 text-white border border-primary/10 rounded-tr-none' : 'glass-cosmic text-white/80 rounded-tl-none border-white/10'}`}>
                   {msg.content}
                 </div>
               </motion.div>
             ))}
             
             {isLoading && (
-              <div className="flex gap-5">
-                <div className="h-10 w-10 rounded-xl glass-cosmic border border-primary/20 flex items-center justify-center text-primary">
-                   <Loader2 className="h-5 w-5 animate-spin" />
+              <div className="flex gap-6 animate-pulse">
+                <div className="h-12 w-12 rounded-2xl glass-cosmic border border-primary/20 flex items-center justify-center text-primary">
+                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-                <div className="glass-cosmic p-6 rounded-[2rem] rounded-tl-none border-white/5 flex gap-1.5 items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" />
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce delay-100" />
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce delay-200" />
+                <div className="glass-cosmic p-8 rounded-[2.5rem] rounded-tl-none border-white/5 flex gap-2 items-center">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-100" />
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce delay-200" />
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        {/* Floating Input Controller */}
-        <div className="p-6 bg-gradient-to-t from-black via-black/80 to-transparent absolute bottom-0 inset-x-0">
+        <div className="p-8 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent absolute bottom-0 inset-x-0">
           <div className="max-w-3xl mx-auto relative">
             
             {isBalanceZero && (
-              <div className="absolute inset-0 z-20 glass-cosmic rounded-[2.5rem] flex items-center justify-between px-10 border-red-500/20 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                  <AlertCircle className="h-6 w-6 text-red-500" />
-                  <p className="text-xs font-black text-white">رصيدك لا يسمح بالاستمرار. يرجى الشحن.</p>
+              <div className="absolute inset-0 z-20 glass-cosmic rounded-[3rem] flex items-center justify-between px-12 border-red-500/20 backdrop-blur-xl">
+                <div className="flex items-center gap-5">
+                  <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center"><AlertCircle className="h-6 w-6 text-red-500" /></div>
+                  <p className="text-sm font-black text-white">رصيدك لا يكفي للمتابعة السيادية.</p>
                 </div>
                 <Link href="/pricing">
-                  <Button className="btn-primary px-8 h-10 rounded-xl font-black text-[10px]">اشحن الآن</Button>
+                  <Button className="btn-primary px-10 h-12 rounded-2xl font-black text-xs">شحن الآن</Button>
                 </Link>
               </div>
             )}
 
-            <div className={`glass-cosmic rounded-[2.5rem] p-2 flex items-center gap-2 border-white/5 shadow-2xl ${isBalanceZero ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
-              <div className="flex items-center gap-1 p-1 bg-white/[0.02] rounded-2xl border border-white/5">
+            <div className={`glass-cosmic rounded-[3rem] p-2.5 flex items-center gap-3 border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] ${isBalanceZero ? 'opacity-20 pointer-events-none' : ''}`}>
+              <div className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded-3xl border border-white/5">
                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                  <input type="file" ref={cameraInputRef} capture="environment" accept="image/*" className="hidden" onChange={handleFileUpload} />
                  
                  <MediaBtn icon={<Camera />} tooltip="التقاط" onClick={() => cameraInputRef.current?.click()} />
                  <MediaBtn 
                     icon={isListening ? <MicOff className="animate-pulse text-red-500" /> : <Mic />} 
-                    tooltip="صوت" 
+                    tooltip="إملاء" 
                     onClick={startListening} 
                  />
-                 <MediaBtn icon={<Paperclip />} tooltip="ملف" onClick={() => fileInputRef.current?.click()} />
+                 <MediaBtn icon={<Paperclip />} tooltip="مرفق" onClick={() => fileInputRef.current?.click()} />
               </div>
               
               <input 
-                placeholder={`اسأل ${activeChar.name} عن أي موضوع قانوني...`}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-right p-4 text-white/90 placeholder:text-white/10"
+                placeholder={`اسأل ${activeChar.name}...`}
+                className="flex-1 bg-transparent border-none focus:ring-0 text-base font-bold text-right p-4 text-white/90 placeholder:text-white/10"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               />
 
-              <Button onClick={handleSend} disabled={!input.trim() || isLoading} className="h-12 w-12 rounded-2xl btn-primary shrink-0 transition-transform active:scale-90">
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rotate-180" />}
+              <Button onClick={handleSend} disabled={!input.trim() || isLoading} className="h-14 w-14 rounded-[1.8rem] btn-primary shrink-0 transition-transform active:scale-90">
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 rotate-180" />}
               </Button>
             </div>
-            <div className="flex justify-between items-center px-6 mt-3 opacity-20">
-               <p className="text-[8px] font-black uppercase tracking-[0.2em]">Sovereign AI Protocol</p>
-               <p className="text-[8px] font-black uppercase tracking-[0.2em]">Cost: {activeChar.cost} EGP / Msg</p>
+            <div className="flex justify-between items-center px-10 mt-4 opacity-20">
+               <p className="text-[8px] font-black uppercase tracking-[0.3em]">Encrypted Core</p>
+               <p className="text-[8px] font-black uppercase tracking-[0.3em]">{activeChar.cost} EGP / Msg</p>
             </div>
           </div>
         </div>
@@ -347,24 +361,24 @@ export default function UltimateChatHub() {
 function MediaBtn({ icon, tooltip, onClick }: any) {
   return (
     <div className="group relative">
-      <Button variant="ghost" size="icon" onClick={onClick} className="h-9 w-9 rounded-xl text-white/20 hover:text-primary hover:bg-white/5 transition-all">
+      <Button variant="ghost" size="icon" onClick={onClick} className="h-10 w-10 rounded-2xl text-white/20 hover:text-primary hover:bg-white/5 transition-all">
         {icon}
       </Button>
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 glass rounded-md text-[8px] font-black px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+      <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 glass px-3 py-1.5 rounded-xl text-[9px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap">
         {tooltip}
       </div>
     </div>
   );
 }
 
-function IconButton({ icon, tooltip }: any) {
+function SidebarQuickAction({ icon, label }: any) {
   return (
     <div className="group relative">
-      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-white/[0.02] border border-white/5 text-white/30 hover:text-primary hover:bg-white/5 transition-all">
+      <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-white/5 border border-white/5 text-white/30 hover:text-primary hover:bg-white/10 transition-all">
         {icon}
       </Button>
-      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 glass rounded-md text-[8px] font-black px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-        {tooltip}
+      <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 glass px-3 py-1.5 rounded-xl text-[9px] font-black opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100]">
+        {label}
       </div>
     </div>
   );

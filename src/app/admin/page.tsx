@@ -1,20 +1,18 @@
 "use client";
 
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
   Users, Gavel, ShieldAlert, Settings, 
-  MessageSquare, LayoutDashboard, UserPlus, 
-  Trash2, Ban, CheckCircle, Search, Activity
+  Trash2, Ban, CheckCircle, Search, Activity, UserPlus, X, Plus
 } from "lucide-react";
-import { collection, doc, deleteDoc, updateDoc, query, orderBy, addDoc } from "firebase/firestore";
+import { collection, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SupremeAdminHub() {
@@ -34,13 +32,13 @@ export default function SupremeAdminHub() {
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
   if (user?.email !== "bishoysamy390@gmail.com") {
-    return <div className="h-screen flex items-center justify-center text-red-500 font-black">ACCESS DENIED - SOVEREIGN LOCK ACTIVE</div>;
+    return <div className="h-screen flex items-center justify-center text-red-500 font-black tracking-widest uppercase bg-black">Access Denied - Sovereign Lock Active</div>;
   }
 
   const handleAction = async (action: () => Promise<void>, msg: string) => {
     try {
       await action();
-      toast({ title: "تم تنفيذ العملية", description: msg });
+      toast({ title: "تم الإجراء بنجاح", description: msg });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الإجراء", description: "تأكد من الصلاحيات والاتصال." });
     }
@@ -58,49 +56,52 @@ export default function SupremeAdminHub() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] p-8 md:p-12" dir="rtl">
-      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16">
-        <div className="space-y-2">
-          <h1 className="text-5xl font-black text-white tracking-tighter">غرفة القيادة <span className="text-primary">العليا</span></h1>
-          <p className="text-white/30 font-bold">السيطرة المطلقة على الكيان والرقابة السيادية.</p>
+    <div className="min-h-screen bg-[#020617] p-12" dir="rtl">
+      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-12 mb-20">
+        <div className="space-y-3">
+          <h1 className="text-6xl font-black text-white tracking-tighter">غرفة القيادة <span className="text-primary">العليا</span></h1>
+          <p className="text-white/30 text-xl font-bold">السيطرة السيادية المطلقة على كافة أنظمة الكيان.</p>
         </div>
-        <div className="flex gap-3 bg-white/5 p-1.5 rounded-[2rem] border border-white/5">
-          <TabBtn active={activeTab === "users"} onClick={() => setActiveTab("users")} icon={<Users />} label="المواطنون" />
-          <TabBtn active={activeTab === "consultants"} onClick={() => setActiveTab("consultants")} icon={<Gavel />} label="الخبراء" />
-          <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert />} label="الرقابة" />
+        <div className="flex gap-2 bg-white/5 p-2 rounded-[2.5rem] border border-white/10 backdrop-blur-xl shadow-2xl">
+          <TabBtn active={activeTab === "users"} onClick={() => setActiveTab("users")} icon={<Users className="h-4 w-4" />} label="المواطنون" />
+          <TabBtn active={activeTab === "consultants"} onClick={() => setActiveTab("consultants")} icon={<Gavel className="h-4 w-4" />} label="هيئة الخبراء" />
+          <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert className="h-4 w-4" />} label="جهاز الرقابة" />
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === "users" && (
-            <motion.div key="users" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-6 mb-10">
-                 <StatMini label="إجمالي المسجلين" val={allUsers?.length || 0} color="blue" />
-                 <StatMini label="المحظورين حالياً" val={allUsers?.filter(u => u.isBanned).length || 0} color="red" />
-                 <StatMini label="نشطين الآن" val={8} color="emerald" />
+            <motion.div key="users" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
+              <div className="grid md:grid-cols-3 gap-8">
+                 <StatMini label="المواطنون المسجلون" val={allUsers?.length || 0} color="blue" />
+                 <StatMini label="الحسابات المحظورة" val={allUsers?.filter(u => u.isBanned).length || 0} color="red" />
+                 <StatMini label="العمليات الحالية" val={12} color="emerald" />
               </div>
-              <Card className="glass-cosmic border-none rounded-[3rem] p-10">
-                <div className="flex justify-between items-center mb-8">
-                   <h3 className="text-2xl font-black text-white">قاعدة بيانات المواطنين</h3>
-                   <div className="relative w-64"><Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" /><Input className="glass border-white/5 rounded-xl pr-10" placeholder="بحث..." /></div>
+              <Card className="glass-cosmic border-none rounded-[4rem] p-14 shadow-2xl">
+                <div className="flex justify-between items-center mb-12">
+                   <h3 className="text-3xl font-black text-white">قاعدة بيانات المواطنين</h3>
+                   <div className="relative w-80 group">
+                     <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-white/20 group-focus-within:text-primary transition-colors" />
+                     <Input className="glass border-white/5 h-14 rounded-2xl pr-14 text-lg font-bold" placeholder="بحث سيادي..." />
+                   </div>
                 </div>
                 <div className="space-y-4">
                   {allUsers?.map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-6 glass rounded-3xl border-white/5 hover:bg-white/[0.02] transition-all">
-                      <div className="flex items-center gap-6">
-                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black ${u.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>{u.fullName.charAt(0)}</div>
-                        <div>
-                          <p className="font-black text-white">{u.fullName}</p>
-                          <p className="text-[10px] text-white/20 font-bold">{u.email}</p>
+                    <div key={u.id} className="flex items-center justify-between p-8 glass rounded-[2.5rem] border-white/5 hover:bg-white/[0.03] transition-all group">
+                      <div className="flex items-center gap-8">
+                        <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-xl font-black shadow-xl ${u.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>{u.fullName.charAt(0)}</div>
+                        <div className="space-y-1">
+                          <p className="font-black text-2xl text-white">{u.fullName}</p>
+                          <p className="text-xs text-white/20 font-bold uppercase tracking-widest">{u.email}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleAction(() => updateDoc(doc(db!, "users", u.id), { isBanned: !u.isBanned }), u.isBanned ? "تم فك الحظر" : "تم الحظر السيادي")} className={u.isBanned ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-red-500 hover:bg-red-500/10'}>
-                          {u.isBanned ? <CheckCircle className="h-4 w-4 ml-2" /> : <Ban className="h-4 w-4 ml-2" />} {u.isBanned ? "فك حظر" : "حظر"}
+                      <div className="flex gap-4">
+                        <Button variant="ghost" className={`h-12 px-8 rounded-2xl font-black text-xs transition-all ${u.isBanned ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`} onClick={() => handleAction(() => updateDoc(doc(db!, "users", u.id), { isBanned: !u.isBanned }), u.isBanned ? "تم فك الحظر" : "تم الحظر")}>
+                          {u.isBanned ? <CheckCircle className="h-4 w-4 ml-3" /> : <Ban className="h-4 w-4 ml-3" />} {u.isBanned ? "إلغاء الحظر" : "حظر سيادي"}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleAction(() => deleteDoc(doc(db!, "users", u.id)), "تم حذف المستخدم نهائياً")} className="text-white/20 hover:text-red-500 hover:bg-red-500/10">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleAction(() => deleteDoc(doc(db!, "users", u.id)), "تم الحذف نهائياً")} className="h-12 w-12 rounded-2xl text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
@@ -111,28 +112,29 @@ export default function SupremeAdminHub() {
           )}
 
           {activeTab === "consultants" && (
-            <motion.div key="consultants" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+            <motion.div key="consultants" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-12">
                <div className="flex justify-between items-center">
-                  <h3 className="text-3xl font-black text-white">إدارة هيئة المستشارين</h3>
-                  <Button className="btn-primary h-12 px-8 rounded-2xl font-black gap-3"><UserPlus className="h-4 w-4" /> تسجيل مستشار جديد</Button>
+                  <h3 className="text-4xl font-black text-white">إدارة هيئة الخبراء</h3>
+                  <Button className="btn-primary h-16 px-10 rounded-[2rem] font-black gap-4 text-lg shadow-2xl"><UserPlus className="h-6 w-6" /> تسجيل خبير جديد</Button>
                </div>
-               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
                   {consultants?.map(c => (
-                    <Card key={c.id} className="glass-cosmic border-none rounded-[4rem] p-8 group relative overflow-hidden">
-                       <div className="flex items-center gap-5 mb-6">
-                          <div className="h-16 w-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><Gavel className="h-8 w-8" /></div>
-                          <div>
-                             <h4 className="font-black text-xl text-white">{c.name}</h4>
-                             <Badge className="bg-white/5 text-primary border-none text-[9px] font-black">{c.specialty}</Badge>
+                    <Card key={c.id} className="glass-cosmic border-none rounded-[4rem] p-10 group relative overflow-hidden shadow-2xl">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover:bg-primary/10 transition-all" />
+                       <div className="flex items-center gap-6 mb-8">
+                          <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform border border-primary/20 shadow-inner"><Gavel className="h-10 w-10" /></div>
+                          <div className="space-y-2">
+                             <h4 className="font-black text-2xl text-white">{c.name}</h4>
+                             <Badge className="bg-white/5 text-primary border-none text-[9px] font-black uppercase tracking-tighter px-4 py-1 rounded-full">{c.specialty}</Badge>
                           </div>
                        </div>
-                       <p className="text-xs text-white/30 font-medium leading-relaxed mb-8 line-clamp-2">{c.bio}</p>
-                       <div className="flex justify-between items-center border-t border-white/5 pt-6">
-                          <div className="flex gap-2">
-                             <Button variant="ghost" size="icon" className="text-white/20 hover:text-white"><Settings className="h-4 w-4" /></Button>
-                             <Button variant="ghost" size="icon" className="text-white/20 hover:text-red-500" onClick={() => handleAction(() => deleteDoc(doc(db!, "consultantProfiles", c.id)), "تم حذف المستشار")}><Trash2 className="h-4 w-4" /></Button>
+                       <p className="text-sm text-white/30 font-bold leading-relaxed mb-10 line-clamp-2">{c.bio}</p>
+                       <div className="flex justify-between items-center border-t border-white/5 pt-8">
+                          <div className="flex gap-3">
+                             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white"><Settings className="h-5 w-5" /></Button>
+                             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-red-500" onClick={() => handleAction(() => deleteDoc(doc(db!, "consultantProfiles", c.id)), "تم حذف الخبير")}><Trash2 className="h-5 w-5" /></Button>
                           </div>
-                          <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4">{c.hourlyRate} EGP/h</Badge>
+                          <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-6 py-2 rounded-full font-black tabular-nums">{c.hourlyRate} EGP/h</Badge>
                        </div>
                     </Card>
                   ))}
@@ -141,33 +143,34 @@ export default function SupremeAdminHub() {
           )}
 
           {activeTab === "moderation" && (
-            <motion.div key="moderation" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid md:grid-cols-2 gap-12">
-               <Card className="glass-cosmic border-none rounded-[4rem] p-12">
-                  <h3 className="text-2xl font-black text-white mb-8 flex items-center gap-4"><ShieldAlert className="text-red-500" /> الكلمات المحظورة</h3>
-                  <div className="flex gap-3 mb-10">
-                     <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="أضف كلمة للرقابة..." className="glass border-white/5 h-14 rounded-2xl px-6 font-bold" />
-                     <Button onClick={addForbiddenWord} className="h-14 w-14 rounded-2xl bg-red-600 hover:bg-red-700 shadow-xl"><Plus /></Button>
+            <motion.div key="moderation" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="grid md:grid-cols-2 gap-12">
+               <Card className="glass-cosmic border-none rounded-[4rem] p-14 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 blur-[100px] -z-10" />
+                  <h3 className="text-3xl font-black text-white mb-10 flex items-center gap-5"><ShieldAlert className="text-red-500 h-8 w-8" /> الكلمات المحظورة</h3>
+                  <div className="flex gap-4 mb-12">
+                     <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="أضف كلمة للرقابة السيادية..." className="glass border-white/5 h-16 rounded-2xl px-8 text-xl font-bold shadow-inner" />
+                     <Button onClick={addForbiddenWord} className="h-16 w-16 rounded-2xl bg-red-600 hover:bg-red-700 shadow-2xl shrink-0"><Plus className="h-8 w-8" /></Button>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-4">
                      {forbiddenWords?.map(w => (
-                       <Badge key={w.id} className="glass border-white/10 text-white/60 py-3 px-5 rounded-2xl flex items-center gap-3 group">
-                          {w.word}
-                          <button onClick={() => deleteDoc(doc(db!, "settings", "moderation", "forbiddenWords", w.id))} className="text-white/10 hover:text-red-500"><X className="h-3 w-3" /></button>
+                       <Badge key={w.id} className="glass border-white/10 text-white/60 py-4 px-6 rounded-2xl flex items-center gap-4 group hover:border-red-500/30 transition-all">
+                          <span className="font-black text-sm">{w.word}</span>
+                          <button onClick={() => deleteDoc(doc(db!, "settings", "moderation", "forbiddenWords", w.id))} className="text-white/10 hover:text-red-500 transition-colors"><X className="h-4 w-4" /></button>
                        </Badge>
                      ))}
                   </div>
                </Card>
 
-               <Card className="glass-cosmic border-none rounded-[4rem] p-12 relative overflow-hidden">
+               <Card className="glass-cosmic border-none rounded-[4rem] p-14 relative overflow-hidden shadow-2xl">
                   <div className="absolute top-0 left-0 w-full h-full bg-red-500/[0.02] -z-10" />
-                  <h3 className="text-2xl font-black text-white mb-8">سجل الرقابة اللحظي</h3>
-                  <div className="space-y-6">
-                     <div className="p-6 glass rounded-[2rem] border-red-500/10 flex items-start gap-5">
-                        <div className="h-10 w-10 rounded-xl bg-red-500/20 flex items-center justify-center text-red-500 shrink-0"><Activity className="h-5 w-5" /></div>
-                        <div>
-                           <p className="text-xs text-white/80 font-black">تم رصد انتهاك: "لفظ خارج"</p>
-                           <p className="text-[10px] text-white/20 mt-1">المستخدم: محمد علي · منذ دقيقتين</p>
-                           <Badge className="bg-red-500/10 text-red-500 border-none mt-3">حظر آلي منفذ ✅</Badge>
+                  <h3 className="text-3xl font-black text-white mb-10 flex items-center gap-5"><Activity className="text-primary h-8 w-8 animate-pulse" /> رادار الانتهاكات</h3>
+                  <div className="space-y-8">
+                     <div className="p-8 glass rounded-[2.5rem] border-red-500/10 flex items-start gap-6 bg-red-500/[0.02]">
+                        <div className="h-14 w-14 rounded-2xl bg-red-500/20 flex items-center justify-center text-red-500 shrink-0"><ShieldAlert className="h-7 w-7" /></div>
+                        <div className="space-y-2">
+                           <p className="text-sm text-white/80 font-black">رصد انتهاك سيادي: "كلمة محظورة"</p>
+                           <p className="text-[10px] text-white/20 font-bold">المواطن: محمد علي · سجل النظام: 14:22</p>
+                           <Badge className="bg-red-500/10 text-red-500 border-none mt-4 px-4 py-1 rounded-full font-black text-[9px] uppercase tracking-widest">Auto Ban Executed</Badge>
                         </div>
                      </div>
                   </div>
@@ -182,8 +185,8 @@ export default function SupremeAdminHub() {
 
 function TabBtn({ active, onClick, icon, label }: any) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-3 px-8 py-3 rounded-[1.5rem] text-xs font-black transition-all ${active ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-white/30 hover:text-white'}`}>
-      <span className={active ? 'scale-110' : ''}>{icon}</span>
+    <button onClick={onClick} className={`flex items-center gap-4 px-10 py-4 rounded-[2rem] text-sm font-black transition-all ${active ? 'bg-primary text-white shadow-2xl shadow-primary/30' : 'text-white/20 hover:text-white hover:bg-white/5'}`}>
+      {icon}
       {label}
     </button>
   );
@@ -191,14 +194,14 @@ function TabBtn({ active, onClick, icon, label }: any) {
 
 function StatMini({ label, val, color }: any) {
   const colors: any = {
-    blue: "text-blue-400 bg-blue-500/10",
-    red: "text-red-400 bg-red-500/10",
-    emerald: "text-emerald-400 bg-emerald-500/10"
+    blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+    red: "text-red-400 bg-red-500/10 border-red-500/20",
+    emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
   };
   return (
-    <div className={`p-8 glass-cosmic rounded-[2.5rem] border-white/5 ${colors[color]}`}>
-       <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-2">{label}</p>
-       <p className="text-4xl font-black tabular-nums">{val}</p>
+    <div className={`p-10 glass-cosmic rounded-[3rem] border ${colors[color]} shadow-2xl`}>
+       <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">{label}</p>
+       <p className="text-6xl font-black tabular-nums tracking-tighter">{val}</p>
     </div>
   );
 }

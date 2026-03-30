@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Sparkles, ShieldCheck, ArrowRight, Gavel, Video, FileText, MessageSquare, Star, Zap, Globe, Scale } from "lucide-react";
+import { Sparkles, ShieldCheck, ArrowRight, Gavel, Video, BookOpen, Star, Zap, Globe, Scale, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const SovereignLogo = () => (
@@ -20,16 +19,14 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-4 overflow-hidden" dir="rtl">
       
-      {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[url('https://picsum.photos/seed/justice/1920/1080')] opacity-[0.02] grayscale pointer-events-none" />
       <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[150px] rounded-full -z-10" />
       <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-accent/5 blur-[120px] rounded-full -z-10" />
 
-      {/* Hero Section */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
         className="text-center space-y-10 max-w-5xl relative z-10"
       >
         <div className="flex justify-center mb-8">
@@ -52,19 +49,18 @@ export default function LandingPage() {
 
         <div className="flex flex-wrap justify-center gap-6 mt-16">
           <Link href="/auth/signup">
-            <Button className="h-20 px-14 rounded-[2rem] btn-primary text-2xl font-black gap-4 group hover:scale-105 transition-all">
-              ابدأ رحلتك الآن <ArrowRight className="h-7 w-7 rotate-180 group-hover:-translate-x-3 transition-transform" />
+            <Button className="h-20 px-14 rounded-[2.5rem] btn-primary text-2xl font-black gap-4 group hover:scale-105 transition-all">
+              ابدأ الآن <ArrowRight className="h-7 w-7 rotate-180 group-hover:-translate-x-3 transition-transform" />
             </Button>
           </Link>
           <Link href="/bot">
-            <Button variant="outline" className="h-20 px-12 rounded-[2rem] glass-cosmic border-white/10 text-xl font-black hover:bg-white/5 hover:border-primary/40 transition-all">
+            <Button variant="outline" className="h-20 px-12 rounded-[2.5rem] glass-cosmic border-white/10 text-xl font-black hover:bg-white/5 hover:border-primary/40 transition-all">
               تحدث مع المستشار الذكي
             </Button>
           </Link>
         </div>
       </motion.div>
 
-      {/* The Three SaaS Pillars */}
       <div className="grid md:grid-cols-3 gap-10 mt-40 max-w-7xl w-full relative z-10">
         <SupremePillar 
           icon={<Zap className="h-12 w-12 text-blue-400" />}
@@ -89,25 +85,24 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Trust & Sovereignty */}
       <motion.div 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         className="mt-60 w-full max-w-6xl glass-cosmic rounded-[4rem] p-16 border-white/5 flex flex-col md:flex-row items-center gap-16"
       >
-        <div className="flex-1 space-y-8">
+        <div className="flex-1 space-y-8 text-right">
            <Badge className="bg-primary/20 text-primary px-6 py-1 rounded-full font-black text-[10px] tracking-widest uppercase">Encryption Protocol v4.0</Badge>
            <h2 className="text-5xl font-black text-white leading-tight">أمن سيادي <br /><span className="text-primary">وخصوصية مطلقة</span></h2>
            <p className="text-xl text-white/40 font-medium leading-relaxed">بياناتك القانونية هي حصنك المنيع. نستخدم تشفيراً عسكرياً لضمان عدم اطلاع أي طرف ثالث على محادثاتك أو مستنداتك.</p>
-           <div className="flex items-center gap-10 pt-4">
-              <div className="flex flex-col">
+           <div className="flex items-center gap-10 pt-4 justify-end">
+              <div className="flex flex-col items-center">
                 <span className="text-3xl font-black text-white">99.9%</span>
-                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">Accuracy Rate</span>
+                <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Accuracy Rate</span>
               </div>
               <div className="h-12 w-px bg-white/5" />
-              <div className="flex flex-col">
+              <div className="flex flex-col items-center">
                 <span className="text-3xl font-black text-white">256-bit</span>
-                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">End-to-End Encryption</span>
+                <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Encryption</span>
               </div>
            </div>
         </div>
@@ -117,7 +112,6 @@ export default function LandingPage() {
         </div>
       </motion.div>
 
-      {/* Global Presence Footer Hint */}
       <div className="mt-40 text-center opacity-30 pb-20">
         <p className="text-[10px] font-black uppercase tracking-[0.5em] mb-12">نظام معتمد من كبار الخبراء</p>
         <div className="flex flex-wrap justify-center gap-16 items-center">
@@ -142,9 +136,9 @@ function SupremePillar({ icon, title, desc, href, badge }: any) {
           </div>
           <Badge className="bg-white/5 text-white/40 border-none px-4 py-1 rounded-full text-[9px] font-black">{badge}</Badge>
         </div>
-        <h3 className="text-3xl font-black text-white mb-6 tracking-tight">{title}</h3>
-        <p className="text-white/30 leading-relaxed font-medium text-lg flex-grow">{desc}</p>
-        <div className="mt-10 flex items-center gap-3 text-primary font-black opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+        <h3 className="text-3xl font-black text-white mb-6 tracking-tight text-right">{title}</h3>
+        <p className="text-white/30 leading-relaxed font-medium text-lg flex-grow text-right">{desc}</p>
+        <div className="mt-10 flex items-center gap-3 text-primary font-black opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0 justify-end">
            فتح البوابة <ArrowRight className="h-5 w-5 rotate-180" />
         </div>
       </div>

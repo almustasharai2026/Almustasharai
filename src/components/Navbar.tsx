@@ -1,9 +1,8 @@
-
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, Languages, User, LayoutDashboard, Sparkles, Lock, Coins } from "lucide-react";
+import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useUser, useFirestore } from "@/firebase";
@@ -16,15 +15,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-// Custom Sovereign Logo Component
 const SovereignLogo = () => (
   <svg viewBox="0 0 100 100" className="h-10 w-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-    <defs>
-      <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
-        <stop offset="100%" style={{ stopColor: '#fbbi05', stopOpacity: 1 }} />
-      </linearGradient>
-    </defs>
     <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
     <path d="M50 15 L80 30 L80 70 L50 85 L20 70 L20 30 Z" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary" />
     <path d="M35 45 H65 M50 45 V70 M35 45 L30 55 M65 45 L70 55" stroke="currentColor" strokeWidth="5" strokeLinecap="round" className="text-primary" />
@@ -62,20 +54,14 @@ export function Navbar() {
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-7xl">
       <div className="glass-cosmic h-20 px-8 rounded-[2.5rem] flex items-center justify-between border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)]">
         
-        {/* Modern Sovereign Logo */}
         <Link href="/" className="flex items-center gap-4 group">
-          <div className="relative">
-            <div className="transition-transform duration-1000 group-hover:scale-110">
-              <SovereignLogo />
-            </div>
-          </div>
+          <SovereignLogo />
           <div className="flex flex-col -space-y-1">
             <span className="font-black text-xl tracking-tighter text-white">المستشار</span>
             <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em]">Sovereign AI</span>
           </div>
         </Link>
 
-        {/* Central Hub Links */}
         <div className="hidden lg:flex items-center gap-10">
           <NavLink href="/consultants" label="الاستشارات" />
           <NavLink href="/templates" label="المكتبة" />
@@ -86,9 +72,7 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Global Controls */}
         <div className="flex items-center gap-4">
-          
           {user && userData && (
             <Link href="/pricing" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
                <Coins className="h-3.5 w-3.5 text-primary" />
@@ -105,33 +89,34 @@ export function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="rounded-2xl h-11 gap-3 px-6 glass border-primary/10 hover:bg-primary transition-all font-black text-xs group">
-                  <User className="h-4 w-4 group-hover:animate-bounce" /> 
-                  <span className="hidden sm:inline-block">حسابي السيادي</span>
+                <Button className="rounded-2xl h-11 gap-3 px-6 glass border-primary/10 hover:bg-primary transition-all font-black text-xs">
+                  <User className="h-4 w-4" /> 
+                  <span className="hidden sm:inline-block">حسابي</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 rounded-[2.5rem] p-4 glass-cosmic border-white/10 shadow-2xl mt-4">
+              <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-4 glass-cosmic border-white/10 shadow-2xl mt-4">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer hover:bg-white/10 font-bold transition-colors text-right">
-                    <LayoutDashboard className="h-4 w-4 text-primary ml-4" /> لوحة التحكم
+                  <Link href="/dashboard" className="flex items-center gap-4 p-4 rounded-xl cursor-pointer hover:bg-white/5 font-bold transition-colors">
+                    <LayoutDashboard className="h-4 w-4 text-primary" /> لوحة التحكم
                   </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex items-center gap-4 p-4 rounded-2xl text-primary font-black cursor-pointer bg-primary/10 hover:bg-primary/20 border border-primary/20 mt-1 transition-all text-right">
-                      <Lock className="h-4 w-4 ml-4" /> غرفة القيادة العليا
+                    <Link href="/admin" className="flex items-center gap-4 p-4 rounded-xl text-primary font-black cursor-pointer bg-primary/10 hover:bg-primary/20 border border-primary/20 mt-1 transition-all">
+                      <Lock className="h-4 w-4" /> غرفة القيادة العليا
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator className="bg-white/5 my-3" />
-                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="text-red-500 p-4 rounded-2xl cursor-pointer hover:bg-red-500/10 font-black transition-colors text-right justify-end">
-                  تسجيل الخروج
+                <DropdownMenuSeparator className="bg-white/5 my-2" />
+                <DropdownMenuItem onClick={() => window.location.href = "/auth/login"} className="text-red-500 p-4 rounded-xl cursor-pointer hover:bg-red-500/10 font-black transition-colors">
+                  <LogOut className="h-4 w-4 ml-4" /> تسجيل الخروج
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Link href="/auth/signup">
-              <Button className="rounded-2xl h-12 px-10 font-black cosmic-gradient hover:scale-105 shadow-xl transition-all border border-white/5 active:scale-95">
+              <Button className="rounded-2xl h-12 px-10 font-black btn-primary active:scale-95 shadow-xl transition-all">
                 انضم الآن
               </Button>
             </Link>
@@ -144,7 +129,7 @@ export function Navbar() {
 
 function NavLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="text-[10px] font-black text-white/30 hover:text-primary hover:tracking-[0.25em] transition-all uppercase tracking-[0.2em]">
+    <Link href={href} className="text-[10px] font-black text-white/30 hover:text-primary hover:tracking-widest transition-all uppercase tracking-[0.2em]">
       {label}
     </Link>
   );
