@@ -32,7 +32,7 @@ export default function LovableInspiredPage() {
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
-      {/* ⚠️ Non-blocking Loader for Auth */}
+      {/* مؤشر تحميل غير حاجب للواجهة */}
       {isUserLoading && (
         <div className="fixed top-0 left-0 w-full h-1 bg-primary/20 z-[200]">
           <div className="h-full bg-primary animate-pulse" style={{ width: '30%' }} />
@@ -90,33 +90,38 @@ export default function LovableInspiredPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <AnimatePresence mode="wait">
-              {activeTab === "my-projects" && recentSessions && recentSessions.length > 0 ? (
-                recentSessions.map((session, i) => (
-                  <motion.div 
-                    key={session.id} 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <CardProject session={session} />
-                  </motion.div>
-                ))
-              ) : activeTab === "my-projects" && (
+            <AnimatePresence mode="popLayout">
+              {activeTab === "my-projects" && (
                 <motion.div 
-                  key="empty" 
+                  key="projects-container" 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
-                  className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10"
+                  exit={{ opacity: 0 }}
+                  className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-8 w-full"
                 >
-                   <Scale className="h-16 w-16 text-white/5 mx-auto" />
-                   <p className="text-white/20 font-bold">
-                     {user ? (sessionsLoading ? "جاري جلب استشاراتك السيادية..." : "لا يوجد سجل استشارات حتى الآن") : "سجل دخولك لاستعراض استشاراتك"}
-                   </p>
-                   {user && sessionsLoading && <Loader2 className="h-6 w-6 animate-spin mx-auto opacity-20" />}
-                   <Link href="/bot">
-                     <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ استشارة الآن</Button>
-                   </Link>
+                  {recentSessions && recentSessions.length > 0 ? (
+                    recentSessions.map((session, i) => (
+                      <motion.div 
+                        key={session.id} 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        transition={{ delay: i * 0.1 }}
+                      >
+                        <CardProject session={session} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10">
+                       <Scale className="h-16 w-16 text-white/5 mx-auto" />
+                       <p className="text-white/20 font-bold">
+                         {user ? (sessionsLoading ? "جاري جلب استشاراتك السيادية..." : "لا يوجد سجل استشارات حتى الآن") : "سجل دخولك لاستعراض استشاراتك"}
+                       </p>
+                       {user && sessionsLoading && <Loader2 className="h-6 w-6 animate-spin mx-auto opacity-20" />}
+                       <Link href="/bot">
+                         <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ استشارة الآن</Button>
+                       </Link>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
