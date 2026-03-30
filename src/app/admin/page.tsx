@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -119,7 +118,7 @@ export default function SupremeAdminHub() {
                </div>
                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {consultants?.map(c => (
-                    <Card key={c.id} className="glass-cosmic border-none rounded-[3rem] p-8 group relative overflow-hidden">
+                    <Card key={c.id} className="glass-cosmic border-none rounded-[4rem] p-8 group relative overflow-hidden">
                        <div className="flex items-center gap-5 mb-6">
                           <div className="h-16 w-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><Gavel className="h-8 w-8" /></div>
                           <div>
