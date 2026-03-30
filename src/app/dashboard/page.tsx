@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
-  Shield, Wallet, Zap, FileCheck, Activity, 
-  ChevronRight, Fingerprint, AlertCircle, Sparkles, Lock, Coins
+  Shield, Wallet, Zap, FileCheck, ChevronRight, Fingerprint, Sparkles, Lock, Activity
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,24 +14,14 @@ import { doc, onSnapshot, collection, query, orderBy, limit } from "firebase/fir
 import { useMemoFirebase } from "@/firebase/provider";
 
 export default function SovereignEcosystemHub() {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const [profile, setProfile] = useState<any>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
 
-  // Monitor profile without blocking
   useEffect(() => {
-    if (!db || !user) {
-      setIsSyncing(false);
-      return;
-    }
-    
+    if (!db || !user) return;
     const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
       setProfile(doc.data());
-      setIsSyncing(false);
-    }, (err) => {
-      console.warn("Profile sync limited:", err);
-      setIsSyncing(false);
     });
     return () => unsub();
   }, [db, user]);
@@ -47,47 +36,30 @@ export default function SovereignEcosystemHub() {
   }, [db, user]);
   const { data: recentTransactions } = useCollection(transQuery);
 
-  // Default values for initial render
-  const displayProfile = profile || {
-    balance: 0,
-    trustScore: 0,
-    digitalId: "SYS-SYNC-PENDING"
-  };
+  const displayProfile = profile || { balance: 0, trustScore: 0, digitalId: "SYNC-PENDING" };
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans" dir="rtl">
-      {/* Atmosphere Backdrop */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[20%] w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full" />
-      </div>
-
-      <main className="max-w-7xl mx-auto relative z-10 space-y-12">
+      <div className="max-w-7xl mx-auto relative z-10 space-y-12">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl border border-white/10">
-                <Fingerprint className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-black tracking-tighter text-white">الكيان السيادي <span className="text-primary"> الرقمي</span></h1>
-                <p className="text-white/30 text-sm font-bold tracking-[0.2em] uppercase flex items-center gap-2">
-                  User ID: {displayProfile.digitalId}
-                  {isSyncing && <Activity className="h-3 w-3 animate-spin opacity-50" />}
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl">
+              <Fingerprint className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tighter text-white">الكيان السيادي <span className="text-primary">الرقمي</span></h1>
+              <p className="text-white/30 text-sm font-bold tracking-[0.2em]">User ID: {displayProfile.digitalId}</p>
             </div>
           </div>
         </header>
 
-        {/* Vital Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard label="رصيد المحفظة" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} color="emerald" />
-          <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} color="indigo" />
-          <StatCard label="الحالة الأمنية" value={profile?.isBanned ? "Banned" : "Safe"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} color={profile?.isBanned ? "red" : "amber"} />
-          <StatCard label="الذكاء النشط" value="Ready" icon={<Sparkles className="text-purple-400" />} color="purple" />
+          <StatCard label="رصيد المحفظة" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
+          <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} />
+          <StatCard label="الحالة الأمنية" value={profile?.isBanned ? "Banned" : "Safe"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} />
+          <StatCard label="الذكاء النشط" value="Ready" icon={<Sparkles className="text-purple-400" />} />
         </div>
 
-        {/* Main Grid */}
         <div className="grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">
             <div className="grid md:grid-cols-2 gap-6">
@@ -113,19 +85,19 @@ export default function SovereignEcosystemHub() {
             </Card>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
 
-function StatCard({ label, value, icon, progress, color }: any) {
+function StatCard({ label, value, icon, progress }: any) {
   return (
-    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8 shadow-xl">
+    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8">
       <div className="flex justify-between items-start mb-6">
-        <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center shadow-inner">{icon}</div>
+        <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center">{icon}</div>
       </div>
-      <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">{label}</p>
-      <h4 className="text-3xl font-black text-white tabular-nums tracking-tighter">{value}</h4>
+      <p className="text-[10px] text-white/30 font-black uppercase mb-1">{label}</p>
+      <h4 className="text-3xl font-black text-white">{value}</h4>
       {progress !== undefined && <Progress value={progress} className="h-1 mt-6 bg-white/5" />}
     </Card>
   );
@@ -134,7 +106,7 @@ function StatCard({ label, value, icon, progress, color }: any) {
 function EcosystemCard({ href, title, desc, icon, action }: any) {
   return (
     <Link href={href} className="group">
-      <Card className="glass-cosmic border-none rounded-[3rem] p-10 h-full hover:scale-[1.02] transition-all shadow-2xl relative overflow-hidden">
+      <Card className="glass-cosmic border-none rounded-[3rem] p-10 h-full hover:scale-[1.02] transition-all">
          <div className="h-16 w-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center mb-8 group-hover:bg-primary/10 transition-colors">{icon}</div>
          <h3 className="text-3xl font-black text-white mb-4">{title}</h3>
          <p className="text-white/30 font-bold text-lg">{desc}</p>

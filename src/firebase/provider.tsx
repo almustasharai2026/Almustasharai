@@ -59,11 +59,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان عدم تجمد الواجهة
+    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان ظهور الواجهة
     const safetyTimer = setTimeout(() => {
       setUserAuthState(prev => {
         if (prev.isUserLoading) {
-          console.warn("Sovereign Safety Trigger: Forcing end of loading state.");
+          console.warn("Sovereign Safety Trigger: Forced loading completion.");
           return { ...prev, isUserLoading: false };
         }
         return prev;
@@ -71,7 +71,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     }, 2000);
 
     if (!auth) {
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not available.") });
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service unavailable.") });
       clearTimeout(safetyTimer);
       return;
     }
