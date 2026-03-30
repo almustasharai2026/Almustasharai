@@ -12,6 +12,13 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'role', 'isBanned'])) || isAdmin();
       allow delete: if isAdmin();
+
+      match /chatSessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+        match /messages/{msgId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
     }
 
     match /consultantProfiles/{id} {

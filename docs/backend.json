@@ -43,6 +43,28 @@
         "startedAt": { "type": "string", "format": "date-time" }
       }
     },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "جلسة محادثة مع البوت الذكي.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "characterId": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "رسالة فردية داخل جلسة محادثة.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
     "ForbiddenWord": {
       "title": "ForbiddenWord",
       "description": "الكلمات المحظورة في النظام الرقابي.",
@@ -60,6 +82,14 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "ملفات المستخدمين"
+    },
+    "/users/{userId}/chatSessions/{sessionId}": {
+      "schema": "ChatSession",
+      "description": "جلسات محادثة المستخدم"
+    },
+    "/users/{userId}/chatSessions/{sessionId}/messages/{msgId}": {
+      "schema": "ChatMessage",
+      "description": "رسائل المحادثة"
     },
     "/consultantProfiles/{id}": {
       "schema": "ConsultantProfile",
