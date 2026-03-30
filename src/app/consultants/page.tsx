@@ -7,15 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, Scale, Video, Activity, Loader2, Sparkles } from "lucide-react";
-import { useFirestore, useCollection } from "@/firebase";
+import { Search, Star, Scale, Video, Activity, Loader2, Sparkles, CalendarCheck } from "lucide-react";
+import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { motion, AnimatePresence } from "framer-motion";
+import { createSovereignBooking } from "@/lib/sovereign-booking";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function ConsultantsMarketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const db = useFirestore();
+  const { user, profile } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const consultantsQuery = useMemoFirebase(() => {
     if (!db) return null;
@@ -28,6 +34,27 @@ export default function ConsultantsMarketplace() {
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleBookSession = (consultant: any) => {
+    if (!user) {
+      toast({ title: "بروتوكول مجهول", description: "يجب تسجيل الدخول لحجز جلسة مع الخبراء." });
+      router.push("/auth/login");
+      return;
+    }
+
+    const sessionPrice = 25; // السعر الافتراضي للجلسة
+    if (profile && profile.balance < sessionPrice && profile.role !== 'admin') {
+      toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "تحتاج إلى ٢٥ جنيه على الأقل لحجز جلسة." });
+      router.push("/pricing");
+      return;
+    }
+
+    createSovereignBooking(db!, user.uid, consultant.id, sessionPrice);
+    toast({ 
+      title: "تم طلب الحجز", 
+      description: `جاري تأكيد الجلسة مع المستشار ${consultant.name}.` 
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white p-8 lg:p-20 font-sans" dir="rtl">
@@ -82,10 +109,16 @@ export default function ConsultantsMarketplace() {
                          {c.specialization} <Sparkles className="h-3 w-3" />
                       </p>
                     </CardHeader>
-                    <CardFooter className="p-10 pt-0">
+                    <CardFooter className="p-10 pt-0 flex flex-col gap-4">
+                      <Button 
+                        onClick={() => handleBookSession(c)}
+                        className="w-full btn-primary h-20 rounded-[2rem] text-xl font-black shadow-2xl gap-3"
+                      >
+                        <CalendarCheck className="h-6 w-6" /> حجز جلسة استشارة
+                      </Button>
                       <Link href={`/consultants/${c.id}/call`} className="w-full">
-                        <Button className="w-full btn-primary h-20 rounded-[2rem] text-xl font-black shadow-2xl">
-                          حجز جلسة استشارة
+                        <Button variant="outline" className="w-full h-14 rounded-2xl border-white/5 text-white/40 hover:text-white font-black text-xs uppercase tracking-widest">
+                          دخول الغرفة (للحالات النشطة)
                         </Button>
                       </Link>
                     </CardFooter>

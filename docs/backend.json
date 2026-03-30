@@ -36,6 +36,19 @@
         "balance": { "type": "number", "default": 0 },
         "lastUpdate": { "type": "string", "format": "date-time" }
       }
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "سجل حجز جلسة استشارية بين مواطن وخبير.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "consultantId": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "consultantId", "price", "status"]
     }
   },
   "auth": {
@@ -53,6 +66,10 @@
     "/wallets/{userId}": {
       "schema": "Wallet",
       "description": "المحافظ المالية المستقلة"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "سجلات الحجز السيادي"
     }
   }
 }

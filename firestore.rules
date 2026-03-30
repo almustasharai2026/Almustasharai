@@ -36,6 +36,13 @@ service cloud.firestore {
       }
     }
 
+    // Bookings
+    match /bookings/{id} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow create: if isSignedIn() && isNotBanned() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
     // Payment Requests
     match /paymentRequests/{id} {
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
