@@ -33,17 +33,27 @@ export default function ProfessionalLiveRoom() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const consultantRef = useMemoFirebase(() => doc(db!, "consultantProfiles", params.id as string), [db, params.id]);
+  // Corrected collection name to match rules and backend schema
+  const consultantRef = useMemoFirebase(() => {
+    if (!db || !params.id) return null;
+    return doc(db, "consultants", params.id as string);
+  }, [db, params.id]);
   const { data: consultant } = useDoc(consultantRef);
 
-  const wordsQuery = useMemoFirebase(() => collection(db!, "system", "moderation", "forbiddenWords"), [db]);
+  const wordsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "system", "moderation", "forbiddenWords");
+  }, [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
-  const messagesQuery = useMemoFirebase(() => query(
-    collection(db!, "liveConsultations", params.id as string, "messages"), 
-    orderBy("timestamp", "asc"), 
-    limit(100)
-  ), [db, params.id]);
+  const messagesQuery = useMemoFirebase(() => {
+    if (!db || !params.id) return null;
+    return query(
+      collection(db, "liveConsultations", params.id as string, "messages"), 
+      orderBy("timestamp", "asc"), 
+      limit(100)
+    );
+  }, [db, params.id]);
   const { data: messages } = useCollection(messagesQuery);
 
   const userRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user]);
@@ -54,7 +64,7 @@ export default function ProfessionalLiveRoom() {
       router.push("/");
       toast({ variant: "destructive", title: "حساب محظور", description: "تم حظر دخولك للنظام لمخالفة القوانين." });
     }
-  }, [currentUser, router]);
+  }, [currentUser, router, toast]);
 
   useEffect(() => {
     const initMedia = async () => {
@@ -73,31 +83,27 @@ export default function ProfessionalLiveRoom() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!chatMessage.trim() || !user || hasViolated) return;
+    if (!chatMessage.trim() || !user || !db || hasViolated) return;
 
-    const violation = forbiddenWords?.find(fw => chatMessage.toLowerCase().includes(fw.word.toLowerCase()));
+    const violation = forbiddenWords?.find(fw => chatMessage.toLowerCase().includes(String(fw.word).toLowerCase()));
     
     if (violation) {
       setHasViolated(true);
-      await updateDoc(doc(db!, "users", user.uid), { isBanned: true });
-      await setDoc(doc(db!, "liveConsultations", params.id as string), { status: "terminated" }, { merge: true });
+      updateDoc(doc(db, "users", user.uid), { isBanned: true });
+      setDoc(doc(db, "liveConsultations", params.id as string), { status: "terminated" }, { merge: true });
       toast({ variant: "destructive", title: "انتهاك سيادي!", description: "لقد استخدمت كلمات محظورة. تم حظر حسابك فوراً." });
       setTimeout(() => router.push("/"), 3000);
       return;
     }
 
-    try {
-      await addDoc(collection(db!, "liveConsultations", params.id as string, "messages"), {
-        text: chatMessage,
-        senderId: user.uid,
-        senderName: user.displayName || "عميل",
-        timestamp: new Date().toISOString(),
-        role: "user"
-      });
-      setChatMessage("");
-    } catch (e) {
-      console.error(e);
-    }
+    addDoc(collection(db, "liveConsultations", params.id as string, "messages"), {
+      text: chatMessage,
+      senderId: user.uid,
+      senderName: user.displayName || "عميل",
+      timestamp: new Date().toISOString(),
+      role: "user"
+    });
+    setChatMessage("");
   };
 
   if (hasViolated) {
