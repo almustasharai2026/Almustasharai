@@ -2,112 +2,110 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut, Gavel, Menu, Search, Bell, Scale } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { useUser, useFirestore } from "@/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
-import { motion } from "framer-motion";
-
-const SovereignLogo = () => (
-  <div className="flex items-center gap-3 group">
-    <div className="h-10 w-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)] group-hover:scale-110 transition-all duration-500">
-      <Scale className="h-5 w-5 text-white" />
-    </div>
-    <div className="flex flex-col -space-y-1">
-      <span className="font-black text-xl tracking-tight text-white">المستشار</span>
-      <span className="text-[8px] font-black uppercase tracking-[0.4em] text-indigo-400">AI Sovereign</span>
-    </div>
-  </div>
-);
+import { Scale, Fingerprint, Coins, Bell, Terminal, Menu, X } from "lucide-react";
+import { useUser } from "@/firebase";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 export function Navbar() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const { user } = useUser();
-  const db = useFirestore();
-  const [userData, setUserData] = useState<any>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!db || !user) {
-      setUserData(null);
-      return;
-    }
-    const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
-      setUserData(doc.data());
-    });
-    return () => unsub();
-  }, [db, user]);
-
-  if (!mounted) return null;
+  const { user, profile } = useUser();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <motion.nav 
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-6xl px-6"
+      className="fixed top-8 left-1/2 -translate-x-1/2 z-[150] w-full max-w-6xl px-6"
     >
-      <div className="glass-cosmic border-white/10 h-16 rounded-[1.8rem] px-6 flex items-center justify-between shadow-2xl">
+      <div className="glass-cosmic border-white/10 h-20 rounded-[2rem] px-10 flex items-center justify-between shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
         
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-12">
           <Link href="/">
-            <SovereignLogo />
+            <div className="flex items-center gap-4 group">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-all duration-500 border border-white/10">
+                <Scale className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex flex-col -space-y-1">
+                <span className="font-black text-2xl tracking-tighter text-white">المستشار</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400">AI Sovereign</span>
+              </div>
+            </div>
           </Link>
           
-          <div className="hidden lg:flex items-center gap-6">
-            <NavLink href="/bot">البوت</NavLink>
+          <div className="hidden lg:flex items-center gap-8">
+            <NavLink href="/bot">محرك القرار</NavLink>
             <NavLink href="/templates">المكتبة</NavLink>
-            <NavLink href="/consultants">الخبراء</NavLink>
+            <NavLink href="/consultants">مجلس الخبراء</NavLink>
             <NavLink href="/pricing">الباقات</NavLink>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-1.5 glass bg-white/5 rounded-2xl px-4 h-10 border-white/5">
-             <Search className="h-3.5 w-3.5 text-white/20" />
-             <input placeholder="بحث..." className="bg-transparent border-none text-[10px] font-bold focus:ring-0 w-24 placeholder:text-white/10" />
-          </div>
-
-          <div className="h-10 w-px bg-white/5 mx-2" />
-
+        <div className="flex items-center gap-6">
           {user ? (
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white hover:bg-white/5 relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 bg-indigo-500 rounded-full border-2 border-slate-950" />
-              </Button>
+            <div className="flex items-center gap-6">
+              <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-2 rounded-2xl">
+                 <Coins className="h-4 w-4 text-amber-400" />
+                 <span className="text-sm font-black tabular-nums">{profile?.balance || 0} <span className="text-[10px] text-white/30">EGP</span></span>
+              </div>
               
               <Link href="/dashboard">
-                <div className="h-10 w-10 rounded-2xl border-2 border-indigo-500/30 overflow-hidden hover:scale-105 transition-all p-0.5">
-                  <div className="h-full w-full rounded-xl bg-indigo-600 flex items-center justify-center font-black text-xs">
+                <div className="h-12 w-12 rounded-2xl border-2 border-indigo-500/30 overflow-hidden hover:scale-110 transition-all p-0.5 shadow-2xl">
+                  <div className="h-full w-full rounded-xl bg-indigo-600 flex items-center justify-center font-black text-sm text-white">
                     {user.email?.charAt(0).toUpperCase()}
                   </div>
                 </div>
               </Link>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/auth/login">
-                <Button variant="ghost" className="text-white/60 font-black text-xs hover:text-white">دخول</Button>
+            <div className="flex items-center gap-4">
+              <Link href="/auth/login" className="hidden sm:block">
+                <Button variant="ghost" className="text-white/40 font-black text-xs hover:text-white tracking-widest">دخول</Button>
               </Link>
               <Link href="/auth/signup">
-                <Button className="btn-primary h-10 px-6 rounded-xl font-black text-xs">انضمام</Button>
+                <Button className="btn-primary h-12 px-8 rounded-2xl text-[10px]">انضمام سيادي</Button>
               </Link>
             </div>
           )}
+          
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/40">
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute top-24 left-6 right-6 glass-cosmic rounded-[2.5rem] p-8 lg:hidden border-white/10"
+          >
+            <div className="grid gap-6">
+              <MobileNavLink href="/bot" onClick={() => setIsMobileMenuOpen(false)}>محرك القرار</MobileNavLink>
+              <MobileNavLink href="/templates" onClick={() => setIsMobileMenuOpen(false)}>المكتبة</MobileNavLink>
+              <MobileNavLink href="/consultants" onClick={() => setIsMobileMenuOpen(false)}>مجلس الخبراء</MobileNavLink>
+              <MobileNavLink href="/pricing" onClick={() => setIsMobileMenuOpen(false)}>الباقات</MobileNavLink>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }
 
 function NavLink({ href, children }: { href: string, children: React.ReactNode }) {
   return (
-    <Link href={href} className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all">
+    <Link href={href} className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:text-white transition-all relative group">
+      {children}
+      <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-500" />
+    </Link>
+  );
+}
+
+function MobileNavLink({ href, children, onClick }: any) {
+  return (
+    <Link href={href} onClick={onClick} className="text-xl font-black text-white/60 hover:text-primary block py-2 border-b border-white/5 last:border-0 transition-colors">
       {children}
     </Link>
   );

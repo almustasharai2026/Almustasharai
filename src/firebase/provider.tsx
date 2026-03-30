@@ -2,51 +2,27 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-
-interface FirebaseProviderProps {
-  children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
-}
 
 interface UserAuthState {
   user: User | null;
   isUserLoading: boolean;
-  userError: Error | null;
 }
 
 export interface FirebaseContextState {
-  areServicesAvailable: boolean;
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
   user: User | null;
   isUserLoading: boolean;
-  userError: Error | null;
-}
-
-export interface FirebaseServicesAndUser {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
-  user: User | null;
-  isUserLoading: boolean;
-  userError: Error | null;
-}
-
-export interface UserHookResult {
-  user: User | null;
-  isUserLoading: boolean;
-  userError: Error | null;
+  profile: any | null;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
-export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
+export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: FirebaseApp; firestore: Firestore; auth: Auth }> = ({
   children,
   firebaseApp,
   firestore,
@@ -55,99 +31,71 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
     isUserLoading: true,
-    userError: null,
   });
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 FORCE STOP LOADING بعد 3 ثوانٍ لضمان ظهور الواجهة (Sovereign Safety Valve)
+    // 🔥 صمام أمان لكسر حلقة التحميل (2 ثانية)
     const safetyTimer = setTimeout(() => {
-      setUserAuthState(prev => {
-        if (prev.isUserLoading) {
-          console.warn("Sovereign Safety Trigger: Forced loading completion after 3s timeout.");
-          return { ...prev, isUserLoading: false };
-        }
-        return prev;
-      });
-    }, 3000);
+      setUserAuthState(prev => ({ ...prev, isUserLoading: false }));
+    }, 2500);
 
-    if (!auth) {
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service unavailable.") });
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setUserAuthState({ user: firebaseUser, isUserLoading: false });
       clearTimeout(safetyTimer);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (firebaseUser) => {
-        clearTimeout(safetyTimer);
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-      },
-      (error) => {
-        clearTimeout(safetyTimer);
-        console.error("Firebase Auth Error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
-      }
-    );
+    });
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
       clearTimeout(safetyTimer);
     };
   }, [auth]);
 
-  const contextValue = useMemo((): FirebaseContextState => {
-    const servicesAvailable = !!(firebaseApp && firestore && auth);
-    return {
-      areServicesAvailable: servicesAvailable,
-      firebaseApp: servicesAvailable ? firebaseApp : null,
-      firestore: servicesAvailable ? firestore : null,
-      auth: servicesAvailable ? auth : null,
-      user: userAuthState.user,
-      isUserLoading: userAuthState.isUserLoading,
-      userError: userAuthState.userError,
-    };
-  }, [firebaseApp, firestore, auth, userAuthState]);
+  // مزامنة الملف الشخصي اللحظية
+  useEffect(() => {
+    if (!firestore || !userAuthState.user) {
+      setProfile(null);
+      return;
+    }
+    const unsub = onSnapshot(doc(firestore, "users", userAuthState.user.uid), (doc) => {
+      if (doc.exists()) setProfile(doc.data());
+    });
+    return () => unsub();
+  }, [firestore, userAuthState.user]);
+
+  const contextValue = useMemo(() => ({
+    firebaseApp,
+    firestore,
+    auth,
+    user: userAuthState.user,
+    isUserLoading: userAuthState.isUserLoading,
+    profile
+  }), [firebaseApp, firestore, auth, userAuthState, profile]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
-      {/* ✅ نعرض الـ children دائمًا لتجنب الصفحة البيضاء */}
       {children}
     </FirebaseContext.Provider>
   );
 };
 
-export const useFirebase = (): FirebaseServicesAndUser => {
+export const useUser = () => {
   const context = useContext(FirebaseContext);
-  if (context === undefined) throw new Error('useFirebase must be used within a FirebaseProvider.');
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
-    throw new Error('Firebase core services not available.');
-  }
-  return {
-    firebaseApp: context.firebaseApp,
-    firestore: context.firestore,
-    auth: context.auth,
-    user: context.user,
-    isUserLoading: context.isUserLoading,
-    userError: context.userError,
+  return { 
+    user: context?.user || null, 
+    isUserLoading: context?.isUserLoading ?? true,
+    profile: context?.profile || null
   };
 };
 
-export const useAuth = (): Auth => useFirebase().auth;
-export const useFirestore = (): Firestore => useFirebase().firestore;
-export const useFirebaseApp = (): FirebaseApp => useFirebase().firebaseApp;
+export const useFirestore = () => useContext(FirebaseContext)?.firestore || null;
+export const useAuth = () => useContext(FirebaseContext)?.auth || null;
 
-type MemoFirebase<T> = T & {__memo?: boolean};
-
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
+export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
   const memoized = useMemo(factory, deps);
-  if(typeof memoized !== 'object' || memoized === null) return memoized;
-  (memoized as MemoFirebase<T>).__memo = true;
+  if (typeof memoized === 'object' && memoized !== null) {
+    (memoized as any).__memo = true;
+  }
   return memoized;
 }
-
-export const useUser = (): UserHookResult => {
-  const context = useContext(FirebaseContext);
-  if (context === undefined) return { user: null, isUserLoading: true, userError: null };
-  return { user: context.user, isUserLoading: context.isUserLoading, userError: context.userError };
-};

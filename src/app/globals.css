@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    --background: 222 47% 4%;
+    --background: 222 47% 2%;
     --foreground: 213 31% 91%;
-    --card: 222 47% 6%;
+    --card: 222 47% 4%;
     --card-foreground: 213 31% 91%;
-    --popover: 222 47% 6%;
+    --popover: 222 47% 4%;
     --popover-foreground: 213 31% 91%;
-    --primary: 230 100% 67%; /* Indigo-ish blue */
+    --primary: 230 100% 67%; 
     --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 12%;
+    --secondary: 222 47% 10%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 12%;
+    --muted: 222 47% 10%;
     --muted-foreground: 215 20% 65%;
-    --accent: 38 92% 50%; /* Warm Gold/Amber */
-    --accent-foreground: 222 47% 4%;
+    --accent: 38 92% 50%; 
+    --accent-foreground: 222 47% 2%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 222 47% 12%;
-    --input: 222 47% 12%;
+    --border: 222 47% 10%;
+    --input: 222 47% 10%;
     --ring: 230 100% 67%;
-    --radius: 1.25rem;
+    --radius: 1.5rem;
   }
 }
 
 @layer utilities {
   .glass-cosmic {
-    @apply bg-slate-950/40 backdrop-blur-3xl border border-white/[0.05] shadow-2xl;
+    @apply bg-slate-950/60 backdrop-blur-3xl border border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.5)];
   }
   
   .glass-card {
-    @apply bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] hover:bg-white/[0.04] transition-all duration-500;
+    @apply bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] hover:bg-white/[0.05] transition-all duration-500 shadow-xl;
   }
 
   .text-gradient {
@@ -41,26 +41,23 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary/90 shadow-[0_0_25px_rgba(99,102,241,0.3)] transition-all active:scale-95;
+    @apply bg-indigo-600 text-white hover:bg-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] transition-all active:scale-95 font-black uppercase tracking-widest;
   }
 
-  .cosmic-glow {
-    @apply absolute -z-10 blur-[120px] rounded-full opacity-30;
+  .sovereign-badge {
+    @apply inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400;
   }
 }
 
 body {
-  background: radial-gradient(circle at 50% -20%, hsla(230, 100%, 20%, 0.3) 0%, transparent 50%),
-              radial-gradient(circle at 0% 100%, hsla(38, 100%, 10%, 0.1) 0%, transparent 40%),
-              hsl(222, 47% , 2%);
+  background: radial-gradient(circle at 50% -20%, hsla(230, 100%, 20%, 0.4) 0%, transparent 50%),
+              radial-gradient(circle at 0% 100%, hsla(38, 100%, 15%, 0.15) 0%, transparent 40%),
+              #02040a;
   background-attachment: fixed;
   font-family: 'Cairo', sans-serif;
   overflow-x: hidden;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full;
+.mirror {
+  transform: scaleX(-1);
 }

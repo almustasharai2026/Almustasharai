@@ -1,110 +1,125 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser } from "@/firebase";
 import { motion } from "framer-motion";
 import { 
-  Shield, Wallet, Zap, FileCheck, ChevronRight, Fingerprint, Sparkles, Lock, Activity, Loader2
+  Shield, Wallet, Zap, FileCheck, ChevronLeft, Fingerprint, Sparkles, Lock, Activity, LayoutDashboard, Terminal, Gavel
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { doc, onSnapshot, collection, query, orderBy, limit } from "firebase/firestore";
-import { useMemoFirebase } from "@/firebase/provider";
 
 export default function SovereignEcosystemHub() {
-  const { user, isUserLoading } = useUser();
-  const db = useFirestore();
-  const [profile, setProfile] = useState<any>(null);
+  const { user, profile, isUserLoading } = useUser();
 
-  useEffect(() => {
-    if (!db || !user) return;
-    // Real-time listener without blocking render
-    const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
-      setProfile(doc.data());
-    }, (err) => console.warn("Sovereign sync limited."));
-    return () => unsub();
-  }, [db, user]);
-
-  const transQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return query(
-      collection(db, "users", user.uid, "transactions"), 
-      orderBy("timestamp", "desc"), 
-      limit(5)
-    );
-  }, [db, user]);
-  
-  const { data: recentTransactions } = useCollection(transQuery);
-
-  // ❌ NO BLOCKING: render UI even if loading or no user
+  // بيانات افتراضية لضمان عدم توقف الواجهة
   const displayProfile = profile || { 
-    balance: user ? "..." : 0, 
-    trustScore: user ? 50 : 0, 
-    digitalId: user ? "SYNCING..." : "GUEST-ID" 
+    balance: user ? "جاري المزامنة..." : 0, 
+    trustScore: 85, 
+    digitalId: user ? `SOV-${user.uid.substring(0,8).toUpperCase()}` : "GUEST-ID" 
   };
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans" dir="rtl">
-      {/* ⚠️ Loading Alert Bar (Forced Safe Mode Indicator) */}
-      {isUserLoading && (
-        <div className="fixed top-0 left-0 w-full bg-primary/10 border-b border-primary/20 py-1 text-center text-[8px] font-black tracking-widest z-[200]">
-          SYNCHRONIZING SOVEREIGN ASSETS... (SAFE MODE ACTIVE)
-        </div>
-      )}
+    <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans overflow-hidden" dir="rtl">
+      
+      {/* Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-600/5 blur-[150px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full" />
+      </div>
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-12">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl">
-              <Fingerprint className="h-8 w-8 text-white" />
+      <div className="max-w-7xl mx-auto relative z-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        
+        {/* Hub Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="flex items-center gap-6">
+            <div className="h-20 w-20 rounded-[2rem] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.3)] border border-white/10">
+              <Fingerprint className="h-10 w-10 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-black tracking-tighter text-white">الكيان السيادي <span className="text-primary">الرقمي</span></h1>
-              <p className="text-white/30 text-sm font-bold tracking-[0.2em]">User ID: {displayProfile.digitalId}</p>
+              <div className="sovereign-badge mb-2">Sovereign Identity Protocol v4.0</div>
+              <h1 className="text-5xl font-black tracking-tighter text-white">المركز <span className="text-primary">السيادي</span></h1>
+              <p className="text-white/30 text-sm font-bold tracking-[0.3em] mt-1">{displayProfile.digitalId}</p>
             </div>
           </div>
           
-          {!user && !isUserLoading && (
-            <Link href="/auth/login">
-              <Button className="btn-primary rounded-xl px-8 h-12 font-black">تسجيل الدخول للوصول الكامل</Button>
-            </Link>
-          )}
+          <div className="flex gap-4">
+            {profile?.role === 'admin' && (
+              <Link href="/admin">
+                <Button variant="outline" className="h-14 px-8 rounded-2xl border-primary/20 bg-primary/5 text-primary font-black gap-3 hover:bg-primary/10">
+                  <Terminal className="h-5 w-5" /> غرفة القيادة
+                </Button>
+              </Link>
+            )}
+            {!user && (
+              <Link href="/auth/login">
+                <Button className="btn-primary h-14 px-10 rounded-2xl">تسجيل الدخول</Button>
+              </Link>
+            )}
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard label="رصيد المحفظة" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
+        {/* Global Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StatCard label="الرصيد السيادي" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
           <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} />
-          <StatCard label="الحالة الأمنية" value={profile?.isBanned ? "Banned" : "Safe"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} />
-          <StatCard label="الذكاء النشط" value="Ready" icon={<Sparkles className="text-purple-400" />} />
+          <StatCard label="حالة الامتثال" value={displayProfile.isBanned ? "Banned" : "Compliant"} icon={<Lock className={displayProfile.isBanned ? "text-red-400" : "text-amber-400"} />} />
+          <StatCard label="المستشارين المتاحين" value="١٢ خبير" icon={<Gavel className="text-purple-400" />} />
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-8 space-y-8">
-            <div className="grid md:grid-cols-2 gap-6">
-              <EcosystemCard href="/bot" title="محرك القرار" desc="بدء تحليل استراتيجي فوري للحالات المعقدة." icon={<Zap />} action="دخول" />
-              <EcosystemCard href="/templates" title="المكتبة" desc="توليد الوثائق السيادية المعتمدة فورياً." icon={<FileCheck />} action="استعراض" />
+        {/* Main Ecosystem Services */}
+        <div className="grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-10">
+            <h2 className="text-3xl font-black flex items-center gap-4"><Sparkles className="text-primary" /> البوابات النشطة</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              <PortalCard 
+                href="/bot" 
+                title="محرك القرار" 
+                desc="تحليل استراتيجي فوري باستخدام الذكاء الاصطناعي التنبؤي." 
+                icon={<Zap className="h-8 w-8" />} 
+                color="from-amber-500 to-orange-600"
+              />
+              <PortalCard 
+                href="/templates" 
+                title="مكتبة العقود" 
+                desc="توليد وثائق قانونية معتمدة وموثقة سيادياً." 
+                icon={<FileCheck className="h-8 w-8" />} 
+                color="from-blue-500 to-indigo-600"
+              />
+              <PortalCard 
+                href="/consultants" 
+                title="مجلس الخبراء" 
+                desc="اتصال فيديو مباشر ومشفر مع كبار المستشارين." 
+                icon={<Gavel className="h-8 w-8" />} 
+                color="from-purple-500 to-pink-600"
+              />
+              <PortalCard 
+                href="/pricing" 
+                title="شحن الرصيد" 
+                desc="إدارة باقات الوقت والوحدات المالية." 
+                icon={<Wallet className="h-8 w-8" />} 
+                color="from-emerald-500 to-teal-600"
+              />
             </div>
           </div>
-          <div className="lg:col-span-4">
-            <Card className="glass-cosmic border-none rounded-[3rem] p-8 shadow-2xl">
-               <h3 className="text-xl font-black mb-6">سجل العمليات المالي</h3>
-               <div className="space-y-4">
-                  {recentTransactions && recentTransactions.length > 0 ? (
-                    recentTransactions.map(t => (
-                      <div key={t.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                         <p className="text-xs font-black text-white/80">{t.service}</p>
-                         <span className={`font-black text-sm ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}`}>{t.amount}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-10 space-y-2 opacity-20">
-                       <Activity className="h-8 w-8 mx-auto" />
-                       <p className="text-[10px] font-bold uppercase tracking-widest">لا توجد معاملات حديثة</p>
+
+          <div className="lg:col-span-4 space-y-8">
+            <Card className="glass-cosmic border-none rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-6 opacity-5"><Activity className="h-32 w-32" /></div>
+               <h3 className="text-2xl font-black mb-8 border-b border-white/5 pb-4">آخر النشاطات</h3>
+               <div className="space-y-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.05] transition-all">
+                       <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:text-primary"><Activity className="h-5 w-5" /></div>
+                       <div>
+                          <p className="text-sm font-bold text-white/80">استشارة قانونية ذكية</p>
+                          <p className="text-[10px] text-white/20 font-black uppercase mt-1">منذ ٢ ساعة</p>
+                       </div>
                     </div>
-                  )}
+                  ))}
                </div>
+               <Button variant="ghost" className="w-full mt-8 rounded-xl text-white/30 font-black hover:text-white">عرض السجل الكامل</Button>
             </Card>
           </div>
         </div>
@@ -115,25 +130,28 @@ export default function SovereignEcosystemHub() {
 
 function StatCard({ label, value, icon, progress }: any) {
   return (
-    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8">
+    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8 group hover:scale-[1.05] transition-all duration-500">
       <div className="flex justify-between items-start mb-6">
-        <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center">{icon}</div>
+        <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center shadow-inner group-hover:bg-white/10 transition-colors border border-white/5">{icon}</div>
       </div>
-      <p className="text-[10px] text-white/30 font-black uppercase mb-1">{label}</p>
-      <h4 className="text-3xl font-black text-white tabular-nums">{value}</h4>
-      {progress !== undefined && <Progress value={progress} className="h-1 mt-6 bg-white/5" />}
+      <p className="text-[10px] text-white/30 font-black uppercase mb-1 tracking-widest">{label}</p>
+      <h4 className="text-3xl font-black text-white tabular-nums tracking-tighter">{value}</h4>
+      {progress !== undefined && <Progress value={progress} className="h-1.5 mt-6 bg-white/5" />}
     </Card>
   );
 }
 
-function EcosystemCard({ href, title, desc, icon, action }: any) {
+function PortalCard({ href, title, desc, icon, color }: any) {
   return (
-    <Link href={href} className="group">
-      <Card className="glass-cosmic border-none rounded-[3rem] p-10 h-full hover:scale-[1.02] transition-all">
-         <div className="h-16 w-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center mb-8 group-hover:bg-primary/10 transition-colors">{icon}</div>
-         <h3 className="text-3xl font-black text-white mb-4">{title}</h3>
+    <Link href={href}>
+      <Card className="glass-card border-none rounded-[3.5rem] p-10 h-full group relative overflow-hidden shadow-2xl">
+         <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${color}`} />
+         <div className="h-20 w-20 rounded-[2rem] bg-white/5 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-500 border border-white/5">{icon}</div>
+         <h3 className="text-3xl font-black text-white mb-4 group-hover:text-primary transition-colors">{title}</h3>
          <p className="text-white/30 font-bold text-lg leading-relaxed">{desc}</p>
-         <div className="mt-8 text-primary font-black text-xs uppercase tracking-widest">{action} <ChevronRight className="h-4 w-4 inline" /></div>
+         <div className="mt-10 flex items-center gap-3 text-primary font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+            فتح البوابة <ChevronRight className="h-4 w-4" />
+         </div>
       </Card>
     </Link>
   );
