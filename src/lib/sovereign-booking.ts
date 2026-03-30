@@ -26,7 +26,8 @@ export function createSovereignBooking(
     userId,
     consultantId,
     price,
-    status: "pending",
+    sessionId: "session_" + Date.now(),
+    status: "active",
     createdAt: serverTimestamp(),
   };
 

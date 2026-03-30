@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -46,8 +45,9 @@
       "properties": {
         "userId": { "type": "string" },
         "consultantId": { "type": "string" },
+        "sessionId": { "type": "string" },
         "price": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled", "active"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "consultantId", "price", "status"]
