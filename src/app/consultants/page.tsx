@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -13,6 +14,7 @@ import { collection } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { createSovereignBooking } from "@/lib/sovereign-booking";
+import { payForSovereignSession } from "@/lib/sovereign-wallet";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -36,23 +38,33 @@ export default function ConsultantsMarketplace() {
   );
 
   const handleBookSession = (consultant: any) => {
-    if (!user) {
+    if (!user || !db) {
       toast({ title: "بروتوكول مجهول", description: "يجب تسجيل الدخول لحجز جلسة مع الخبراء." });
       router.push("/auth/login");
       return;
     }
 
-    const sessionPrice = 25; // السعر الافتراضي للجلسة
-    if (profile && profile.balance < sessionPrice && profile.role !== 'admin') {
-      toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "تحتاج إلى ٢٥ جنيه على الأقل لحجز جلسة." });
+    const sessionPrice = 25; // السعر الافتراضي للجلسة بالجنيه
+    
+    // التحقق من الرصيد السيادي قبل البدء
+    const currentBalance = profile?.balance || 0;
+    if (currentBalance < sessionPrice && profile?.role !== 'admin') {
+      toast({ 
+        variant: "destructive", 
+        title: "الرصيد غير كافٍ", 
+        description: `تحتاج إلى ${sessionPrice} EGP على الأقل. رصيدك الحالي: ${currentBalance} EGP.` 
+      });
       router.push("/pricing");
       return;
     }
 
-    createSovereignBooking(db!, user.uid, consultant.id, sessionPrice);
+    // تفعيل بروتوكول الدفع ثم الحجز
+    payForSovereignSession(db, user.uid, consultant.id, sessionPrice);
+    createSovereignBooking(db, user.uid, consultant.id, sessionPrice);
+    
     toast({ 
-      title: "تم طلب الحجز", 
-      description: `جاري تأكيد الجلسة مع المستشار ${consultant.name}.` 
+      title: "تم تفعيل الحجز السيادي", 
+      description: `تم خصم ${sessionPrice} EGP وتوجيه طلب الحجز للمستشار ${consultant.name}.` 
     });
   };
 
@@ -94,7 +106,13 @@ export default function ConsultantsMarketplace() {
                 <motion.div key={c.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                   <Card className="glass-card border-none rounded-[4rem] overflow-hidden group hover:scale-[1.03] transition-all duration-700 shadow-2xl relative bg-slate-950/40">
                     <div className="relative h-80 w-full bg-[#050505]">
-                      <Image src={`https://picsum.photos/seed/${c.id}/800/800`} alt={c.name} fill className="object-cover opacity-40 group-hover:opacity-100 transition-all duration-1000 grayscale group-hover:grayscale-0" />
+                      <Image 
+                        src={`https://picsum.photos/seed/${c.id}/800/800`} 
+                        alt={c.name} 
+                        fill 
+                        className="object-cover opacity-40 group-hover:opacity-100 transition-all duration-1000 grayscale group-hover:grayscale-0" 
+                        data-ai-hint="expert portrait"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent" />
                     </div>
                     <CardHeader className="p-10 pb-4 text-right">
@@ -103,6 +121,7 @@ export default function ConsultantsMarketplace() {
                           <Star className="h-3.5 w-3.5 fill-primary" />
                           {c.rating || "5.0"}
                         </div>
+                        <Badge className="bg-primary/10 text-primary border-none font-black">٢٥ EGP / جلسة</Badge>
                       </div>
                       <CardTitle className="text-3xl font-black text-white">{c.name}</CardTitle>
                       <p className="text-primary font-black text-xs mt-3 uppercase tracking-widest flex items-center gap-2 justify-end">

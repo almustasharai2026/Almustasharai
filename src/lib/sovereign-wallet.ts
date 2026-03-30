@@ -17,7 +17,7 @@ import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/e
 /**
  * إنشاء المحفظة السيادية للمواطن الجديد في مسار /wallets.
  */
-export function createSovereignWallet(db: Firestore, userId: string, initialBalance: number = 100) {
+export function createSovereignWallet(db: Firestore, userId: string, initialBalance: number = 50) {
   const walletRef = doc(db, "wallets", userId);
   
   const data = {
@@ -33,6 +33,41 @@ export function createSovereignWallet(db: Firestore, userId: string, initialBala
         requestResourceData: data,
       } satisfies SecurityRuleContext));
     });
+}
+
+/**
+ * بروتوكول الدفع مقابل جلسة استشارية.
+ * يستخدم الخصم الذري (Atomic Deduction) لضمان سلامة الرصيد.
+ */
+export function payForSovereignSession(
+  db: Firestore, 
+  userId: string, 
+  consultantId: string, 
+  amount: number
+): void {
+  const walletRef = doc(db, "wallets", userId);
+  const transactionRef = collection(db, "wallets", userId, "transactions");
+
+  // خصم الرصيد بأسلوب غير حاصر
+  updateDoc(walletRef, {
+    balance: increment(-amount),
+    lastUpdate: serverTimestamp()
+  }).catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: walletRef.path,
+      operation: 'update',
+      requestResourceData: { amount: -amount, consultantId },
+    } satisfies SecurityRuleContext));
+  });
+
+  // تسجيل المعاملة في السجل السيادي
+  addDoc(transactionRef, {
+    amount: -amount,
+    type: "session_payment",
+    service: "استشارة فيديو مباشرة",
+    consultantId: consultantId,
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**
@@ -57,32 +92,6 @@ export function rechargeSovereignBalance(db: Firestore, userId: string, amount: 
     amount: amount,
     type: "recharge",
     service: reason,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * خصم الرصيد مقابل الخدمات من مسار /wallets.
- */
-export function deductSovereignBalance(db: Firestore, userId: string, amount: number, serviceName: string) {
-  const walletRef = doc(db, "wallets", userId);
-  const transactionRef = collection(db, "wallets", userId, "transactions");
-
-  updateDoc(walletRef, {
-    balance: increment(-amount),
-    lastUpdate: serverTimestamp()
-  }).catch(async (error) => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: walletRef.path,
-      operation: 'update',
-      requestResourceData: { amount: -amount, service: serviceName },
-    } satisfies SecurityRuleContext));
-  });
-
-  addDoc(transactionRef, {
-    amount: -amount,
-    type: "deduction",
-    service: serviceName,
     timestamp: new Date().toISOString()
   });
 }
