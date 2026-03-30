@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  Plus, ArrowUp, Sparkles, Scale, ChevronRight
+  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -14,7 +14,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
 export default function LovableInspiredPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const [activeTab, setActiveTab] = useState("my-projects");
   const [prompt, setInput] = useState("");
@@ -32,6 +32,13 @@ export default function LovableInspiredPage() {
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
+      {/* ⚠️ Non-blocking Loader for Auth */}
+      {isUserLoading && (
+        <div className="fixed top-0 left-0 w-full h-1 bg-primary/20 z-[200]">
+          <div className="h-full bg-primary animate-pulse" style={{ width: '30%' }} />
+        </div>
+      )}
+
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="cosmic-glow top-[-10%] left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-600/20" />
       </div>
@@ -86,16 +93,29 @@ export default function LovableInspiredPage() {
             <AnimatePresence mode="wait">
               {activeTab === "my-projects" && recentSessions && recentSessions.length > 0 ? (
                 recentSessions.map((session, i) => (
-                  <motion.div key={session.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                  <motion.div 
+                    key={session.id} 
+                    initial={{ opacity: 0, y: 20 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: i * 0.1 }}
+                  >
                     <CardProject session={session} />
                   </motion.div>
                 ))
-              ) : activeTab === "my-projects" && !sessionsLoading && (
-                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10">
+              ) : activeTab === "my-projects" && (
+                <motion.div 
+                  key="empty" 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10"
+                >
                    <Scale className="h-16 w-16 text-white/5 mx-auto" />
-                   <p className="text-white/20 font-bold">لا يوجد سجل استشارات حتى الآن</p>
+                   <p className="text-white/20 font-bold">
+                     {user ? (sessionsLoading ? "جاري جلب استشاراتك السيادية..." : "لا يوجد سجل استشارات حتى الآن") : "سجل دخولك لاستعراض استشاراتك"}
+                   </p>
+                   {user && sessionsLoading && <Loader2 className="h-6 w-6 animate-spin mx-auto opacity-20" />}
                    <Link href="/bot">
-                     <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ الآن</Button>
+                     <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ استشارة الآن</Button>
                    </Link>
                 </motion.div>
               )}
@@ -117,14 +137,19 @@ function TabButton({ active, onClick, label }: any) {
 
 function CardProject({ session }: any) {
   return (
-    <div className="group relative flex flex-col gap-5 p-2 rounded-[2.5rem] glass-card transition-all cursor-pointer">
+    <div className="group relative flex flex-col gap-5 p-2 rounded-[2.5rem] glass-card transition-all cursor-pointer overflow-hidden">
       <div className="relative aspect-video rounded-[2.2rem] overflow-hidden bg-slate-900 border border-white/5">
-        <Image src={`https://picsum.photos/seed/${session.id}/1200/675`} alt="Preview" fill className="object-cover opacity-40 group-hover:opacity-60 transition-all duration-700" />
+        <Image 
+          src={`https://picsum.photos/seed/${session.id}/1200/675`} 
+          alt="Preview" 
+          fill 
+          className="object-cover opacity-40 group-hover:opacity-60 transition-all duration-700" 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
-           <h3 className="text-xl font-black text-white truncate max-w-[250px]">{session.title || "استشارة بدون عنوان"}</h3>
+           <h3 className="text-xl font-black text-white truncate max-w-[250px]">{session.title || "استشارة سيادية"}</h3>
            <Badge variant="outline" className="bg-black/40 border-white/10 text-[9px] font-bold py-1.5 px-4 rounded-full">
-             {new Date(session.lastMessageAt).toLocaleDateString('ar-EG')}
+             {session.lastMessageAt ? new Date(session.lastMessageAt).toLocaleDateString('ar-EG') : "Just now"}
            </Badge>
         </div>
       </div>

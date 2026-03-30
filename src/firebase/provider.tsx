@@ -59,11 +59,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان ظهور الواجهة
+    // 🔥 FORCE STOP LOADING بعد 2 ثانية لضمان ظهور الواجهة (Emergency Safety Valve)
     const safetyTimer = setTimeout(() => {
       setUserAuthState(prev => {
         if (prev.isUserLoading) {
-          console.warn("Sovereign Safety Trigger: Forced loading completion.");
+          console.warn("Sovereign Safety Trigger: Forced loading completion after timeout.");
           return { ...prev, isUserLoading: false };
         }
         return prev;
@@ -111,6 +111,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
+      {/* ✅ نعرض الـ children دائمًا لتجنب الصفحة البيضاء */}
       {children}
     </FirebaseContext.Provider>
   );
