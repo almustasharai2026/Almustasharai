@@ -69,14 +69,15 @@ export default function ChatGPTStyleChat() {
   // Voice Recognition Setup
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) {
+        recognitionRef.current = new SR();
         recognitionRef.current.lang = "ar-EG";
         recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
         recognitionRef.current.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
-          setInput(prev => prev + " " + transcript);
+          setInput(prev => prev + (prev ? " " : "") + transcript);
           setIsListening(false);
         };
         recognitionRef.current.onend = () => setIsListening(false);
@@ -124,6 +125,7 @@ export default function ChatGPTStyleChat() {
     let currentSessId = sessionId;
 
     try {
+      // If no session exists, create one
       if (!currentSessId) {
         const sessRef = await addDoc(collection(db!, "users", user.uid, "chatSessions"), {
           title: textToSend.slice(0, 40),
@@ -135,33 +137,40 @@ export default function ChatGPTStyleChat() {
         setSessionId(currentSessId);
       }
 
+      // Add User Message
       await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
         role: "user",
         content: textToSend,
         timestamp: serverTimestamp()
       });
 
+      // Process with AI Flow
       const result = await processLegalQuery({
         prompt: textToSend,
         characterName: activeChar.name,
         characterDesc: activeChar.desc
       });
 
+      // Add AI Response
       await addDoc(collection(db!, "users", user.uid, "chatSessions", currentSessId, "messages"), {
         role: "assistant",
         content: result.response,
         timestamp: serverTimestamp()
       });
 
+      // Update Session Timestamp
       await updateDoc(doc(db!, "users", user.uid, "chatSessions", currentSessId), {
         lastMessageAt: serverTimestamp()
       });
 
+      // Deduct Balance
       if (userData.role !== 'admin') {
         await updateDoc(doc(db!, "users", user.uid), { balance: increment(-activeChar.cost) });
       }
 
-      setInput("");
+      // Clear main input if it wasn't a custom prompt
+      if (!customPrompt) setInput("");
+      
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "تعذر معالجة الاستشارة حالياً." });
     } finally {
@@ -175,7 +184,8 @@ export default function ChatGPTStyleChat() {
     setIsSidebarOpen(false);
   };
 
-  const deleteSession = async (id: string) => {
+  const deleteSession = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     if (!user) return;
     try {
       await deleteDoc(doc(db!, "users", user.uid, "chatSessions", id));
@@ -224,7 +234,7 @@ export default function ChatGPTStyleChat() {
                         {s.title}
                       </button>
                       <button 
-                        onClick={() => deleteSession(s.id)}
+                        onClick={(e) => deleteSession(e, s.id)}
                         className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-500 transition-all"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -238,10 +248,10 @@ export default function ChatGPTStyleChat() {
         )}
       </AnimatePresence>
 
-      {/* Desktop Sidebar Stub */}
-      <aside className="hidden lg:flex w-72 flex-col bg-[#171717] border-l border-white/5 p-4">
-          <Button onClick={startNewChat} className="w-full bg-white/5 hover:bg-white/10 text-white rounded-xl mb-6 h-12 gap-3 justify-start px-4 border border-white/5">
-            <Plus className="h-4 w-4" /> محادثة جديدة
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-72 flex-col bg-[#171717] border-l border-white/5 p-4 flex-shrink-0">
+          <Button onClick={startNewChat} className="w-full bg-white/5 hover:bg-white/10 text-white rounded-xl mb-6 h-12 gap-3 justify-start px-4 border border-white/5 group">
+            <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" /> محادثة جديدة
           </Button>
           <div className="flex-1 overflow-hidden flex flex-col">
             <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4 px-2">محادثات سابقة</p>
@@ -256,7 +266,7 @@ export default function ChatGPTStyleChat() {
                       {s.title}
                     </button>
                     <button 
-                      onClick={() => deleteSession(s.id)}
+                      onClick={(e) => deleteSession(e, s.id)}
                       className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-500 transition-all"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -279,21 +289,21 @@ export default function ChatGPTStyleChat() {
           </div>
       </aside>
 
-      <main className="flex-1 flex flex-col relative bg-black">
+      <main className="flex-1 flex flex-col relative bg-black min-w-0">
         
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-4 z-20 border-b border-white/5 lg:border-none">
+        <header className="h-16 flex items-center justify-between px-4 z-20 border-b border-white/5 lg:border-none backdrop-blur-md bg-black/50">
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-white/60 rounded-full h-10 w-10 hover:bg-white/10">
             <Menu className="h-5 w-5" />
           </Button>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/5">
+            <div className="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/5 shadow-inner">
                <Coins className="h-3.5 w-3.5 text-primary" />
                <span className="text-[10px] font-black tabular-nums text-primary">{userData?.balance || 0} EGP</span>
             </div>
             <Link href="/pricing">
-              <Button className="bg-white/5 hover:bg-white/10 text-white rounded-full px-6 h-10 border border-white/10 gap-2 text-xs font-bold transition-all">
+              <Button className="bg-white/5 hover:bg-white/10 text-white rounded-full px-6 h-10 border border-white/10 gap-2 text-xs font-bold transition-all shadow-xl">
                 <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
                 اشترك في Plus
               </Button>
@@ -321,25 +331,46 @@ export default function ChatGPTStyleChat() {
                 </div>
                 <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">كيف يمكنني المساعدة قانونياً؟</h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
-                  <QuickAction icon={<ImageIcon className="text-emerald-400" />} label="تحليل مستند قانوني" onClick={() => handleSend("ممكن تحلل لي هالمستند القانوني وتطلع لي الثغرات؟")} />
-                  <QuickAction icon={<FileText className="text-orange-400" />} label="لخص النص بأسلوب رصين" onClick={() => handleSend("لخص لي هالنص القانوني بأسلوب بسيط ومفهوم لغير المختصين.")} />
-                  <QuickAction icon={<Terminal className="text-blue-400" />} label="صياغة عقد إيجار موحد" onClick={() => handleSend("أريد صياغة عقد إيجار موحد متوافق مع تعديلات القانون الجديد.")} />
-                  <QuickAction icon={<Lightbulb className="text-amber-400" />} label="اقتراح خطة دفاع عمالية" onClick={() => handleSend("اقترح لي خطة للدفاع في قضية فصل تعسفي من العمل.")} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4">
+                  <QuickAction 
+                    icon={<ImageIcon className="text-emerald-400" />} 
+                    label="تحليل مستند قانوني" 
+                    onClick={() => handleSend("ممكن تحلل لي هالمستند القانوني وتطلع لي الثغرات؟")} 
+                  />
+                  <QuickAction 
+                    icon={<FileText className="text-orange-400" />} 
+                    label="لخص النص بأسلوب رصين" 
+                    onClick={() => handleSend("لخص لي هالنص القانوني بأسلوب بسيط ومفهوم لغير المختصين.")} 
+                  />
+                  <QuickAction 
+                    icon={<Terminal className="text-blue-400" />} 
+                    label="صياغة عقد إيجار موحد" 
+                    onClick={() => handleSend("أريد صياغة عقد إيجار موحد متوافق مع تعديلات القانون الجديد.")} 
+                  />
+                  <QuickAction 
+                    icon={<Lightbulb className="text-amber-400" />} 
+                    label="اقتراح خطة دفاع عمالية" 
+                    onClick={() => handleSend("اقترح لي خطة للدفاع في قضية فصل تعسفي من العمل.")} 
+                  />
                 </div>
               </motion.div>
             ) : (
               <div className="space-y-8 pb-40">
                 {messages.map((msg, i) => (
-                  <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-5 rounded-[1.8rem] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2f2f2f] text-white rounded-tr-none' : 'bg-white/5 border border-white/5 text-white/90 leading-loose rounded-tl-none'}`}>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    key={i} 
+                    className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[85%] p-5 rounded-[1.8rem] text-sm leading-relaxed shadow-xl border ${msg.role === 'user' ? 'bg-[#2f2f2f] text-white rounded-tr-none border-white/5' : 'bg-white/5 border-white/5 text-white/90 leading-loose rounded-tl-none'}`}>
                       {msg.content}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 {isLoading && (
                   <div className="flex gap-4">
-                    <div className="p-5 rounded-[1.8rem] bg-white/5 border border-white/5 rounded-tl-none">
+                    <div className="p-5 rounded-[1.8rem] bg-white/5 border border-white/5 rounded-tl-none shadow-xl">
                       <TypingDots />
                     </div>
                   </div>
@@ -350,20 +381,22 @@ export default function ChatGPTStyleChat() {
         </ScrollArea>
 
         {/* Floating Input Area */}
-        <div className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-10 bg-gradient-to-t from-black via-black to-transparent z-30">
+        <div className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-10 bg-gradient-to-t from-black via-black/90 to-transparent z-30">
           <div className="max-w-3xl mx-auto">
             
-            {isBalanceZero && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center mb-4">
-                <Link href="/pricing">
-                  <Badge variant="destructive" className="py-2 px-6 rounded-full bg-red-500/20 text-red-500 border border-red-500/20 font-black text-[10px] cursor-pointer hover:bg-red-500/30 transition-all">
-                    نفذ رصيدك السيادي - اضغط هنا للشحن الفوري
-                  </Badge>
-                </Link>
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {isBalanceZero && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="flex justify-center mb-4">
+                  <Link href="/pricing">
+                    <Badge variant="destructive" className="py-2 px-6 rounded-full bg-red-500/20 text-red-500 border border-red-500/20 font-black text-[10px] cursor-pointer hover:bg-red-500/30 transition-all shadow-2xl">
+                      نفذ رصيدك السيادي - اضغط هنا للشحن الفوري
+                    </Badge>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <div className={`bg-[#2f2f2f] rounded-[2rem] p-2 flex items-center gap-2 shadow-2xl transition-all border border-white/5 focus-within:border-white/20 ${isBalanceZero ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div className={`bg-[#2f2f2f] rounded-[2rem] p-2 flex items-center gap-2 shadow-[0_30px_60px_rgba(0,0,0,0.5)] transition-all border border-white/5 focus-within:border-white/20 ${isBalanceZero ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
               <div className="flex items-center gap-1">
                 <Button onClick={() => toast({title: "قيد المزامنة"})} variant="ghost" size="icon" className="h-10 w-10 rounded-full text-white/40 hover:text-white">
                   <AudioLines className="h-5 w-5" />
@@ -403,12 +436,12 @@ export default function ChatGPTStyleChat() {
                 </Button>
                 
                 <AnimatePresence>
-                  {input.trim() && (
+                  {(input.trim() || isLoading) && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
                       <Button 
                         onClick={() => handleSend()}
-                        disabled={isLoading}
-                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-indigo-50 p-0 shadow-xl"
+                        disabled={isLoading || !input.trim()}
+                        className="h-10 w-10 rounded-full bg-white text-black hover:bg-indigo-50 p-0 shadow-xl transition-transform active:scale-90"
                       >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-5 w-5" />}
                       </Button>
@@ -418,8 +451,8 @@ export default function ChatGPTStyleChat() {
               </div>
             </div>
             
-            <p className="text-[9px] text-center text-white/10 font-bold mt-4 tracking-widest uppercase">
-              Almustashar AI Sovereign System v4.0 - Verified Privacy
+            <p className="text-[9px] text-center text-white/10 font-bold mt-4 tracking-widest uppercase opacity-50">
+              Almustashar AI Sovereign System v4.0 - Encryption Verified
             </p>
           </div>
         </div>
@@ -447,7 +480,7 @@ function QuickAction({ icon, label, onClick }: any) {
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-4 p-5 rounded-[1.8rem] border border-white/5 bg-white/[0.02] hover:bg-white/5 transition-all text-right group"
+      className="flex items-center gap-4 p-5 rounded-[1.8rem] border border-white/5 bg-white/[0.02] hover:bg-white/5 transition-all text-right group shadow-lg"
     >
       <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner">
         {icon}
