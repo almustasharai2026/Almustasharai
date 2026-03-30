@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -24,6 +25,7 @@
         "name": { "type": "string" },
         "specialization": { "type": "string" },
         "rating": { "type": "number", "default": 5.0 },
+        "reviews": { "type": "number", "default": 0 },
         "isApproved": { "type": "boolean", "default": true }
       },
       "required": ["name", "specialization"]
