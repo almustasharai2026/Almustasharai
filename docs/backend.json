@@ -3,62 +3,52 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "الملف السيادي للمواطن الرقمي، يضم الرصيد، الهوية الرقمية، ومستوى الثقة.",
+      "description": "الملف السيادي للمواطن الرقمي، يضم الهوية الرقمية ومستوى الثقة.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "digitalId": { "type": "string", "description": "Unique Sovereign ID" },
+        "digitalId": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "fullName": { "type": "string" },
-        "balance": { "type": "number", "default": 50 },
         "role": { "type": "string", "enum": ["user", "consultant", "admin"] },
-        "trustScore": { "type": "number", "default": 100 },
         "isBanned": { "type": "boolean", "default": false },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "lastActivity": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "digitalId", "email", "fullName", "balance", "role"]
+      "required": ["id", "email", "fullName", "role"]
     },
-    "ConsultantProfile": {
-      "title": "ConsultantProfile",
-      "description": "ملف الخبير المعتمد في المنصة.",
+    "Consultant": {
+      "title": "Consultant",
+      "description": "ملف الخبير المعتمد في سوق الاستشارات.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "specialty": { "type": "string" },
-        "bio": { "type": "string" },
-        "hourlyRate": { "type": "number" },
+        "specialization": { "type": "string" },
         "rating": { "type": "number", "default": 5.0 },
-        "totalSessions": { "type": "number", "default": 0 },
         "isApproved": { "type": "boolean", "default": false },
         "isOnline": { "type": "boolean", "default": false }
+      },
+      "required": ["name", "specialization"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "المحفظة المالية السيادية للمواطن.",
+      "type": "object",
+      "properties": {
+        "balance": { "type": "number", "default": 100 },
+        "lastUpdate": { "type": "string", "format": "date-time" }
       }
     },
     "Transaction": {
       "title": "Transaction",
-      "description": "سجل المعاملات المالية داخل النظام البيئي.",
+      "description": "سجل المعاملات المالية.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "userId": { "type": "string" },
         "amount": { "type": "number" },
-        "type": { "type": "string", "enum": ["recharge", "deduction", "refund"] },
+        "type": { "type": "string", "enum": ["recharge", "deduction"] },
         "service": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "PaymentRequest": {
-      "title": "PaymentRequest",
-      "description": "طلب شحن رصيد مقدم من المواطن.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "amount": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -68,19 +58,19 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "بيانات المواطنين الرقميين"
+      "description": "بيانات الهوية السيادية"
     },
-    "/users/{userId}/transactions/{id}": {
+    "/consultants/{id}": {
+      "schema": "Consultant",
+      "description": "هيئة الخبراء المعتمدين"
+    },
+    "/wallets/{userId}": {
+      "schema": "Wallet",
+      "description": "المحافظ المالية للمواطنين"
+    },
+    "/wallets/{userId}/transactions/{id}": {
       "schema": "Transaction",
       "description": "سجل المحاسبة المالية"
-    },
-    "/paymentRequests/{id}": {
-      "schema": "PaymentRequest",
-      "description": "طلبات الشحن المعلقة"
-    },
-    "/consultantProfiles/{id}": {
-      "schema": "ConsultantProfile",
-      "description": "هيئة الخبراء"
     },
     "/system/moderation/forbiddenWords/{id}": {
       "schema": "object",

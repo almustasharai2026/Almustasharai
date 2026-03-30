@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -14,21 +15,20 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
- * إنشاء المحفظة السيادية للمواطن الجديد.
- * يتم استدعاؤها عادةً عند التسجيل لأول مرة.
+ * إنشاء المحفظة السيادية للمواطن الجديد في مسار /wallets.
  */
-export function createSovereignWallet(db: Firestore, userId: string, initialBalance: number = 50) {
-  const userRef = doc(db, "users", userId);
+export function createSovereignWallet(db: Firestore, userId: string, initialBalance: number = 100) {
+  const walletRef = doc(db, "wallets", userId);
   
   const data = {
     balance: initialBalance,
-    lastWalletUpdate: serverTimestamp(),
+    lastUpdate: serverTimestamp(),
   };
 
-  setDoc(userRef, data, { merge: true })
+  setDoc(walletRef, data, { merge: true })
     .catch(async (serverError) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: userRef.path,
+        path: walletRef.path,
         operation: 'create',
         requestResourceData: data,
       } satisfies SecurityRuleContext));
@@ -36,52 +36,44 @@ export function createSovereignWallet(db: Firestore, userId: string, initialBala
 }
 
 /**
- * شحن الرصيد السيادي (Recharge).
- * تستخدم ميزة increment لضمان الدقة الحسابية.
+ * شحن الرصيد السيادي في مسار /wallets.
  */
 export function rechargeSovereignBalance(db: Firestore, userId: string, amount: number, reason: string = "شحن رصيد") {
-  const userRef = doc(db, "users", userId);
-  const transactionRef = collection(db, "users", userId, "transactions");
+  const walletRef = doc(db, "wallets", userId);
+  const transactionRef = collection(db, "wallets", userId, "transactions");
 
-  // 1. تحديث الرصيد (Non-blocking)
-  updateDoc(userRef, {
+  updateDoc(walletRef, {
     balance: increment(amount),
-    lastActivity: serverTimestamp()
+    lastUpdate: serverTimestamp()
   }).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: userRef.path,
+      path: walletRef.path,
       operation: 'update',
       requestResourceData: { amount, type: 'recharge' },
     } satisfies SecurityRuleContext));
   });
 
-  // 2. تسجيل المعاملة في السجل المالي (Ledger)
-  const txData = {
+  addDoc(transactionRef, {
     amount: amount,
     type: "recharge",
     service: reason,
     timestamp: new Date().toISOString()
-  };
-
-  addDoc(transactionRef, txData).catch(() => {
-    // خطأ في تسجيل المعاملة لا يعيق عملية الشحن الأساسية ولكن يتم رصده
-    console.error("Sovereign Ledger Error: Failed to log transaction");
   });
 }
 
 /**
- * خصم الرصيد مقابل الخدمات (Deduction).
+ * خصم الرصيد مقابل الخدمات من مسار /wallets.
  */
 export function deductSovereignBalance(db: Firestore, userId: string, amount: number, serviceName: string) {
-  const userRef = doc(db, "users", userId);
-  const transactionRef = collection(db, "users", userId, "transactions");
+  const walletRef = doc(db, "wallets", userId);
+  const transactionRef = collection(db, "wallets", userId, "transactions");
 
-  updateDoc(userRef, {
+  updateDoc(walletRef, {
     balance: increment(-amount),
-    lastActivity: serverTimestamp()
+    lastUpdate: serverTimestamp()
   }).catch(async (error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: userRef.path,
+      path: walletRef.path,
       operation: 'update',
       requestResourceData: { amount: -amount, service: serviceName },
     } satisfies SecurityRuleContext));
