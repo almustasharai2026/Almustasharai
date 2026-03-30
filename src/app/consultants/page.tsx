@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -37,7 +36,7 @@ export default function ConsultantsMarketplace() {
     c.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleBookSession = (consultant: any) => {
+  const handleBooking = (consultant: any) => {
     if (!user || !db) {
       toast({ 
         variant: "destructive",
@@ -48,37 +47,36 @@ export default function ConsultantsMarketplace() {
       return;
     }
 
-    // السعر السيادي للجلسة (٥٠ EGP) حسب الطلب
-    const sessionPrice = 50; 
+    // السعر السيادي الموحد للجلسة (٥٠ EGP)
+    const price = 50; 
     
-    // التحقق المسبق من الرصيد لضمان السيادة المالية
+    // التحقق السيادي من الرصيد قبل إطلاق البروتوكول
     const currentBalance = profile?.balance || 0;
-    if (currentBalance < sessionPrice && profile?.role !== 'admin') {
+    if (currentBalance < price && profile?.role !== 'admin') {
       toast({ 
         variant: "destructive", 
         title: "رصيد غير كافٍ", 
-        description: `تكلفة الجلسة ${sessionPrice} EGP. رصيدك الحالي: ${currentBalance} EGP.` 
+        description: `تكلفة الجلسة ${price} EGP. رصيدك الحالي: ${currentBalance} EGP.` 
       });
       router.push("/pricing");
       return;
     }
 
+    // 🔥 إطلاق بروتوكول الحجز والدفع المتزامن (Non-blocking)
+    // لا يتم استخدام await هنا لضمان سرعة استجابة الواجهة السيادية
     try {
-      // تفعيل بروتوكول الدفع والخصم الذري
-      payForSovereignSession(db, user.uid, consultant.id, sessionPrice);
-      
-      // إنشاء سجل الحجز السيادي في قاعدة البيانات
-      createSovereignBooking(db, user.uid, consultant.id, sessionPrice);
+      payForSovereignSession(db, user.uid, consultant.id, price);
+      createSovereignBooking(db, user.uid, consultant.id, price);
       
       toast({ 
         title: "تم الحجز بنجاح 🚀", 
-        description: `تم خصم ${sessionPrice} EGP وتوجيه طلبك للمستشار ${consultant.name}.` 
+        description: `تم تخصم ${price} EGP وتوثيق طلبك مع المستشار ${consultant.name}.` 
       });
     } catch (error: any) {
       toast({ 
         variant: "destructive",
-        title: "فشل البروتوكول",
-        description: error.message || "حدث خطأ غير متوقع أثناء الحجز."
+        title: "فشل في البروتوكول",
+        description: "حدث خطأ غير متوقع في محرك الحجز."
       });
     }
   };
@@ -145,10 +143,13 @@ export default function ConsultantsMarketplace() {
                     </CardHeader>
                     <CardFooter className="p-10 pt-0 flex flex-col gap-4">
                       <Button 
-                        onClick={() => handleBookSession(c)}
-                        className="w-full btn-primary h-20 rounded-[2rem] text-xl font-black shadow-2xl gap-3"
+                        onClick={() => handleBooking(c)}
+                        className="w-full btn-primary h-20 rounded-[2rem] text-xl font-black shadow-2xl gap-3 group/btn overflow-hidden relative"
                       >
-                        <CalendarCheck className="h-6 w-6" /> حجز جلسة استشارة
+                        <span className="relative z-10 flex items-center gap-3">
+                          <CalendarCheck className="h-6 w-6" /> حجز جلسة (٥٠ EGP)
+                        </span>
+                        <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                       </Button>
                       <Link href={`/consultants/${c.id}/call`} className="w-full">
                         <Button variant="outline" className="w-full h-14 rounded-2xl border-white/5 text-white/40 hover:text-white font-black text-xs uppercase tracking-widest">
