@@ -8,7 +8,8 @@ import {
   Send, Sparkles, Plus, History, Camera, Mic, 
   Paperclip, ChevronLeft, Menu, X, 
   Loader2, Gavel, User, LayoutGrid, Scale,
-  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight
+  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight,
+  Coins
 } from "lucide-react";
 import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
