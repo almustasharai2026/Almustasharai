@@ -13,6 +13,7 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 export default function LovableInspiredPage() {
   const { user } = useUser();
@@ -118,29 +119,32 @@ export default function LovableInspiredPage() {
           {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <AnimatePresence mode="popLayout">
-              {activeTab === "my-projects" && (
-                <>
-                  {recentSessions?.map((session, i) => (
-                    <motion.div
-                      key={session.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: i * 0.1 }}
-                    >
-                      <CardProject session={session} />
-                    </motion.div>
-                  ))}
-                  {(!recentSessions || recentSessions.length === 0) && (
-                    <div className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10">
-                       <Scale className="h-16 w-16 text-white/5 mx-auto" />
-                       <p className="text-white/20 font-bold">لا يوجد سجل استشارات حتى الآن</p>
-                       <Link href="/bot">
-                         <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ الآن</Button>
-                       </Link>
-                    </div>
-                  )}
-                </>
+              {activeTab === "my-projects" && recentSessions && recentSessions.length > 0 ? (
+                recentSessions.map((session, i) => (
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <CardProject session={session} />
+                  </motion.div>
+                ))
+              ) : activeTab === "my-projects" && (
+                <motion.div 
+                  key="empty-state"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10"
+                >
+                   <Scale className="h-16 w-16 text-white/5 mx-auto" />
+                   <p className="text-white/20 font-bold">لا يوجد سجل استشارات حتى الآن</p>
+                   <Link href="/bot">
+                     <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ الآن</Button>
+                   </Link>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
