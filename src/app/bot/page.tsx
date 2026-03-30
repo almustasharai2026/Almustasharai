@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,16 +6,18 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  ArrowUp, BrainCircuit, Activity, Lock, Coins, Loader2, MessageCircle, Scale, ShieldAlert, Target, Terminal, Brain, Sparkles, RefreshCcw
+  ArrowUp, BrainCircuit, Activity, Lock, Coins, Loader2, MessageCircle, Scale, ShieldAlert, Target, Terminal, Brain, Sparkles, RefreshCcw, UserCheck, Star, ChevronRight
 } from "lucide-react";
 import { collection, addDoc, doc, updateDoc, increment, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { executeDecisionEngine, type DecisionOutput } from "@/ai/flows/decision-engine-flow";
+import { matchConsultantSovereign } from "@/lib/sovereign-match";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SovereignDecisionBot() {
   const { user, profile } = useUser();
@@ -25,9 +28,28 @@ export default function SovereignDecisionBot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [decisionData, setDecisionData] = useState<DecisionOutput | null>(null);
+  const [bestMatch, setBestMatch] = useState<any | null>(null);
 
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
+
+  const handleAIMatch = async () => {
+    if (!input.trim() || !db) return;
+    setIsLoading(true);
+    try {
+      const match = await matchConsultantSovereign(db, input);
+      setBestMatch(match);
+      if (match) {
+        toast({ title: "تم العثور على خبير مطور", description: `المستشار ${match.name} هو الأنسب لحالتك.` });
+      } else {
+        toast({ title: "محرك البحث السيادي", description: "لم نجد خبيراً مطابقاً تماماً، جرب تغيير الوصف." });
+      }
+    } catch (e) {
+      console.error("Match error:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -39,7 +61,7 @@ export default function SovereignDecisionBot() {
     }
 
     // الدرع الواقي (Moderation)
-    const violation = forbiddenWords?.find(fw => input.toLowerCase().includes(fw.word.toLowerCase()));
+    const violation = forbiddenWords?.find(fw => input.toLowerCase().includes(String(fw.word).toLowerCase()));
     if (violation) {
       await updateDoc(doc(db!, "users", user.uid), { isBanned: true });
       toast({ variant: "destructive", title: "انتهاك سيادي مكتشف", description: "تم حظر الحساب فوراً لمخالفة بروتوكول الأمان." });
@@ -55,6 +77,7 @@ export default function SovereignDecisionBot() {
 
     setIsLoading(true);
     setDecisionData(null);
+    setBestMatch(null);
 
     try {
       const result = await executeDecisionEngine({ context: input });
@@ -69,7 +92,11 @@ export default function SovereignDecisionBot() {
           type: "deduction"
         });
       }
-      setInput("");
+      
+      // إطلاق محرك المطابقة تلقائياً مع القرار
+      const match = await matchConsultantSovereign(db!, input);
+      setBestMatch(match);
+
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ في المعالجة", description: "تعذر الاتصال بالمحرك السيادي حالياً." });
     } finally {
@@ -94,7 +121,7 @@ export default function SovereignDecisionBot() {
                    </div>
                    <div className="space-y-6">
                       <h2 className="text-6xl font-black tracking-tighter leading-tight">محرك <span className="text-gradient">اتخاذ القرار</span></h2>
-                      <p className="text-white/30 text-xl font-bold max-w-lg mx-auto">أدخل معطيات الحالة ليقوم الذكاء الاصطناعي السيادي بتحليل المخاطر وإصدار التوصيات.</p>
+                      <p className="text-white/30 text-xl font-bold max-w-lg mx-auto">أدخل معطيات الحالة ليقوم الذكاء الاصطناعي السيادي بتحليل المخاطر وإصدار التوصيات وترشيح الخبراء.</p>
                    </div>
                    
                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl opacity-40">
@@ -146,6 +173,36 @@ export default function SovereignDecisionBot() {
                             <p className="text-xl font-medium italic text-indigo-100/60 leading-relaxed">{decisionData?.prediction}</p>
                          </div>
                       </div>
+
+                      {/* Matched Expert Insight */}
+                      {bestMatch && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-16 relative z-10">
+                           <div className="p-1 glass rounded-[3rem] border-primary/20">
+                              <Card className="bg-primary/5 border-none rounded-[2.8rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+                                 <div className="flex items-center gap-8">
+                                    <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center">
+                                       <UserCheck className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <div>
+                                       <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">الخبير المقترح لهذه الحالة</p>
+                                       <h4 className="text-2xl font-black text-white">{bestMatch.name}</h4>
+                                       <div className="flex items-center gap-4 mt-2">
+                                          <Badge className="bg-white/5 text-white/60 border-none font-bold">{bestMatch.specialization}</Badge>
+                                          <span className="flex items-center gap-1.5 text-amber-400 font-bold text-sm">
+                                             <Star className="h-3.5 w-3.5 fill-current" /> {bestMatch.rating}
+                                          </span>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <Link href="/consultants">
+                                    <Button className="btn-primary h-16 px-10 rounded-2xl gap-3">
+                                       حجز جلسة معه الآن <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                                    </Button>
+                                 </Link>
+                              </Card>
+                           </div>
+                        </motion.div>
+                      )}
                       
                       <div className="mt-16 flex items-center justify-between border-t border-white/5 pt-12">
                          <div className="flex gap-4">
@@ -153,7 +210,7 @@ export default function SovereignDecisionBot() {
                               <Badge key={i} variant="outline" className="border-white/5 bg-white/[0.02] px-6 py-2 rounded-xl text-[10px] font-bold text-white/40">{alt}</Badge>
                             ))}
                          </div>
-                         <Button variant="ghost" onClick={() => setDecisionData(null)} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
+                         <Button variant="ghost" onClick={() => { setDecisionData(null); setBestMatch(null); }} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
                            <RefreshCcw className="h-4 w-4" /> تحليل جديد
                          </Button>
                       </div>
