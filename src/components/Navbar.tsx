@@ -1,27 +1,23 @@
-
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut, Gavel, Menu } from "lucide-react";
+import { Sun, Moon, User, LayoutDashboard, Sparkles, Lock, Coins, ChevronDown, LogOut, Gavel, Menu, Search, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useUser, useFirestore } from "@/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { motion } from "framer-motion";
 
 const SovereignLogo = () => (
-  <div className="flex items-center gap-2">
-    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-pink-500 via-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-      <div className="h-5 w-5 bg-white rounded-full opacity-90 shadow-inner" style={{ clipPath: 'path("M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 2 7.5 2c1.74 0 3.41.81 4.5 2.09C13.09 2.81 14.76 2 16.5 2 19.58 2 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z")' }} />
+  <div className="flex items-center gap-3 group">
+    <div className="h-10 w-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)] group-hover:scale-110 transition-all duration-500">
+      <Scale className="h-5 w-5 text-white" />
     </div>
-    <span className="font-bold text-2xl tracking-tighter text-white">المستشار</span>
+    <div className="flex flex-col -space-y-1">
+      <span className="font-black text-xl tracking-tight text-white">المستشار</span>
+      <span className="text-[8px] font-black uppercase tracking-[0.4em] text-indigo-400">AI Sovereign</span>
+    </div>
   </div>
 );
 
@@ -50,33 +46,69 @@ export function Navbar() {
   if (!mounted) return null;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-white/5 bg-black/40 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto h-16 px-6 flex items-center justify-between">
+    <motion.nav 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-6xl px-6"
+    >
+      <div className="glass-cosmic border-white/10 h-16 rounded-[1.8rem] px-6 flex items-center justify-between shadow-2xl">
         
-        <div className="flex items-center gap-6">
-          <Button variant="ghost" size="icon" className="text-white/40 hover:text-white lg:hidden">
-            <Menu className="h-6 w-6" />
-          </Button>
+        <div className="flex items-center gap-8">
           <Link href="/">
             <SovereignLogo />
           </Link>
+          
+          <div className="hidden lg:flex items-center gap-6">
+            <NavLink href="/bot">البوت</NavLink>
+            <NavLink href="/templates">المكتبة</NavLink>
+            <NavLink href="/consultants">الخبراء</NavLink>
+            <NavLink href="/pricing">الباقات</NavLink>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1.5 glass bg-white/5 rounded-2xl px-4 h-10 border-white/5">
+             <Search className="h-3.5 w-3.5 text-white/20" />
+             <input placeholder="بحث..." className="bg-transparent border-none text-[10px] font-bold focus:ring-0 w-24 placeholder:text-white/10" />
+          </div>
+
+          <div className="h-10 w-px bg-white/5 mx-2" />
+
           {user ? (
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex h-8 w-8 rounded-full bg-indigo-600 items-center justify-center text-[10px] font-black border border-white/10 shadow-lg">
-                V
-              </div>
-              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white hover:bg-white/5 relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 bg-indigo-500 rounded-full border-2 border-slate-950" />
+              </Button>
+              
+              <Link href="/dashboard">
+                <div className="h-10 w-10 rounded-2xl border-2 border-indigo-500/30 overflow-hidden hover:scale-105 transition-all p-0.5">
+                  <div className="h-full w-full rounded-xl bg-indigo-600 flex items-center justify-center font-black text-xs">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                </div>
+              </Link>
             </div>
           ) : (
-            <Link href="/auth/login">
-              <Button variant="ghost" className="text-white/60 font-bold hover:text-white">دخول</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/auth/login">
+                <Button variant="ghost" className="text-white/60 font-black text-xs hover:text-white">دخول</Button>
+              </Link>
+              <Link href="/auth/signup">
+                <Button className="btn-primary h-10 px-6 rounded-xl font-black text-xs">انضمام</Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>
-    </nav>
+    </motion.nav>
+  );
+}
+
+function NavLink({ href, children }: { href: string, children: React.ReactNode }) {
+  return (
+    <Link href={href} className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all">
+      {children}
+    </Link>
   );
 }

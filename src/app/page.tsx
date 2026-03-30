@@ -1,14 +1,12 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { 
   Plus, Mic, ArrowUp, Star, MoreHorizontal, 
-  LayoutGrid, Clock, BookOpen, Search, Menu, 
-  Scale, Share2, Sparkles, Map, Paperclip
+  Search, Scale, Share2, Sparkles, Map, Paperclip, 
+  MessageSquare, Clock, BookOpen, Layers
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -31,53 +29,54 @@ export default function LovableInspiredPage() {
   const { data: recentSessions } = useCollection(sessionsQuery);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden" dir="rtl">
+    <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
       
-      {/* Background Ambient Glows */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-600/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 blur-[100px] rounded-full opacity-30" />
-        <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-amber-500/5 blur-[100px] rounded-full opacity-20" />
+      {/* Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="cosmic-glow top-[-10%] left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-600/20" />
+        <div className="cosmic-glow bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5" />
       </div>
 
-      {/* Main Container */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-40">
+      {/* Content Container */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-40 pb-32">
         
-        {/* Hero Header */}
+        {/* Central Command Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-12 mb-16"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center space-y-12 mb-24"
         >
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white/90 leading-tight">
-            ما الذي يشغل بالك، يا مستشار؟
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Sovereign Power
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
+            بوابة <span className="text-gradient">المستشار</span> الذكية
           </h1>
 
-          {/* Magic Prompt Box */}
-          <div className="max-w-2xl mx-auto relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-[2.5rem] blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-            <div className="relative glass-cosmic rounded-[2rem] border-white/5 p-2 flex items-center gap-2 shadow-2xl shadow-black/50">
-              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white transition-all">
+          {/* Magic Prompt Area */}
+          <div className="max-w-3xl mx-auto relative mt-12">
+            <div className="absolute -inset-4 bg-indigo-500/5 blur-2xl rounded-full" />
+            <div className="relative glass-cosmic rounded-[2.5rem] border-white/10 p-2.5 flex items-center gap-3 shadow-[0_0_50px_rgba(0,0,0,0.5)] group focus-within:border-indigo-500/30 transition-all duration-500">
+              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white hover:bg-white/5">
                 <Plus className="h-6 w-6" />
               </Button>
               
               <input 
                 value={prompt}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="اسأل المستشار للبدء في استشارة أو صياغة عقد..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-medium p-4 placeholder:text-white/10"
+                placeholder="ابدأ استشارة قانونية أو صياغة عقد سيادي..."
+                className="flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-4 placeholder:text-white/10 text-white"
               />
 
-              <div className="flex items-center gap-1 ml-2">
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white">
-                  <Map className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white">
-                  <Mic className="h-5 w-5" />
-                </Button>
+              <div className="flex items-center gap-1.5 ml-2">
+                <MediaAction icon={<Map />} />
+                <MediaAction icon={<Mic />} />
+                <MediaAction icon={<Paperclip />} />
                 <Link href={`/bot?q=${encodeURIComponent(prompt)}`}>
-                  <Button className="h-12 w-12 rounded-2xl bg-white text-black hover:bg-white/90 shadow-xl ml-1">
-                    <ArrowUp className="h-6 w-6" />
+                  <Button className="h-14 w-14 rounded-[1.8rem] bg-white text-black hover:bg-indigo-50 shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                    <ArrowUp className="h-7 w-7" />
                   </Button>
                 </Link>
               </div>
@@ -85,50 +84,65 @@ export default function LovableInspiredPage() {
           </div>
         </motion.div>
 
-        {/* Content Section */}
-        <section className="space-y-10">
+        {/* Dashboard Grid Section */}
+        <section className="space-y-12">
           
-          {/* Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <TabButton 
-              active={activeTab === "my-projects"} 
-              onClick={() => setActiveTab("my-projects")}
-              label="استشاراتي"
-            />
-            <TabButton 
-              active={activeTab === "recently-viewed"} 
-              onClick={() => setActiveTab("recently-viewed")}
-              label="تمت مشاهدتها مؤخراً"
-            />
-            <TabButton 
-              active={activeTab === "templates"} 
-              onClick={() => setActiveTab("templates")}
-              label="نماذج جاهزة"
-            />
+          {/* Navigation Tabs */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+              <TabButton 
+                active={activeTab === "my-projects"} 
+                onClick={() => setActiveTab("my-projects")}
+                label="استشاراتي"
+                icon={<MessageSquare className="h-4 w-4" />}
+              />
+              <TabButton 
+                active={activeTab === "templates"} 
+                onClick={() => setActiveTab("templates")}
+                label="المكتبة السيادية"
+                icon={<BookOpen className="h-4 w-4" />}
+              />
+              <TabButton 
+                active={activeTab === "shared"} 
+                onClick={() => setActiveTab("shared")}
+                label="الملفات المشتركة"
+                icon={<Layers className="h-4 w-4" />}
+              />
+            </div>
+            <div className="hidden md:flex items-center gap-4 text-white/20 text-xs font-bold uppercase tracking-widest">
+              <Search className="h-4 w-4" />
+              <span>بحث في الأرشيف</span>
+            </div>
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
-            {recentSessions?.map((session, i) => (
-              <motion.div
-                key={session.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link href={`/bot?sessionId=${session.id}`}>
-                  <CardProject session={session} />
-                </Link>
-              </motion.div>
-            ))}
-            
-            {/* If empty, show placeholders */}
-            {(!recentSessions || recentSessions.length === 0) && (
-              <>
-                <PlaceholderCard title="استشارة قانونية في العقارات" />
-                <PlaceholderCard title="مراجعة عقد توريد تجاري" />
-              </>
-            )}
+          {/* Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <AnimatePresence mode="popLayout">
+              {activeTab === "my-projects" && (
+                <>
+                  {recentSessions?.map((session, i) => (
+                    <motion.div
+                      key={session.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <CardProject session={session} />
+                    </motion.div>
+                  ))}
+                  {(!recentSessions || recentSessions.length === 0) && (
+                    <div className="col-span-full py-32 text-center space-y-6 glass-card rounded-[3rem] border-dashed border-white/10">
+                       <Scale className="h-16 w-16 text-white/5 mx-auto" />
+                       <p className="text-white/20 font-bold">لا يوجد سجل استشارات حتى الآن</p>
+                       <Link href="/bot">
+                         <Button variant="outline" className="rounded-xl border-white/10 font-bold px-8">ابدأ الآن</Button>
+                       </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </section>
       </div>
@@ -136,16 +150,25 @@ export default function LovableInspiredPage() {
   );
 }
 
-function TabButton({ active, onClick, label }: any) {
+function MediaAction({ icon }: { icon: React.ReactNode }) {
+  return (
+    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-white hover:bg-white/5 transition-all">
+      {icon}
+    </Button>
+  );
+}
+
+function TabButton({ active, onClick, label, icon }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
+      className={`flex items-center gap-3 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
         active 
-        ? 'bg-white text-black border-white shadow-lg' 
+        ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]' 
         : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10 hover:text-white'
       }`}
     >
+      {icon}
       {label}
     </button>
   );
@@ -153,54 +176,48 @@ function TabButton({ active, onClick, label }: any) {
 
 function CardProject({ session }: any) {
   return (
-    <div className="group space-y-4">
-      <div className="relative aspect-video rounded-[2.5rem] overflow-hidden glass border border-white/5 shadow-2xl">
+    <div className="group relative flex flex-col gap-5 p-2 rounded-[2.5rem] glass-card transition-all cursor-pointer">
+      <div className="relative aspect-video rounded-[2.2rem] overflow-hidden bg-slate-900 border border-white/5">
         <Image 
-          src={`https://picsum.photos/seed/${session.id}/800/450`} 
+          src={`https://picsum.photos/seed/${session.id}/1200/675`} 
           alt="Preview" 
           fill 
-          className="object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700 grayscale group-hover:grayscale-0"
+          className="object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        
+        {/* Star Icon */}
         <button className="absolute top-6 right-6 h-10 w-10 glass border border-white/10 rounded-xl flex items-center justify-center text-white/20 hover:text-amber-400 transition-colors">
           <Star className="h-5 w-5" />
         </button>
+
+        {/* Info Overlay */}
+        <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
+           <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Active Case</span>
+              </div>
+              <h3 className="text-xl font-black text-white truncate max-w-[250px]">{session.title || "استشارة بدون عنوان"}</h3>
+           </div>
+           <Badge variant="outline" className="bg-black/40 backdrop-blur-xl border-white/10 text-[9px] font-bold py-1.5 px-4 rounded-full">
+             {new Date(session.lastMessageAt).toLocaleDateString('ar-EG')}
+           </Badge>
+        </div>
       </div>
       
-      <div className="flex items-center justify-between px-4">
+      <div className="flex items-center justify-between px-6 pb-4">
         <div className="flex items-center gap-4">
-          <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center font-black text-sm shadow-lg border border-white/10">
+          <div className="h-9 w-9 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-black text-xs text-indigo-400">
             {session.title?.charAt(0) || "M"}
           </div>
-          <div className="space-y-0.5">
-            <h3 className="font-bold text-lg text-white/90 group-hover:text-primary transition-colors truncate max-w-[200px]">
-              {session.title || "عنوان الاستشارة"}
-            </h3>
-            <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">
-              عدلت منذ {new Date(session.lastMessageAt).toLocaleDateString('ar-EG')}
-            </p>
+          <div className="space-y-0.5 text-right">
+            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.2em]">آخر نشاط منذ يومين</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 text-white/10">
-          <button className="hover:text-white transition-colors"><Share2 className="h-4 w-4" /></button>
-          <button className="hover:text-white transition-colors"><MoreHorizontal className="h-4 w-4" /></button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PlaceholderCard({ title }: { title: string }) {
-  return (
-    <div className="group space-y-4 opacity-40 hover:opacity-100 transition-opacity">
-      <div className="relative aspect-video rounded-[2.5rem] overflow-hidden glass border border-white/5 shadow-2xl bg-white/5 flex items-center justify-center">
-        <Scale className="h-16 w-16 text-white/5" />
-      </div>
-      <div className="flex items-center gap-4 px-4">
-        <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center" />
-        <div className="space-y-1 flex-1">
-          <div className="h-4 bg-white/10 rounded-full w-2/3" />
-          <div className="h-2 bg-white/5 rounded-full w-1/3" />
+        <div className="flex items-center gap-2">
+          <button className="h-9 w-9 flex items-center justify-center text-white/10 hover:text-white transition-all"><Share2 className="h-4 w-4" /></button>
+          <button className="h-9 w-9 flex items-center justify-center text-white/10 hover:text-white transition-all"><MoreHorizontal className="h-4 w-4" /></button>
         </div>
       </div>
     </div>
