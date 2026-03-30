@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  Users, Gavel, ShieldAlert, Settings, 
-  Trash2, Ban, CheckCircle, Search, Activity, UserPlus, X, Plus,
-  BarChart3, Wallet, TrendingUp, AlertTriangle, Terminal, Eye, Lock, CreditCard
+  Users, Gavel, ShieldAlert, 
+  Trash2, Search, Terminal, Wallet, X, CreditCard, Activity, Lock
 } from "lucide-react";
-import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, limit, increment } from "firebase/firestore";
+import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +21,6 @@ export default function MasterCommandPanel() {
   const db = useFirestore();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"users" | "consultants" | "moderation" | "finance">("users");
-  const [newWord, setNewWord] = useState("");
 
   const usersQuery = useMemoFirebase(() => collection(db!, "users"), [db]);
   const { data: allUsers } = useCollection(usersQuery);
@@ -30,7 +28,7 @@ export default function MasterCommandPanel() {
   const consultantsQuery = useMemoFirebase(() => collection(db!, "consultantProfiles"), [db]);
   const { data: consultants } = useCollection(consultantsQuery);
 
-  const wordsQuery = useMemoFirebase(() => collection(db!, "settings", "moderation", "forbiddenWords"), [db]);
+  const wordsQuery = useMemoFirebase(() => collection(db!, "system", "moderation", "forbiddenWords"), [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
   const payReqQuery = useMemoFirebase(() => query(collection(db!, "paymentRequests"), orderBy("createdAt", "desc")), [db]);
@@ -85,23 +83,17 @@ export default function MasterCommandPanel() {
       <main className="max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           
-          {/* Finance Tab */}
           {activeTab === "finance" && (
             <motion.div key="finance" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-8">
-               <div className="grid md:grid-cols-3 gap-8">
-                  <StatMini label="إجمالي الإيرادات" val="42,500 EGP" color="blue" />
-                  <StatMini label="طلبات معلقة" val={paymentRequests?.filter(r => r.status === 'pending').length || 0} color="amber" />
-                  <StatMini label="عمليات اليوم" val="12" color="emerald" />
-               </div>
                <Card className="glass-cosmic border-none rounded-[4rem] p-12 shadow-2xl overflow-hidden">
                   <h3 className="text-3xl font-black text-white mb-12 flex items-center gap-5"><CreditCard className="text-primary h-8 w-8" /> طلبات الشحن والتحويل</h3>
                   <div className="space-y-4">
                     {paymentRequests?.map(r => (
                       <div key={r.id} className="flex items-center justify-between p-8 glass rounded-[2.5rem] border-white/5 bg-white/[0.02] group">
                          <div className="flex items-center gap-8">
-                            <div className="h-16 w-16 rounded-[1.5rem] bg-indigo-600/10 flex items-center justify-center font-black text-primary text-xl shadow-inner">{r.userName.charAt(0)}</div>
+                            <div className="h-16 w-16 rounded-[1.5rem] bg-indigo-600/10 flex items-center justify-center font-black text-primary text-xl shadow-inner">{r.userName?.charAt(0) || "U"}</div>
                             <div>
-                               <p className="text-2xl font-black text-white">{r.userName}</p>
+                               <p className="text-2xl font-black text-white">{r.userName || "مواطن"}</p>
                                <p className="text-xs text-white/20 font-bold uppercase mt-1 tracking-widest">{new Date(r.createdAt).toLocaleString('ar-EG')}</p>
                             </div>
                          </div>
@@ -142,9 +134,9 @@ export default function MasterCommandPanel() {
                     {allUsers?.map(u => (
                       <div key={u.id} className="flex items-center justify-between p-8 glass rounded-[2.5rem] border-white/5 hover:bg-white/[0.03] transition-all">
                         <div className="flex items-center gap-8">
-                          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-xl font-black shadow-inner ${u.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>{u.fullName.charAt(0)}</div>
+                          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-xl font-black shadow-inner ${u.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>{u.fullName?.charAt(0) || "U"}</div>
                           <div className="space-y-1 text-right">
-                            <p className="font-black text-2xl text-white">{u.fullName}</p>
+                            <p className="font-black text-2xl text-white">{u.fullName || "مواطن"}</p>
                             <p className="text-xs text-white/20 font-bold uppercase tracking-widest">{u.email} · Trust: {u.trustScore}%</p>
                           </div>
                         </div>
@@ -174,19 +166,5 @@ function TabBtn({ active, onClick, icon, label, badge }: any) {
       {label}
       {badge > 0 && <span className="absolute -top-2 -left-2 h-6 w-6 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] animate-pulse shadow-2xl">{badge}</span>}
     </button>
-  );
-}
-
-function StatMini({ label, val, color }: any) {
-  const colors: any = {
-    blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-    amber: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-  };
-  return (
-    <div className={`p-12 glass-cosmic rounded-[3rem] border ${colors[color]} shadow-2xl`}>
-       <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">{label}</p>
-       <p className="text-5xl font-black tabular-nums tracking-tighter">{val}</p>
-    </div>
   );
 }

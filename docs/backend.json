@@ -48,28 +48,16 @@
         "timestamp": { "type": "string", "format": "date-time" }
       }
     },
-    "DecisionResult": {
-      "title": "DecisionResult",
-      "description": "نتيجة تحليل محرك القرار الذكي.",
-      "type": "object",
-      "properties": {
-        "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-        "recommendedAction": { "type": "string" },
-        "alternatives": { "type": "array", "items": { "type": "string" } },
-        "confidenceScore": { "type": "number" },
-        "prediction": { "type": "string" }
-      }
-    },
-    "SmartContract": {
-      "title": "SmartContract",
-      "description": "وثيقة قانونية مولدة آلياً ومحفوظة في سجل المستخدم.",
+    "PaymentRequest": {
+      "title": "PaymentRequest",
+      "description": "طلب شحن رصيد مقدم من المواطن.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
-        "type": { "type": "string" },
-        "content": { "type": "string" },
-        "dataSnapshot": { "type": "object" },
+        "userName": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       }
     }
@@ -86,9 +74,9 @@
       "schema": "Transaction",
       "description": "سجل المحاسبة المالية"
     },
-    "/users/{userId}/contracts/{id}": {
-      "schema": "SmartContract",
-      "description": "أرشيف الوثائق السيادية"
+    "/paymentRequests/{id}": {
+      "schema": "PaymentRequest",
+      "description": "طلبات الشحن المعلقة"
     },
     "/consultantProfiles/{id}": {
       "schema": "ConsultantProfile",
@@ -97,10 +85,6 @@
     "/system/moderation/forbiddenWords/{id}": {
       "schema": "object",
       "description": "قاموس الحظر التلقائي"
-    },
-    "/decisions/{id}": {
-      "schema": "DecisionResult",
-      "description": "سجل مخرجات محرك القرار"
     }
   }
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -6,16 +7,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Mic, MicOff, Video, VideoOff, PhoneOff, Settings, 
-  MessageSquare, Send, User, ShieldCheck, X, 
-  Lock, AlertTriangle, Loader2, Sparkles, Activity
+  MessageSquare, Send, X, 
+  Lock, AlertTriangle, Loader2, Activity
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
-import { doc, addDoc, collection, query, orderBy, onSnapshot, limit, updateDoc, setDoc } from "firebase/firestore";
+import { doc, addDoc, collection, query, orderBy, limit, updateDoc, setDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { motion, AnimatePresence } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 
 export default function ProfessionalLiveRoom() {
   const params = useParams();
@@ -36,7 +36,7 @@ export default function ProfessionalLiveRoom() {
   const consultantRef = useMemoFirebase(() => doc(db!, "consultantProfiles", params.id as string), [db, params.id]);
   const { data: consultant } = useDoc(consultantRef);
 
-  const wordsQuery = useMemoFirebase(() => collection(db!, "settings", "moderation", "forbiddenWords"), [db]);
+  const wordsQuery = useMemoFirebase(() => collection(db!, "system", "moderation", "forbiddenWords"), [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
   const messagesQuery = useMemoFirebase(() => query(
@@ -75,7 +75,6 @@ export default function ProfessionalLiveRoom() {
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !user || hasViolated) return;
 
-    // Smart Moderation Check
     const violation = forbiddenWords?.find(fw => chatMessage.toLowerCase().includes(fw.word.toLowerCase()));
     
     if (violation) {
@@ -113,15 +112,11 @@ export default function ProfessionalLiveRoom() {
 
   return (
     <div className="fixed inset-0 bg-[#050505] z-[200] flex flex-col md:flex-row overflow-hidden" dir="rtl">
-      
-      {/* Live Video Hub */}
       <main className="flex-grow relative flex flex-col">
         <div className="flex-grow flex items-center justify-center bg-[#080808] relative group">
-          {/* Main Remote Video Placeholder */}
           <div className="text-center space-y-10 animate-in fade-in duration-1000">
              <div className="h-40 w-40 rounded-[3.5rem] glass-cosmic mx-auto flex items-center justify-center border-2 border-primary/20 relative">
-                <Video className="h-16 w-16 text-primary" />
-                <div className="absolute inset-0 rounded-[3.5rem] border-2 border-primary/50 animate-ping opacity-20" />
+                <Loader2 className="h-16 w-16 text-primary animate-spin" />
              </div>
              <div className="space-y-3">
                 <h2 className="text-4xl font-black text-white tracking-tighter">{consultant?.name || "المستشار الخبير"}</h2>
@@ -132,7 +127,6 @@ export default function ProfessionalLiveRoom() {
              </div>
           </div>
 
-          {/* User Self Preview */}
           <motion.div 
             drag
             dragConstraints={{ left: -1000, right: 0, top: -600, bottom: 0 }}
@@ -144,57 +138,36 @@ export default function ProfessionalLiveRoom() {
                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> أنت (بث مباشر)
             </div>
           </motion.div>
-
-          {/* Stats Overlay */}
-          <div className="absolute top-10 left-10 flex gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500">
-             <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 border-white/5">
-                <Activity className="h-4 w-4 text-emerald-500" />
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Signal Stable</span>
-             </div>
-             <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 border-white/5">
-                <Lock className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Encrypted</span>
-             </div>
-          </div>
         </div>
 
-        {/* Tactical Controls */}
         <div className="h-32 glass-cosmic border-t border-white/5 flex items-center justify-center gap-8 px-10 relative z-[60]">
           <LiveControlBtn active={isMicOn} onClick={() => setIsMicOn(!isMicOn)} icon={isMicOn ? <Mic /> : <MicOff />} color={isMicOn ? 'blue' : 'red'} />
           <LiveControlBtn active={isVideoOn} onClick={() => setIsVideoOn(!isVideoOn)} icon={isVideoOn ? <Video /> : <VideoOff />} color={isVideoOn ? 'blue' : 'red'} />
           
-          <div className="w-12 h-px bg-white/5 mx-4 hidden md:block" />
-
           <Button 
             variant="destructive" 
             size="icon" 
-            className="h-24 w-24 rounded-[2.5rem] bg-red-600 hover:bg-red-700 shadow-2xl shadow-red-500/30 hover:scale-105 active:scale-95 transition-all" 
+            className="h-24 w-24 rounded-[2.5rem] bg-red-600 hover:bg-red-700 shadow-2xl" 
             onClick={() => router.push("/dashboard")}
           >
             <PhoneOff className="h-10 w-10 text-white" />
           </Button>
-
-          <div className="w-12 h-px bg-white/5 mx-4 hidden md:block" />
 
           <LiveControlBtn active={isSidebarOpen} onClick={() => setIsSidebarOpen(!isSidebarOpen)} icon={<MessageSquare />} color="blue" />
           <LiveControlBtn active={false} onClick={() => {}} icon={<Settings />} color="gray" />
         </div>
       </main>
 
-      {/* Real-time Side Chat */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.aside 
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 400, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="w-full md:w-[400px] glass-cosmic border-r border-white/5 flex flex-col z-[70] shadow-2xl"
+            className="w-full md:w-[400px] glass-cosmic border-r border-white/5 flex flex-col z-[70]"
           >
             <header className="p-8 border-b border-white/5 flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="font-black text-2xl text-white">الدردشة الأمنية</h3>
-                <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Sovereign Encryption v4.0</p>
-              </div>
+              <h3 className="font-black text-2xl text-white">الدردشة الأمنية</h3>
               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="text-white/20 hover:text-white">
                 <X className="h-5 w-5" />
               </Button>
@@ -207,11 +180,6 @@ export default function ProfessionalLiveRoom() {
                     <div className={`p-5 rounded-[2rem] max-w-[90%] text-sm leading-relaxed shadow-xl border ${m.senderId === user?.uid ? 'bg-primary border-white/10 text-slate-950 font-bold rounded-tr-none' : 'glass border-white/5 text-white/80 rounded-tl-none'}`}>
                       {m.text}
                     </div>
-                    <div className="flex items-center gap-2 mt-2 px-2">
-                       <span className="text-[9px] font-black text-white/20 uppercase tracking-tighter">{m.senderName}</span>
-                       <div className="h-1 w-1 rounded-full bg-white/10" />
-                       <span className="text-[9px] font-bold text-white/10">{new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
                   </div>
                 ))}
                 <div ref={chatEndRef} />
@@ -221,21 +189,20 @@ export default function ProfessionalLiveRoom() {
             <div className="p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5">
               <div className="relative group">
                 <Input 
-                  placeholder="اكتب رسالتك السيادية هنا..." 
+                  placeholder="رسالة سيادية..." 
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="glass border-white/10 h-16 rounded-2xl pr-6 pl-16 text-sm font-medium transition-all focus:border-primary/50 focus:ring-0"
+                  className="glass border-white/10 h-16 rounded-2xl pr-6 pl-16"
                 />
                 <Button 
                   onClick={handleSendMessage} 
                   disabled={!chatMessage.trim()}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-xl bg-primary text-slate-950 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-12 w-12 rounded-xl bg-primary text-slate-950"
                 >
                    <Send className="h-5 w-5 rotate-180" />
                 </Button>
               </div>
-              <p className="text-[9px] text-white/10 font-bold text-center mt-4">تخضع المحادثة للرقابة اللحظية بنظام "الدرع الواقي"</p>
             </div>
           </motion.aside>
         )}
@@ -246,7 +213,7 @@ export default function ProfessionalLiveRoom() {
 
 function LiveControlBtn({ active, onClick, icon, color }: any) {
   const colors: any = {
-    blue: "text-primary hover:bg-primary/10 border-primary/20",
+    blue: "text-primary border-primary/20",
     red: "text-red-500 bg-red-500/10 border-red-500/20",
     gray: "text-white/20 hover:text-white border-white/5"
   };
@@ -255,7 +222,7 @@ function LiveControlBtn({ active, onClick, icon, color }: any) {
     <Button 
       variant="outline" 
       size="icon" 
-      className={`h-16 w-16 rounded-[1.8rem] glass border transition-all ${colors[color]} ${!active && color !== 'gray' ? 'bg-red-500/10' : ''}`} 
+      className={`h-16 w-16 rounded-[1.8rem] glass border ${colors[color]}`} 
       onClick={onClick}
     >
       {icon}

@@ -1,20 +1,19 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
+import { useState, useRef, useEffect } from "react";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { 
-  Send, Sparkles, Plus, History, Camera, Mic, 
-  Paperclip, ChevronLeft, Menu, X, 
-  Loader2, Gavel, User, LayoutGrid, Scale,
-  MessageCircle, AlertCircle, Image as ImageIcon, Archive, MicOff, CheckCircle2, ChevronRight,
-  Coins, Settings, UserPlus, AlignLeft, Lightbulb, Terminal, FileText, AudioLines, Trash2, ArrowUp,
-  Target, ShieldAlert, BarChart3, BrainCircuit, Activity, Lock
+  Send, Sparkles, Plus, History, Mic, 
+  Paperclip, X, 
+  Loader2, Gavel, Scale,
+  MessageCircle, ShieldAlert, FileText, Trash2, ArrowUp,
+  Target, BrainCircuit, Activity, Lock, Coins
 } from "lucide-react";
-import { collection, addDoc, query, orderBy, serverTimestamp, doc, updateDoc, increment, limit, onSnapshot, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, doc, updateDoc, increment, onSnapshot } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { executeDecisionEngine, type DecisionOutput } from "@/ai/flows/decision-engine-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +28,8 @@ const AI_LAYERS = [
   { id: "predictive", name: "الذكاء التنبؤي", icon: <BarChart3 />, color: "from-purple-500 to-purple-700", desc: "توقع النتائج القضائية والاستراتيجيات المستقبلية." }
 ];
 
+function BarChart3() { return <Activity className="h-4 w-4" />; }
+
 export default function SovereignDecisionBot() {
   const { user } = useUser();
   const db = useFirestore();
@@ -39,7 +40,6 @@ export default function SovereignDecisionBot() {
   const [activeLayer, setActiveLayer] = useState(AI_LAYERS[1]);
   const [decisionData, setDecisionData] = useState<DecisionOutput | null>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +57,7 @@ export default function SovereignDecisionBot() {
     return () => unsub();
   }, [db, user, toast]);
 
-  const wordsQuery = useMemoFirebase(() => collection(db!, "settings", "moderation", "forbiddenWords"), [db]);
+  const wordsQuery = useMemoFirebase(() => collection(db!, "system", "moderation", "forbiddenWords"), [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
   const handleSend = async () => {
@@ -84,7 +84,6 @@ export default function SovereignDecisionBot() {
         const result = await executeDecisionEngine({ context: input });
         setDecisionData(result);
         
-        // Log transaction
         if (userData.role !== 'admin') {
           await updateDoc(doc(db!, "users", user.uid), { balance: increment(-2) });
           await addDoc(collection(db!, "users", user.uid, "transactions"), {
@@ -95,7 +94,6 @@ export default function SovereignDecisionBot() {
           });
         }
       } else {
-        // Fallback or General Chat Logic
         toast({ title: "الوضع قيد التطوير", description: "هذه الطبقة ستتوفر قريباً بنسختها الكاملة." });
       }
       
