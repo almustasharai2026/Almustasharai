@@ -2,7 +2,7 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "الملف السيادي للمواطن الرقمي، يضم الهوية الرقمية ومستوى الثقة.",
+      "description": "الملف السيادي للمواطن الرقمي، يضم الهوية الرقمية ومستوى الثقة وحالة الامتثال.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -29,13 +29,14 @@
       },
       "required": ["name", "specialization"]
     },
-    "Wallet": {
-      "title": "Wallet",
-      "description": "المحفظة المالية المستقلة.",
+    "ModerationWord": {
+      "title": "ModerationWord",
+      "description": "كلمة محظورة يراقبها الدرع الواقي السيادي.",
       "type": "object",
       "properties": {
-        "balance": { "type": "number", "default": 0 },
-        "lastUpdate": { "type": "string", "format": "date-time" }
+        "word": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+        "addedAt": { "type": "string", "format": "date-time" }
       }
     },
     "Booking": {
@@ -65,9 +66,9 @@
       "schema": "Consultant",
       "description": "هيئة الخبراء المعتمدين"
     },
-    "/wallets/{userId}": {
-      "schema": "Wallet",
-      "description": "المحافظ المالية المستقلة"
+    "/system/moderation/forbiddenWords/{id}": {
+      "schema": "ModerationWord",
+      "description": "قاعدة بيانات الكلمات المحظورة"
     },
     "/bookings/{bookingId}": {
       "schema": "Booking",
