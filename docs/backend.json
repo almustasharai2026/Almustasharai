@@ -3,41 +3,53 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "بيانات المستخدم الأساسية والرصيد المالي.",
+      "description": "بيانات المستخدم الأساسية والرصيد المالي وحالة الحظر.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "fullName": { "type": "string" },
-        "balance": { "type": "number", "description": "الرصيد المتاح بالجنيه المصري" },
+        "balance": { "type": "number" },
         "role": { "type": "string", "enum": ["user", "admin"] },
+        "isBanned": { "type": "boolean", "default": false },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "email", "fullName", "balance", "role"]
     },
-    "ChatSession": {
-      "title": "ChatSession",
-      "description": "جلسة محادثة ذكية محفوظة.",
+    "ConsultantProfile": {
+      "title": "ConsultantProfile",
+      "description": "بيانات المستشارين المعتمدين في النظام.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "characterId": { "type": "string" },
-        "lastMessageAt": { "type": "string", "format": "date-time" }
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "bio": { "type": "string" },
+        "hourlyRate": { "type": "number" },
+        "rating": { "type": "number" },
+        "image": { "type": "string" },
+        "isOnline": { "type": "boolean", "default": false }
       }
     },
-    "PaymentRequest": {
-      "title": "PaymentRequest",
-      "description": "طلب شحن رصيد مرسل من المستخدم للمالك.",
+    "LiveConsultation": {
+      "title": "LiveConsultation",
+      "description": "جلسة استشارة مباشرة بين عميل ومستشار.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "amount": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "consultantId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "terminated", "completed"] },
+        "startedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ForbiddenWord": {
+      "title": "ForbiddenWord",
+      "description": "الكلمات المحظورة في النظام الرقابي.",
+      "type": "object",
+      "properties": {
+        "word": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -49,17 +61,21 @@
       "schema": "UserProfile",
       "description": "ملفات المستخدمين"
     },
-    "/users/{userId}/chatSessions/{sessionId}": {
-      "schema": "ChatSession",
-      "description": "جلسات الدردشة الخاصة بكل مستخدم"
+    "/consultantProfiles/{id}": {
+      "schema": "ConsultantProfile",
+      "description": "بيانات الخبراء"
     },
-    "/paymentRequests/{requestId}": {
-      "schema": "PaymentRequest",
-      "description": "طلبات الشحن العامة للمدير"
+    "/liveConsultations/{id}": {
+      "schema": "LiveConsultation",
+      "description": "جلسات البث المباشر"
     },
-    "/consultantProfiles/{consultantId}": {
+    "/liveConsultations/{id}/messages/{msgId}": {
       "schema": "object",
-      "description": "بيانات الخبراء المتاحين"
+      "description": "رسائل الدردشة اللحظية"
+    },
+    "/settings/moderation/forbiddenWords/{id}": {
+      "schema": "ForbiddenWord",
+      "description": "قائمة الكلمات المحظورة"
     }
   }
 }
