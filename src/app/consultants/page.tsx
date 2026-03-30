@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, Scale, Video, Activity, Loader2, Sparkles, CalendarCheck } from "lucide-react";
+import { Search, Star, Scale, Video, Activity, Loader2, Sparkles, CalendarCheck, Wallet } from "lucide-react";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -39,33 +39,48 @@ export default function ConsultantsMarketplace() {
 
   const handleBookSession = (consultant: any) => {
     if (!user || !db) {
-      toast({ title: "بروتوكول مجهول", description: "يجب تسجيل الدخول لحجز جلسة مع الخبراء." });
+      toast({ 
+        variant: "destructive",
+        title: "بروتوكول مجهول", 
+        description: "يجب تسجيل الدخول لتفعيل ميزات الحجز السيادي." 
+      });
       router.push("/auth/login");
       return;
     }
 
-    const sessionPrice = 25; // السعر الافتراضي للجلسة بالجنيه
+    // السعر السيادي للجلسة (٥٠ EGP) حسب الطلب
+    const sessionPrice = 50; 
     
-    // التحقق من الرصيد السيادي قبل البدء
+    // التحقق المسبق من الرصيد لضمان السيادة المالية
     const currentBalance = profile?.balance || 0;
     if (currentBalance < sessionPrice && profile?.role !== 'admin') {
       toast({ 
         variant: "destructive", 
-        title: "الرصيد غير كافٍ", 
-        description: `تحتاج إلى ${sessionPrice} EGP على الأقل. رصيدك الحالي: ${currentBalance} EGP.` 
+        title: "رصيد غير كافٍ", 
+        description: `تكلفة الجلسة ${sessionPrice} EGP. رصيدك الحالي: ${currentBalance} EGP.` 
       });
       router.push("/pricing");
       return;
     }
 
-    // تفعيل بروتوكول الدفع ثم الحجز
-    payForSovereignSession(db, user.uid, consultant.id, sessionPrice);
-    createSovereignBooking(db, user.uid, consultant.id, sessionPrice);
-    
-    toast({ 
-      title: "تم تفعيل الحجز السيادي", 
-      description: `تم خصم ${sessionPrice} EGP وتوجيه طلب الحجز للمستشار ${consultant.name}.` 
-    });
+    try {
+      // تفعيل بروتوكول الدفع والخصم الذري
+      payForSovereignSession(db, user.uid, consultant.id, sessionPrice);
+      
+      // إنشاء سجل الحجز السيادي في قاعدة البيانات
+      createSovereignBooking(db, user.uid, consultant.id, sessionPrice);
+      
+      toast({ 
+        title: "تم الحجز بنجاح 🚀", 
+        description: `تم خصم ${sessionPrice} EGP وتوجيه طلبك للمستشار ${consultant.name}.` 
+      });
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive",
+        title: "فشل البروتوكول",
+        description: error.message || "حدث خطأ غير متوقع أثناء الحجز."
+      });
+    }
   };
 
   return (
@@ -121,7 +136,7 @@ export default function ConsultantsMarketplace() {
                           <Star className="h-3.5 w-3.5 fill-primary" />
                           {c.rating || "5.0"}
                         </div>
-                        <Badge className="bg-primary/10 text-primary border-none font-black">٢٥ EGP / جلسة</Badge>
+                        <Badge className="bg-primary/10 text-primary border-none font-black">٥٠ EGP / جلسة</Badge>
                       </div>
                       <CardTitle className="text-3xl font-black text-white">{c.name}</CardTitle>
                       <p className="text-primary font-black text-xs mt-3 uppercase tracking-widest flex items-center gap-2 justify-end">
