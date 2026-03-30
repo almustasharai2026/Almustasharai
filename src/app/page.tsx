@@ -69,7 +69,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Power Pillars */}
+        {/* Power Pillars - Three Main Action Buttons */}
         <div className="grid md:grid-cols-3 gap-8 mt-24 max-w-6xl mx-auto">
           <PillarButton 
             href="/consultants"

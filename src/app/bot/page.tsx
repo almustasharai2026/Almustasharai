@@ -25,7 +25,8 @@ import {
   History,
   LayoutGrid,
   Image as ImageIcon,
-  Zap
+  Zap,
+  ChevronLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { processLegalQuery } from "@/ai/flows/legal-chat-flow";
@@ -188,6 +189,7 @@ export default function BotPage() {
     setIsRecording(!isRecording);
     if (!isRecording) {
       toast({ title: "جاري الاستماع", description: "تحدث الآن ليتم تحويل صوتك لنص..." });
+      // In a real app, integrate Web Speech API here
       setTimeout(() => setIsRecording(false), 3000); 
     }
   };
@@ -195,8 +197,8 @@ export default function BotPage() {
   return (
     <div className="flex h-[calc(100vh-5rem)] w-full overflow-hidden bg-[#0a0a0a]" dir="rtl">
       
-      {/* Sidebar (Replit Style) */}
-      <aside className={`transition-all duration-300 ease-in-out border-l border-white/[0.03] bg-[#0d0d0d] flex flex-col ${isSidebarOpen ? 'w-[300px]' : 'w-0 opacity-0 overflow-hidden'}`}>
+      {/* Sidebar - Pro History & Navigation */}
+      <aside className={`transition-all duration-300 ease-in-out border-l border-white/[0.03] bg-[#0d0d0d] flex flex-col relative z-50 ${isSidebarOpen ? 'w-[300px]' : 'w-0 opacity-0 overflow-hidden'}`}>
         <div className="p-4 flex flex-col h-full">
           <Button onClick={startNewSession} className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] gap-3 font-bold text-xs mb-6 shadow-sm">
             <Plus className="h-4 w-4" /> محادثة جديدة
@@ -298,7 +300,7 @@ export default function BotPage() {
                 <div className={`max-w-[85%] space-y-1 ${msg.role === 'user' ? 'text-left' : 'text-right'}`}>
                   <div className={`p-5 rounded-2xl text-[15px] leading-relaxed border transition-all ${
                     msg.role === 'bot' 
-                    ? 'bg-white/[0.01] border-white/[0.03] text-white/80 rounded-tr-none whitespace-pre-wrap' 
+                    ? 'bg-white/[0.01] border-white/[0.03] text-white/80 rounded-tr-none whitespace-pre-wrap shadow-inner' 
                     : 'bg-primary/10 border-primary/20 text-white font-medium rounded-tl-none shadow-sm'
                   }`}>
                     {msg.content}
@@ -319,7 +321,7 @@ export default function BotPage() {
           </div>
         </ScrollArea>
 
-        {/* Replit Style Input Area */}
+        {/* Input Area - Camera, Mic, Upload integration */}
         <div className="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border-t border-white/[0.03]">
           <div className="max-w-4xl mx-auto space-y-4">
             <div className="relative flex items-end gap-3 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-2 focus-within:border-primary/40 transition-all shadow-2xl">
@@ -340,13 +342,13 @@ export default function BotPage() {
                  
                  <div className="flex items-center justify-between p-2 mt-2">
                     <div className="flex items-center gap-1">
-                       <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]">
+                       <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]" title="رفع ملف">
                           <Paperclip className="h-4 w-4" />
                        </Button>
-                       <Button variant="ghost" size="icon" onClick={toggleCamera} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]">
+                       <Button variant="ghost" size="icon" onClick={toggleCamera} className="h-9 w-9 rounded-lg text-white/20 hover:text-primary hover:bg-white/[0.03]" title="كاميرا">
                           <Camera className="h-4 w-4" />
                        </Button>
-                       <Button variant="ghost" size="icon" onClick={handleVoiceTyping} className={`h-9 w-9 rounded-lg transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-white/20 hover:text-primary hover:bg-white/[0.03]'}`}>
+                       <Button variant="ghost" size="icon" onClick={handleVoiceTyping} className={`h-9 w-9 rounded-lg transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-white/20 hover:text-primary hover:bg-white/[0.03]'}`} title="تحدث">
                           <Mic className="h-4 w-4" />
                        </Button>
                        <input type="file" ref={fileInputRef} className="hidden" />

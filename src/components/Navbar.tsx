@@ -38,7 +38,7 @@ export function Navbar() {
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-7xl">
       <div className="glass-cosmic h-20 px-8 rounded-[2.5rem] flex items-center justify-between border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)]">
         
-        {/* Modern Gavel Logo System */}
+        {/* Modern Gavel Logo System - Pro Identity */}
         <Link href="/" className="flex items-center gap-4 group">
           <div className="relative">
             <div className="bg-primary p-3.5 rounded-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)] group-hover:rotate-[360deg] transition-transform duration-1000 flex items-center justify-center relative z-10">
