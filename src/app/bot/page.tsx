@@ -12,6 +12,7 @@ import { useMemoFirebase } from "@/firebase/provider";
 import { executeDecisionEngine, type DecisionOutput } from "@/ai/flows/decision-engine-flow";
 import { matchConsultantSovereign } from "@/lib/sovereign-match";
 import { checkSovereignViolation } from "@/lib/sovereign-moderation";
+import { getSovereignQuickReply } from "@/lib/sovereign-ai";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ export default function SovereignDecisionBot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [decisionData, setDecisionData] = useState<DecisionOutput | null>(null);
+  const [quickReply, setQuickReply] = useState<string | null>(null);
   const [bestMatch, setBestMatch] = useState<any | null>(null);
 
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
@@ -46,7 +48,6 @@ export default function SovereignDecisionBot() {
     const isViolated = checkSovereignViolation(input, forbiddenWords || []);
     
     if (isViolated) {
-      // حظر المستخدم سيادياً فوراً
       await updateDoc(doc(db, "users", user.uid), { isBanned: true });
       toast({ 
         variant: "destructive", 
@@ -66,9 +67,15 @@ export default function SovereignDecisionBot() {
 
     setIsLoading(true);
     setDecisionData(null);
+    setQuickReply(null);
     setBestMatch(null);
 
     try {
+      // 1. الحصول على الرد السريع (Keyword-based)
+      const quick = await getSovereignQuickReply(input);
+      setQuickReply(quick);
+
+      // 2. تفعيل محرك القرار (Genkit AI)
       const result = await executeDecisionEngine({ context: input });
       setDecisionData(result);
       
@@ -82,6 +89,7 @@ export default function SovereignDecisionBot() {
         });
       }
       
+      // 3. مطابقة الخبير
       const match = await matchConsultantSovereign(db, input);
       setBestMatch(match);
 
@@ -133,6 +141,16 @@ export default function SovereignDecisionBot() {
                         <Badge className="bg-primary/10 text-primary border-none px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest">Confidential Report</Badge>
                       </div>
 
+                      {quickReply && (
+                        <div className="mb-12 p-8 glass rounded-[2rem] border-primary/20 bg-primary/5">
+                           <div className="flex items-center gap-4 mb-4">
+                              <Sparkles className="h-5 w-5 text-primary" />
+                              <h4 className="font-black text-sm uppercase tracking-widest text-primary">استجابة سريعة فورية</h4>
+                           </div>
+                           <p className="text-lg font-bold text-white/80 leading-relaxed">{quickReply}</p>
+                        </div>
+                      )}
+
                       <div className="grid md:grid-cols-2 gap-12 relative z-10">
                          <div className="space-y-6 p-10 glass rounded-[3rem] border-white/5">
                             <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">القرار الموصى به</h4>
@@ -160,7 +178,7 @@ export default function SovereignDecisionBot() {
                       )}
                       
                       <div className="mt-16 pt-12 border-t border-white/5 flex justify-end">
-                         <Button variant="ghost" onClick={() => { setDecisionData(null); setBestMatch(null); }} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
+                         <Button variant="ghost" onClick={() => { setDecisionData(null); setBestMatch(null); setQuickReply(null); }} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
                            <RefreshCcw className="h-4 w-4" /> تحليل جديد
                          </Button>
                       </div>
@@ -194,13 +212,5 @@ export default function SovereignDecisionBot() {
         </div>
       </main>
     </div>
-  );
-}
-
-function TabBtn({ active, onClick, icon, label }: any) {
-  return (
-    <button onClick={onClick} className={`flex items-center gap-5 px-12 py-5 rounded-[2.5rem] text-sm font-black transition-all ${active ? 'bg-primary text-slate-950 shadow-3xl' : 'text-white/20 hover:text-white'}`}>
-      {icon} {label}
-    </button>
   );
 }
