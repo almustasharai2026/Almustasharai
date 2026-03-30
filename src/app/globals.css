@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,6 +33,10 @@
     @apply bg-slate-950/40 backdrop-blur-3xl border border-white/[0.05] shadow-2xl;
   }
   
+  .glass {
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.05];
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-200 to-amber-200;
   }
@@ -46,6 +51,14 @@
 
   .mirror {
     transform: scaleX(-1);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
