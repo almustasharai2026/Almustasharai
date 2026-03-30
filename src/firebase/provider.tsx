@@ -65,7 +65,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    // Safety timeout to prevent infinite loading
+    // CRITICAL: Safety timeout to prevent infinite loading screen
+    // Force isUserLoading to false after 5 seconds regardless of Firebase response
     const safetyTimer = setTimeout(() => {
       setUserAuthState(prev => prev.isUserLoading ? { ...prev, isUserLoading: false } : prev);
     }, 5000);

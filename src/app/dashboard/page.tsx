@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Shield, Wallet, Zap, Gavel, FileCheck, Activity, 
@@ -23,9 +23,11 @@ export default function SovereignEcosystemHub() {
   const [profile, setProfile] = useState<any>(null);
   const [loadingError, setLoadingError] = useState(false);
 
+  // FORCE UNSTICK: Handle profile loading with safety timeout
   useEffect(() => {
     if (!db || !user) return;
     
+    // If we don't get a profile doc in 5 seconds, show error/fallback
     const timeout = setTimeout(() => {
       if (!profile) setLoadingError(true);
     }, 5000);
@@ -59,6 +61,7 @@ export default function SovereignEcosystemHub() {
     );
   }
 
+  // If still strictly loading from auth and not timed out
   if (!profile) return (
     <div className="h-screen bg-black flex flex-col items-center justify-center gap-4">
       <Activity className="animate-spin text-primary h-12 w-12" />
@@ -68,6 +71,7 @@ export default function SovereignEcosystemHub() {
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans selection:bg-primary/30" dir="rtl">
+      {/* Atmosphere Backdrop */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-20% w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full" />
       </div>
@@ -87,6 +91,7 @@ export default function SovereignEcosystemHub() {
           </div>
         </header>
 
+        {/* Vital Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard label="رصيد المحفظة" value={`${profile.balance || 0} EGP`} icon={<Wallet className="text-emerald-400" />} color="emerald" />
           <StatCard label="معدل الموثوقية" value={`${profile.trustScore || 0}%`} icon={<Shield className="text-indigo-400" />} progress={profile.trustScore} color="indigo" />
@@ -94,6 +99,7 @@ export default function SovereignEcosystemHub() {
           <StatCard label="الذكاء النشط" value="Ready" icon={<Sparkles className="text-purple-400" />} color="purple" />
         </div>
 
+        {/* Main Grid */}
         <div className="grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">
             <div className="grid md:grid-cols-2 gap-6">
