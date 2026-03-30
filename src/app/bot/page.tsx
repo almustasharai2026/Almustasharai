@@ -46,13 +46,15 @@ export default function SovereignDecisionBot() {
     const isViolated = checkSovereignViolation(input, forbiddenWords || []);
     
     if (isViolated) {
+      // حظر المستخدم سيادياً فوراً
       await updateDoc(doc(db, "users", user.uid), { isBanned: true });
       toast({ 
         variant: "destructive", 
-        title: "انتهاك سيادي مكتشف", 
+        title: "انتهاك سيادي مكتشف 🚫", 
         description: "تم حظر الحساب فوراً لمخالفة بروتوكول الأمان والكلمات المحظورة." 
       });
-      router.push("/");
+      setInput("");
+      setTimeout(() => router.push("/"), 2000);
       return;
     }
 
@@ -192,5 +194,13 @@ export default function SovereignDecisionBot() {
         </div>
       </main>
     </div>
+  );
+}
+
+function TabBtn({ active, onClick, icon, label }: any) {
+  return (
+    <button onClick={onClick} className={`flex items-center gap-5 px-12 py-5 rounded-[2.5rem] text-sm font-black transition-all ${active ? 'bg-primary text-slate-950 shadow-3xl' : 'text-white/20 hover:text-white'}`}>
+      {icon} {label}
+    </button>
   );
 }

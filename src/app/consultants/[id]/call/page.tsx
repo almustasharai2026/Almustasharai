@@ -69,12 +69,14 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
     
     if (isViolated) {
       setHasViolated(true);
+      // حظر المستخدم سيادياً فوراً
       await updateDoc(doc(db, "users", user.uid), { isBanned: true });
       toast({ 
         variant: "destructive", 
-        title: "انتهاك سيادي مكتشف!", 
-        description: "تم إنهاء الجلسة وحظر الحساب لمخالفة بروتوكول الأمان." 
+        title: "انتهاك سيادي مكتشف! 🚫", 
+        description: "تم إنهاء الجلسة وحظر الحساب لمخالفة بروتوكول الأمان والكلمات المحظورة." 
       });
+      setChatMessage("");
       setTimeout(() => router.push("/"), 3000);
       return;
     }
@@ -88,7 +90,7 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
       <div className="fixed inset-0 bg-red-950/90 backdrop-blur-3xl z-[300] flex flex-col items-center justify-center text-center p-10">
          <AlertTriangle className="h-32 w-32 text-red-500 mb-8 animate-bounce" />
          <h1 className="text-5xl font-black text-white mb-4">تم إنهاء الجلسة سيادياً</h1>
-         <p className="text-xl text-red-200 font-bold max-w-lg">خالفت بروتوكولات الأمان. تم تجميد الحساب نهائياً.</p>
+         <p className="text-xl text-red-200 font-bold max-w-lg">خالفت بروتوكولات الأمان والكلمات المحظورة. تم تجميد الحساب نهائياً.</p>
       </div>
     );
   }
