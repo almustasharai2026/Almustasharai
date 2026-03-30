@@ -1,79 +1,138 @@
-
 rules_version = '2';
+
+/**
+ * Almustasharai Platform Security Rules
+ * 
+ * Core Philosophy:
+ * This ruleset implements a strict, identity-based security model designed for a legal consultation SaaS. 
+ * It prioritizes "Authorization Independence" by ensuring that all data required to make an 
+ * access decision is either present in the document path or denormalized onto the document itself. 
+ * This approach minimizes the need for costly `get()` calls and ensures performant, atomic operations.
+ * 
+ * Data Structure:
+ * - /userProfiles/{userId}: Private profile data, strictly owned by the authenticated user.
+ * - /consultantProfiles/{consultantId}: Public-facing consultant details. Publicly readable, 
+ *   but writeable only by the consultant.
+ * - /expertiseAreas/{expertiseAreaId}: Platform-wide lookup data. Publicly readable, admin-only writes.
+ * - /consultations/{consultationId}: Collaborative records shared between a client and a consultant. 
+ *   Access is granted if the user's UID matches either the 'clientId' or 'consultantId' fields.
+ * - /roles_admin/{userId}: Sentinel collection for administrative access control.
+ * 
+ * Key Security Decisions:
+ * 1. Denormalization for Auth: Documents like 'Consultation' explicitly store 'clientId' and 'consultantId' 
+ *    to allow for O(1) authorization checks without traversing relationships.
+ * 2. Structural Segregation: Public consultant data is separated from private user profile data 
+ *    to allow for broad discovery (listing) of consultants while keeping personal details secure.
+ * 3. Prototyping Flexibility: Rules strictly enforce *who* can access data but do not enforce 
+ *    the specific schema or data types of non-relational fields, allowing for rapid iteration.
+ */
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * ALMUSTASHAR AI - SUPREME SECURITY RULES
-     * 
-     * الهوية: السيطرة السيادية للمالك والحماية المطلقة للمستخدم.
-     * المالك: bishoysamy390@gmail.com
-     */
+    // --- Helper Functions ---
 
+    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /** @description Checks if the authenticated user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    /** @description Checks if the user is an administrator via the roles_admin sentinel collection. */
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == "bishoysamy390@gmail.com";
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // --- قوانين المجموعات ---
-
-    match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isSignedIn();
-      allow update: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['balance', 'status', 'email']));
-      allow delete: if isAdmin();
-
-      match /chatSessions/{sessionId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-        
-        match /messages/{messageId} {
-          allow read, write: if isOwner(userId) || isAdmin();
-        }
-      }
+    /** @description Checks if the user is the owner of an existing document. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
     }
 
-    match /specializations/{specializationId} {
-      allow get, list: if true;
-      allow write: if isAdmin();
+    // Removed the isConsultationParticipant function and inlined its logic
+    // to resolve "Unused function" and "Invalid variable name: request" warnings.
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Private user profile data. Access is restricted to the owner.
+     * @path /userProfiles/{userId}
+     * @allow get, list, create, update: if isOwner(userId)
+     * @deny delete: if true (Profiles are preserved)
+     * @principle Path-based ownership and relational integrity enforcement.
+     */
+    match /userProfiles/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if false;
     }
 
+    /**
+     * @description Publicly viewable consultant profiles. Only the consultant can manage their own profile.
+     * @path /consultantProfiles/{consultantId}
+     * @allow get, list: if true
+     * @allow create, update: if isOwner(consultantId)
+     * @deny delete: if true
+     * @principle Public read with owner-only writes.
+     */
     match /consultantProfiles/{consultantId} {
       allow get, list: if true;
-      allow write: if isAdmin();
-      allow delete: if isAdmin();
+      allow create: if isOwner(consultantId) && request.resource.data.userId == consultantId;
+      allow update: if isExistingOwner(consultantId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
     }
 
+    /**
+     * @description Platform-defined expertise areas. Read-only for users, managed by admins.
+     * @path /expertiseAreas/{expertiseAreaId}
+     * @allow get, list: if true
+     * @allow create, update, delete: if isAdmin()
+     * @principle Global role-based access for static platform data.
+     */
+    match /expertiseAreas/{expertiseAreaId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Legal consultations. Access shared between the client and the consultant.
+     * @path /consultations/{consultationId}
+     * @allow get, list: if current user is a participant of the existing document.
+     * @allow create: if current user is a participant of the proposed new document.
+     * @allow update: if current user is a participant of both the existing and proposed new document.
+     * @deny delete: if true
+     * @principle Denormalized ownership ensures efficient O(1) participant checks.
+     */
     match /consultations/{consultationId} {
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.consultantId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (request.query.limit <= 50); 
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      // Allow read access if the authenticated user is either the client or the consultant
+      allow get, list: if isSignedIn() && (request.auth.uid == resource.data.clientId || request.auth.uid == resource.data.consultantId);
 
-      match /chat/{messageId} {
-        allow get, list, create: if isSignedIn();
-        allow update, delete: if isAdmin();
-      }
+      // Allow creation if the authenticated user is either the client or the consultant in the new data
+      allow create: if isSignedIn() && (request.auth.uid == request.resource.data.clientId || request.auth.uid == request.resource.data.consultantId);
+
+      // Allow update if the document exists AND the authenticated user is a participant in both the existing and proposed new document
+      allow update: if resource != null &&
+                       isSignedIn() &&
+                       (request.auth.uid == resource.data.clientId || request.auth.uid == resource.data.consultantId) &&
+                       (request.auth.uid == request.resource.data.clientId || request.auth.uid == request.resource.data.consultantId);
+
+      allow delete: if false; // Consultations are preserved and not deletable by users.
     }
-    
-    match /paymentRequests/{requestId} {
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 50); 
-      allow create: if isSignedIn();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-    
-    match /{path=**}/public_data/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
+
+    /**
+     * @description Admin sentinel collection. Only existing admins can add new admins.
+     * @path /roles_admin/{userId}
+     * @allow get: if isSignedIn()
+     * @allow list, create, update, delete: if isAdmin()
+     * @principle Database Access Control (DBAC) via sentinel documents.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isSignedIn();
+      allow list, create, update, delete: if isAdmin();
     }
   }
 }
