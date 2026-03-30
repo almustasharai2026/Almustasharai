@@ -31,6 +31,7 @@ export function sendSovereignLiveMessage(
   };
 
   // إرسال الرسالة بأسلوب غير حاصر (Non-blocking)
+  // لا نستخدم await هنا لضمان سرعة استجابة الواجهة السيادية
   addDoc(messagesRef, messageData)
     .then((docRef) => {
       console.log(`[Sovereign Chat] Message transmitted: ${docRef.id}`);
