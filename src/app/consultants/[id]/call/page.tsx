@@ -16,6 +16,7 @@ import { useMemoFirebase } from "@/firebase/provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendSovereignLiveMessage } from "@/lib/sovereign-live-chat";
 import { checkSovereignViolation } from "@/lib/sovereign-moderation";
+import { getSovereignQuickReply } from "@/lib/sovereign-ai";
 
 export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id: string }> }) {
   const { id: consultantId } = use(params);
@@ -79,7 +80,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // التحكم السيادي في الكاميرا والصوت
   useEffect(() => {
     if (stream) {
       stream.getVideoTracks().forEach(track => track.enabled = isVideoOn);
@@ -108,8 +108,18 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
       return;
     }
 
-    sendSovereignLiveMessage(db, consultantId, user.uid, user.displayName || "مواطن سيادي", chatMessage);
+    const currentInput = chatMessage;
     setChatMessage("");
+
+    // 1. إرسال رسالة المواطن
+    sendSovereignLiveMessage(db, consultantId, user.uid, user.displayName || "مواطن سيادي", currentInput);
+
+    // 2. تفعيل المساعد الذكي السيادي (AI Autopilot)
+    const aiReply = await getSovereignQuickReply(currentInput);
+    if (aiReply) {
+      // إرسال رد المحرك السيادي بصفة مساعد (Assistant)
+      sendSovereignLiveMessage(db, consultantId, "assistant", "المستشار AI", aiReply);
+    }
   };
 
   if (hasViolated) {
@@ -125,7 +135,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
   return (
     <div className="fixed inset-0 bg-[#050505] z-[200] flex flex-col md:flex-row overflow-hidden font-sans" dir="rtl">
       <main className="flex-grow relative flex flex-col">
-        {/* منطقة الخبير (Main Video Area) */}
         <div className="flex-grow flex items-center justify-center bg-[#080808] relative group">
           <div className="text-center space-y-10 animate-in fade-in duration-1000">
              <div className="h-48 w-48 rounded-[4rem] glass-cosmic mx-auto flex items-center justify-center border-2 border-primary/20 shadow-3xl overflow-hidden relative">
@@ -138,7 +147,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
              </div>
           </div>
 
-          {/* صورة المواطن (PiP Mode) */}
           <motion.div 
             drag
             dragConstraints={{ left: -1000, right: 0, top: -600, bottom: 0 }}
@@ -166,7 +174,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
           </motion.div>
         </div>
 
-        {/* شريط التحكم السيادي */}
         <div className="h-36 glass-cosmic border-t border-white/5 flex items-center justify-center gap-6 md:gap-10 px-6 md:px-12 relative z-[60]">
           <LiveControlBtn 
             active={isMicOn} 
@@ -198,7 +205,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
         </div>
       </main>
 
-      {/* الجانب الاستشاري (Chat Sidebar) */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.aside 
@@ -222,11 +228,15 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
                 {messages?.map((m, idx) => (
                   <div key={idx} className={`flex flex-col ${m.senderId === user?.uid ? 'items-start' : 'items-end'}`}>
                     <div className="flex items-center gap-3 mb-2 px-4">
-                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{m.senderName}</span>
+                       <span className={`text-[9px] font-black uppercase tracking-widest ${m.senderId === 'assistant' ? 'text-primary' : 'text-white/20'}`}>
+                         {m.senderName}
+                       </span>
                     </div>
                     <div className={`p-6 rounded-[2.5rem] max-w-[95%] text-sm leading-relaxed border shadow-xl ${
                       m.senderId === user?.uid 
                         ? 'bg-primary border-white/10 text-slate-950 font-bold rounded-tr-none' 
+                        : m.senderId === 'assistant'
+                        ? 'bg-indigo-600/20 border-primary/20 text-white rounded-tl-none italic'
                         : 'glass border-white/5 text-white/80 rounded-tl-none'
                     }`}>
                       {m.text}
