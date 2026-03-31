@@ -1,11 +1,12 @@
+
 'use client';
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, User, History, CreditCard, 
-  LifeBuoy, Settings, LogOut, ShieldCheck,
-  LayoutDashboard, Sparkles
+  Settings, LogOut, ShieldCheck,
+  LayoutDashboard, Sparkles, Gift, Zap
 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { roles as ROLES_LIST, SOVEREIGN_ADMIN_EMAIL } from '@/lib/roles';
@@ -17,8 +18,8 @@ interface SovereignSidebarProps {
 }
 
 /**
- * القائمة الجانبية السيادية (Sovereign Sidebar - king2026).
- * توفر وصولاً سريعاً للأوامر والملفات داخل الجسد الرقمي.
+ * القائمة الجانبية السيادية (Sovereign Sidebar).
+ * تم تحديثها لتغلق عند الضغط على الـ Overlay وضمان خصوصية المالك.
  */
 export default function SovereignSidebar({ isOpen, onClose }: SovereignSidebarProps) {
   const { user, profile, role, signOut } = useUser();
@@ -28,30 +29,30 @@ export default function SovereignSidebar({ isOpen, onClose }: SovereignSidebarPr
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* 1. طبقة التعتيم الزجاجية (Overlay) */}
+          {/* 1. طبقة التعتيم (Sovereign Glass Overlay) */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] cursor-pointer"
           />
 
-          {/* 2. جسم القائمة (The Drawer) */}
+          {/* 2. جسم القائمة (Handheld Drawer) */}
           <motion.aside 
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-full w-[320px] bg-[#1a1a1a] z-[70] border-r border-white/5 shadow-3xl flex flex-col"
+            className="fixed right-0 top-0 h-full w-[320px] bg-[#1a1a1a] z-[70] border-r border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col"
           >
             {/* Header */}
-            <div className="p-10 flex justify-between items-center border-b border-white/5">
+            <div className="p-10 flex justify-between items-center border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center gap-4">
                  <div className="w-10 h-10 bg-[#ff5722] rounded-xl flex items-center justify-center shadow-lg shadow-[#ff5722]/20">
                     <User size={20} className="text-black" />
                  </div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Menu Protocol</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Device Protocol</span>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-all text-zinc-600">
                 <X size={24} />
@@ -65,31 +66,30 @@ export default function SovereignSidebar({ isOpen, onClose }: SovereignSidebarPr
               <SidebarLink href="/pricing" icon={<CreditCard size={18}/>} label="شحن الرصيد" onClick={onClose} />
               <SidebarLink href="/templates" icon={<Sparkles size={18}/>} label="المكتبة الرقمية" onClick={onClose} />
               
-              <div className="h-px bg-white/5 my-6" />
-              
-              <SidebarLink href="/settings" icon={<Settings size={18}/>} label="الإعدادات السيادية" onClick={onClose} />
-
-              {/* صلاحية المالك الحصرية */}
               {isOwner && (
-                <SidebarLink 
-                   href="/admin"
-                   icon={<ShieldCheck size={18} className="text-[#ff5722]" />} 
-                   label="لوحة السيطرة (الملك)" 
-                   special 
-                   onClick={onClose}
-                />
+                <>
+                  <div className="h-px bg-white/5 my-6" />
+                  <p className="text-[8px] font-black text-primary uppercase tracking-[0.4em] px-4 mb-2">Supreme Authority</p>
+                  <SidebarLink 
+                    href="/admin"
+                    icon={<ShieldCheck size={18} className="text-[#ff5722]" />} 
+                    label="لوحة السيطرة الملكية" 
+                    special 
+                    onClick={onClose}
+                  />
+                </>
               )}
             </div>
 
-            {/* Footer / Identity */}
+            {/* Account Info */}
             <div className="p-8 border-t border-white/5 space-y-4">
                <div className="flex items-center gap-4 px-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
+                  <div className="w-10 h-10 rounded-2xl bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 border border-white/5">
                     {profile?.fullName?.charAt(0) || "U"}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-white truncate max-w-[150px]">{profile?.fullName || "مواطن سيادي"}</span>
-                    <span className="text-[8px] text-zinc-600 uppercase font-black tracking-widest">{role}</span>
+                    <span className="text-[8px] text-zinc-600 uppercase font-black tracking-widest">{isOwner ? 'KING2026' : role}</span>
                   </div>
                </div>
                <button 

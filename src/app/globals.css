@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,21 +33,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#0f0f0f] text-[#e5e5e5] antialiased font-sans selection:bg-[#ff5722]/30 overflow-x-hidden;
+    @apply bg-[#050505] text-[#e5e5e5] antialiased font-sans selection:bg-[#ff5722]/30 overflow-hidden;
   }
 }
 
 @layer utilities {
-  .glass-device {
-    @apply bg-[#1a1a1a] border-[#252525] border-[6px] shadow-2xl;
+  .glass-cosmic {
+    @apply bg-white/[0.03] backdrop-blur-3xl border border-white/5 shadow-2xl;
   }
   
-  .text-sovereign {
-    @apply text-[#ff5722];
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-zinc-600;
   }
 
-  .bg-sovereign {
-    @apply bg-[#ff5722];
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -57,13 +58,14 @@
   }
 }
 
-@keyframes scan {
-  0% { top: 0; }
-  100% { top: 100%; }
+.float-sovereign {
+  animation: float 6s ease-in-out infinite;
 }
 
-.animate-scan {
-  animation: scan 2s linear infinite;
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
 }
 
 .mirror {

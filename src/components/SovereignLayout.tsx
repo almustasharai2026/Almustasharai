@@ -1,8 +1,12 @@
+
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { LayoutGrid, MessageSquare, User, Scale, ArrowUp, Camera } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  MessageSquare, User, Scale, ArrowUp, 
+  Camera, Zap, ShieldCheck, LayoutGrid 
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
@@ -14,88 +18,107 @@ interface SovereignLayoutProps {
 }
 
 /**
- * واجهة الجسد الرقمي (The Sovereign Device Body).
- * تم تحديث "العدسة" لتكون مفتاحاً للمسح والقائمة الجانبية معاً.
+ * واجهة الجسد الرقمي المحمول (The Sovereign Handheld Body).
+ * تصميم Matte فائق الفخامة مستوحى من Rabbit R1.
  */
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
-  const { profile } = useUser();
+  const { profile, user } = useUser();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 lg:p-10 font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 lg:p-10 font-sans selection:bg-[#ff5722]/20" dir="rtl">
       
       {/* جسد الجهاز السيادي (The Device Body) */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-[450px] h-[850px] bg-[#1a1a1a] rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-[8px] border-[#252525] relative overflow-hidden flex flex-col"
+        className="w-full max-w-[450px] h-[880px] bg-[#1a1a1a] rounded-[4.5rem] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.9)] border-[10px] border-[#252525] relative overflow-hidden flex flex-col"
       >
         
-        {/* الكاميرا السيادية المحدثة (The Sovereign Lens) */}
-        <button 
+        {/* العدسة السيادية المضيئة (The Sovereign Lens) */}
+        <div 
           onClick={() => setIsSidebarOpen(true)}
-          className="absolute top-10 right-12 w-14 h-14 bg-[#252525] rounded-[1.5rem] flex items-center justify-center border border-[#ff5722]/20 hover:border-[#ff5722] z-50 group cursor-pointer transition-all duration-500 shadow-xl"
+          className="absolute top-12 right-12 w-16 h-16 bg-[#252525] rounded-[2rem] flex items-center justify-center border border-[#ff5722]/10 hover:border-[#ff5722] z-50 group cursor-pointer transition-all duration-700 shadow-2xl active:scale-95"
         >
-           <Camera size={24} className="text-zinc-500 group-hover:text-[#ff5722] transition-colors" />
-           <div className="absolute top-2 right-2 w-2 h-2 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_10px_#ff5722]" />
-           <span className="absolute -bottom-10 text-[8px] font-black opacity-0 group-hover:opacity-100 transition-opacity uppercase text-[#ff5722] tracking-widest">Sovereign Lens</span>
-        </button>
+           <div className="relative">
+              <Camera size={28} className="text-zinc-600 group-hover:text-[#ff5722] transition-colors" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_15px_#ff5722]" />
+           </div>
+           <span className="absolute -bottom-12 text-[8px] font-black opacity-0 group-hover:opacity-100 transition-all uppercase text-[#ff5722] tracking-[0.4em] whitespace-nowrap">Open Sovereign Lens</span>
+        </div>
 
-        {/* القائمة الجانبية المنزلقة */}
-        <SovereignSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        {/* القائمة الجانبية المنزلقة (The Sovereign Menu) */}
+        <SovereignSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+          userEmail={user?.email} 
+        />
 
-        {/* الجزء العلوي: الهوية السيادية */}
-        <div className="p-12 pt-20 flex justify-between items-start">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tighter italic text-white">المستشار</h1>
-            <div className="flex items-center gap-2">
-               <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-               <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] font-black">Sovereign OS v1.0</p>
+        {/* الهوية العلوية */}
+        <div className="p-12 pt-24 flex justify-between items-end">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black tracking-tighter italic text-white leading-none">المستشار</h1>
+            <div className="flex items-center gap-3">
+               <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.6)]" />
+               <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] font-black">Sovereign OS 1.0</p>
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-1">
-             <span className="text-[10px] font-black text-[#ff5722] uppercase tracking-widest">Vault Balance</span>
-             <span className="text-xl font-bold tabular-nums text-white">{profile?.balance || 0} EGP</span>
+          <div className="flex flex-col items-end gap-1.5">
+             <span className="text-[9px] font-black text-[#ff5722] uppercase tracking-[0.3em] opacity-60">Vault Status</span>
+             <div className="flex items-center gap-2">
+                <span className="text-2xl font-black tabular-nums text-white">
+                  {user?.email === 'bishoysamy390@gmail.com' ? '∞' : (profile?.balance || 0)}
+                </span>
+                <span className="text-[10px] font-black text-zinc-500 uppercase">EGP</span>
+             </div>
           </div>
         </div>
 
-        {/* مساحة المحتوى الرئيسية */}
-        <main className="flex-1 px-10 overflow-y-auto custom-scrollbar relative">
-          {children}
+        {/* مساحة العمل (The Handheld Screen) */}
+        <main className="flex-1 px-10 overflow-y-auto custom-scrollbar relative scroll-smooth">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
-        {/* الجزء السفلي: الـ Quick Dock (نظام التنقل الجرمي) */}
-        <div className="p-10 pb-14">
-          <div className="bg-[#252525] rounded-[3rem] p-3 flex items-center justify-between border border-white/5 shadow-inner">
-            <Link href="/bot">
-              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/bot' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
-                <MessageSquare size={24} />
-              </button>
-            </Link>
-            
-            <Link href="/dashboard">
-              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/dashboard' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
-                <User size={24} />
-              </button>
-            </Link>
-
-            <Link href="/admin">
-              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/admin' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
-                <LayoutGrid size={24} />
-              </button>
-            </Link>
-
-            <Link href="/">
-              <button className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-all">
-                <ArrowUp size={24} />
-              </button>
-            </Link>
+        {/* قاعدة التنقل الجرمية (The Sovereign Dock) */}
+        <div className="p-10 pb-16 relative z-50">
+          <div className="bg-[#252525]/80 backdrop-blur-3xl rounded-[3.5rem] p-3 flex items-center justify-between border border-white/5 shadow-3xl">
+            <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={26} />} />
+            <DockItem href="/dashboard" active={pathname === '/dashboard'} icon={<User size={26} />} />
+            <DockItem href="/admin" active={pathname === '/admin'} icon={<LayoutGrid size={26} />} />
+            <DockItem href="/" active={pathname === '/'} icon={<ArrowUp size={26} />} />
           </div>
         </div>
 
       </motion.div>
     </div>
+  );
+}
+
+function DockItem({ href, active, icon }: any) {
+  return (
+    <Link href={href}>
+      <motion.button 
+        whileTap={{ scale: 0.9 }}
+        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${
+          active 
+            ? 'bg-[#ff5722] text-black shadow-[0_15px_40px_rgba(255,87,34,0.4)]' 
+            : 'text-zinc-600 hover:text-white hover:bg-white/5'
+        }`}
+      >
+        {icon}
+      </motion.button>
+    </Link>
   );
 }
