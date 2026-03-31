@@ -1,6 +1,6 @@
 'use client';
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
@@ -90,11 +90,19 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
 
 export const useUser = () => {
   const context = useContext(FirebaseContext);
+  
+  const signOut = useCallback(async () => {
+    if (context?.auth) {
+      await context.auth.signOut();
+    }
+  }, [context?.auth]);
+
   return { 
     user: context?.user || null, 
     role: context?.role || roles.USER,
     isUserLoading: context?.isUserLoading ?? true,
-    profile: context?.profile || null
+    profile: context?.profile || null,
+    signOut
   };
 };
 
