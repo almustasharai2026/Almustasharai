@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, User, ArrowUp, 
-  LayoutGrid, Loader2, Menu, X, Wallet, ShieldCheck
+  LayoutGrid, Loader2, Menu, X, Wallet, ShieldCheck, Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -31,6 +31,7 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
     setIsMounted(true);
   }, []);
 
+  const sovereign = checkSovereignStatus(user?.email);
   const balance = getBalance(profile);
 
   if (!isMounted) return null;
@@ -56,12 +57,18 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
 
           <Link href="/pricing">
             <div className="bg-[#1a1a1a] border border-white/5 px-6 py-3 rounded-3xl flex items-center gap-4 shadow-inner hover:bg-white/5 transition-all group">
-               <Wallet size={16} className="text-zinc-700 group-hover:text-primary transition-colors" />
+               {sovereign.isOwner ? (
+                 <Crown size={16} className="text-primary animate-pulse" />
+               ) : (
+                 <Wallet size={16} className="text-zinc-700 group-hover:text-primary transition-colors" />
+               )}
                <div className="flex flex-col items-end">
-                  <span className="text-xl font-black tabular-nums text-white leading-none">
-                    {balance === Infinity ? '∞' : balance}
+                  <span className={`text-xl font-black tabular-nums leading-none ${sovereign.isOwner ? 'text-primary' : 'text-white'}`}>
+                    {balance}
                   </span>
-                  <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mt-1">Sovereign Units</span>
+                  <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mt-1">
+                    {sovereign.isOwner ? 'Supreme Status' : 'Sovereign Units'}
+                  </span>
                </div>
             </div>
           </Link>
@@ -91,7 +98,9 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
           <div className="bg-[#1a1a1a]/80 backdrop-blur-3xl rounded-[3.5rem] p-3 flex items-center justify-between border border-white/5 shadow-2xl">
             <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={26} />} />
             <DockItem href="/dashboard" active={pathname === '/dashboard'} icon={<User size={26} />} />
-            <DockItem href="/admin" active={pathname === '/admin'} icon={<LayoutGrid size={26} />} />
+            {sovereign.isOwner && (
+              <DockItem href="/admin" active={pathname === '/admin'} icon={<Crown size={26} />} />
+            )}
             <DockItem href="/" active={pathname === '/'} icon={<ArrowUp size={26} />} />
           </div>
         </div>

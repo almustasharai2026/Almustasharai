@@ -55,7 +55,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         const sovereign = checkSovereignStatus(firebaseUser.email);
         const initialRole = sovereign.isOwner ? ROLES_LIST.ADMIN : ROLES_LIST.USER;
         
-        // التحقق من وجود الملف الشخصي أو إنشاؤه (بروتوكول king2026)
         const userRef = doc(firestore, "users", firebaseUser.uid);
         const userSnap = await getDoc(userRef);
         
@@ -64,19 +63,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             id: firebaseUser.uid,
             email: firebaseUser.email,
             fullName: firebaseUser.displayName || 'مواطن سيادي',
-            balance: sovereign.isOwner ? 999999 : 50, // منحة التأسيس 50 EGP
+            balance: sovereign.isOwner ? 999999 : 50, // رصيد التأسيس السيادي
             role: initialRole,
             createdAt: serverTimestamp(),
             isBanned: false
           };
           await setDoc(userRef, newProfile);
+        } else if (sovereign.isOwner) {
+          // تحديث رصيد المالك لضمان اللانهاية
+          await setDoc(userRef, { balance: 999999, role: ROLES_LIST.ADMIN }, { merge: true });
         }
 
         const unsubscribeProfile = onSnapshot(userRef, (snap) => {
           const data = snap.data();
           let detectedRole = data?.role || initialRole;
           
-          // فرض سلطة المالك المطلقة برمجياً
           if (sovereign.isOwner) detectedRole = ROLES_LIST.ADMIN;
 
           setAuthState({
@@ -90,7 +91,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
         return () => unsubscribeProfile();
       } else {
-        // Bypass for owner during development/session clearing
         setAuthState({ 
           user: null, 
           profile: null, 

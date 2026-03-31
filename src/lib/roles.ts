@@ -13,7 +13,7 @@ export const roles = {
 
 export type UserRole = (typeof roles)[keyof typeof roles];
 
-// المرجع النهائي للسلطة البرمجية للمالك bishoysamy
+// المرجع النهائي للسلطة البرمجية للمالك ROOT OWNER
 export const SOVEREIGN_ADMIN_EMAIL = "bishoysamy390@gmail.com";
 
 export interface RolePermissions {
@@ -28,13 +28,12 @@ export interface RolePermissions {
 }
 
 /**
- * تصحيح منطق الهوية السيادية (Sovereign Identity Check).
- * هذا البروتوكول يمنح المالك bishoysamy390@gmail.com صلاحيات الـ GOD_MODE والرصيد اللانهائي.
+ * بروتوكول الهوية السيادية (Sovereign Identity Check).
+ * يمنح المالك bishoysamy390@gmail.com صلاحيات الـ GOD_MODE والرصيد اللانهائي.
  */
 export const checkSovereignStatus = (email: string | null | undefined) => {
-  const KING_EMAIL = SOVEREIGN_ADMIN_EMAIL;
   const normalizedEmail = email?.toLowerCase() || "";
-  const isKing = normalizedEmail === KING_EMAIL;
+  const isKing = normalizedEmail === SOVEREIGN_ADMIN_EMAIL;
   
   return {
     isOwner: isKing,
@@ -60,17 +59,6 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
   }
 
   switch (role) {
-    case roles.MODERATOR:
-      return {
-        canManageUsers: true,
-        canPromoteRoles: false,
-        canManageSystem: true,
-        canConsult: false,
-        canChatAI: true,
-        canGenerateDocs: true,
-        canManageMoney: false,
-        consultationDiscount: 0,
-      };
     case roles.VIP:
       return {
         canManageUsers: false,
@@ -109,6 +97,6 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
 
 export const getBalance = (profile: any) => {
   const sovereign = checkSovereignStatus(profile?.email);
-  if (sovereign.hasInfiniteVault) return Infinity;
-  return Number(profile?.balance ?? 50); // الافتراضي 50 EGP للمواطن
+  if (sovereign.hasInfiniteVault) return "∞";
+  return profile?.balance ?? 50;
 };
