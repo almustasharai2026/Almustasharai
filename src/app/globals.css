@@ -1,30 +1,29 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 224 71% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 160 84% 39%; /* Emerald */
-    --primary-foreground: 224 71% 4%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 210 40% 98%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 90%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 14 100% 57%; /* Sovereign Orange #ff5722 */
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 14 100% 57%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 160 84% 39%;
-    --radius: 2.5rem;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 14 100% 57%;
+    --radius: 3.5rem;
   }
 }
 
@@ -33,45 +32,40 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#010103] text-foreground antialiased font-sans selection:bg-primary/30 overflow-x-hidden;
+    @apply bg-[#0f0f0f] text-[#e5e5e5] antialiased font-sans selection:bg-[#ff5722]/30 overflow-x-hidden;
   }
 }
 
 @layer utilities {
-  .glass-cosmic {
-    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/10 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)];
+  .glass-device {
+    @apply bg-[#1a1a1a] border-[#252525] border-[6px] shadow-2xl;
   }
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-blue-500 to-emerald-400 animate-gradient;
+  
+  .text-sovereign {
+    @apply text-[#ff5722];
   }
-  .shadow-3xl {
-    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+
+  .bg-sovereign {
+    @apply bg-[#ff5722];
   }
-  .aurora-1 {
-    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 2px;
   }
-  .aurora-2 {
-    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-[#ff5722]/20 rounded-full;
   }
 }
 
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
 }
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 8s ease infinite;
+.animate-scan {
+  animation: scan 2s linear infinite;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/10 rounded-full hover:bg-primary/30 transition-all;
+.mirror {
+  transform: scaleX(-1);
 }

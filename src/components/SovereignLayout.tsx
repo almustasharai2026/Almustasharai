@@ -1,9 +1,8 @@
-
 'use client';
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, Search, Settings, User, Wallet, Scale } from 'lucide-react';
+import { LayoutGrid, MessageSquare, Settings, User, Wallet, Scale, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
@@ -13,69 +12,80 @@ interface SovereignLayoutProps {
   activeId: string;
 }
 
+/**
+ * واجهة الجسد الرقمي (The Sovereign Device Body).
+ * تم تصميمها لتكون قلباً للجهاز السيادي المحمول.
+ */
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
   const { profile } = useUser();
 
   return (
-    <div className="flex bg-[#010103] min-h-screen font-sans relative overflow-hidden text-white" dir="rtl">
-      {/* 1. Aurora Background Effects */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] aurora-1 blur-[150px] animate-pulse rounded-full pointer-events-none z-0" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] aurora-2 blur-[180px] animate-bounce rounded-full pointer-events-none z-0" />
-
-      {/* 2. Top Minimalist Nav */}
-      <nav className="fixed top-0 w-full z-50 p-6 flex justify-between items-center backdrop-blur-md border-b border-white/5">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-xl rotate-45 flex items-center justify-center shadow-lg group-hover:rotate-[225deg] transition-transform duration-1000">
-            <Scale className="-rotate-45 text-black" size={20} />
-          </div>
-          <span className="text-2xl font-black tracking-tighter uppercase">LegaLex <span className="text-emerald-500 text-xs">AI</span></span>
-        </Link>
-        
-        <div className="bg-white/5 border border-white/10 px-6 py-2 rounded-full backdrop-blur-2xl flex items-center gap-3 group cursor-pointer hover:bg-emerald-500 transition-all shadow-xl">
-          <Wallet size={16} className="group-hover:text-black text-emerald-500" />
-          <span className="text-sm font-bold group-hover:text-black tracking-widest tabular-nums">
-            {profile?.balance || 0}.00 EGP
-          </span>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 lg:p-10 font-sans" dir="rtl">
       
-      {/* 3. Main Operational Area */}
-      <main className="flex-1 pt-32 pb-40 px-6 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="w-full h-full max-w-7xl mx-auto"
-        >
-          {children}
-        </motion.div>
-      </main>
-
-      {/* 4. Royal Dock (Mac Style) */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/5 backdrop-blur-3xl border border-white/10 p-3 rounded-[2.5rem] flex items-center gap-2 sm:gap-6 shadow-3xl z-[100]">
-         <DockItem href="/" icon={<Home />} label="الرئيسية" active={pathname === '/'} />
-         <DockItem href="/bot" icon={<Search />} label="الاستشارة" active={pathname === '/bot'} />
-         <DockItem href="/admin" icon={<Settings />} label="الإدارة" active={pathname === '/admin'} />
-         <div className="h-8 w-[1px] bg-white/10 mx-2" />
-         <DockItem href="/dashboard" icon={<User />} label="حسابي" active={pathname === '/dashboard'} />
-      </div>
-    </div>
-  );
-}
-
-function DockItem({ href, icon, label, active }: any) {
-  return (
-    <Link href={href}>
+      {/* جسد الجهاز السيادي (The Device Body) */}
       <motion.div 
-        whileHover={{ y: -10, scale: 1.1 }}
-        className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all ${
-          active ? 'bg-emerald-500 text-black shadow-xl' : 'text-zinc-500 hover:text-white hover:bg-white/5'
-        }`}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-[450px] h-[850px] bg-[#1a1a1a] rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-[8px] border-[#252525] relative overflow-hidden flex flex-col"
       >
-        <div className="scale-110">{icon}</div>
-        <span className="text-[8px] font-black uppercase tracking-widest">{label}</span>
+        
+        {/* الكاميرا السيادية (The Lens) */}
+        <div className="absolute top-10 right-12 w-14 h-14 bg-[#252525] rounded-[1.5rem] flex items-center justify-center border border-white/5 z-50 group cursor-pointer hover:rotate-90 transition-transform duration-700">
+           <div className="w-3 h-3 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_15px_#ff5722]" />
+        </div>
+
+        {/* الجزء العلوي: الهوية السيادية */}
+        <div className="p-12 pt-20 flex justify-between items-start">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black tracking-tighter italic text-white">المستشار</h1>
+            <div className="flex items-center gap-2">
+               <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+               <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] font-black">Sovereign OS v1.0</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end gap-1">
+             <span className="text-[10px] font-black text-[#ff5722] uppercase tracking-widest">Vault Balance</span>
+             <span className="text-xl font-bold tabular-nums text-white">{profile?.balance || 0} EGP</span>
+          </div>
+        </div>
+
+        {/* مساحة المحتوى الرئيسية */}
+        <main className="flex-1 px-10 overflow-y-auto custom-scrollbar relative">
+          {children}
+        </main>
+
+        {/* الجزء السفلي: الـ Quick Dock (نظام التنقل الجرمي) */}
+        <div className="p-10 pb-14">
+          <div className="bg-[#252525] rounded-[3rem] p-3 flex items-center justify-between border border-white/5 shadow-inner">
+            <Link href="/bot">
+              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/bot' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
+                <MessageSquare size={24} />
+              </button>
+            </Link>
+            
+            <Link href="/dashboard">
+              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/dashboard' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
+                <User size={24} />
+              </button>
+            </Link>
+
+            <Link href="/admin">
+              <button className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${pathname === '/admin' ? 'bg-[#ff5722] text-black shadow-2xl' : 'text-zinc-500 hover:text-white'}`}>
+                <LayoutGrid size={24} />
+              </button>
+            </Link>
+
+            <Link href="/">
+              <button className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-all">
+                <ArrowUp size={24} />
+              </button>
+            </Link>
+          </div>
+        </div>
+
       </motion.div>
-    </Link>
+    </div>
   );
 }

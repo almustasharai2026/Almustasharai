@@ -1,20 +1,19 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Send, Scale, Sparkles, Mic, Camera, Paperclip, 
-  History, Volume2, Loader2, BrainCircuit, Book, FileText, UserCheck
-} from "lucide-react";
+import { Mic, Send, Loader2, Sparkles, Plus } from "lucide-react";
 import SovereignLayout from "@/components/SovereignLayout";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import Image from "next/image";
 
+/**
+ * واجهة الدردشة الجرمية (Device Chat Node).
+ * تركز على الهدوء البصري والتفاعل الصوتي.
+ */
 export default function SmartConsultantPage() {
-  const { user, profile, role } = useUser();
+  const { user, profile } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   
@@ -51,7 +50,7 @@ export default function SmartConsultantPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text, persona: "المستشار الذكي" })
+        body: JSON.stringify({ prompt: text, persona: "المستشار السيادي" })
       });
       const data = await res.json();
 
@@ -69,96 +68,73 @@ export default function SmartConsultantPage() {
 
   return (
     <SovereignLayout activeId="bot">
-      <div className="grid grid-cols-12 gap-8 h-full">
+      <div className="flex flex-col h-full">
         
-        {/* 1. Main Chat Glass Workspace */}
-        <div className="col-span-12 lg:col-span-8 glass-cosmic rounded-[3rem] p-10 flex flex-col min-h-[700px] relative overflow-hidden shadow-3xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -z-10" />
+        {/* منطقة السجل الهادئة */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-8 pb-10 scrollbar-none">
+          <AnimatePresence mode="popLayout">
+            {cloudMessages?.length === 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-10">
+                <p className="text-3xl font-light leading-tight text-white">أهلاً يا {profile?.fullName?.split(' ')[0] || "سيادة المالك"}، <br/> <span className="text-zinc-500">كيف يمكنني مساعدتك قانونياً اليوم؟</span></p>
+                <div className="flex flex-wrap gap-2">
+                   {["عقود عمل", "قضايا جنائية", "تأسيس شركة"].map(q => (
+                     <button key={q} onClick={() => setInputText(q)} className="px-4 py-2 bg-[#252525] border border-white/5 rounded-full text-[10px] font-black uppercase text-zinc-400 hover:text-white transition-all">{q}</button>
+                   ))}
+                </div>
+              </motion.div>
+            )}
+            
+            {cloudMessages?.map((m) => (
+              <motion.div 
+                key={m.id} 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-start'}`}
+              >
+                <div className={`p-6 rounded-[2.5rem] max-w-full text-sm leading-relaxed ${
+                  m.role === 'user' ? 'bg-[#252525] text-white italic border border-white/5' : 'bg-transparent text-zinc-300 font-medium'
+                }`}>
+                  {m.text}
+                </div>
+                <span className="text-[8px] font-black uppercase text-zinc-600 mt-2 px-6">{m.role === 'user' ? 'Citizen Request' : 'Sovereign Answer'}</span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
           
-          {/* Message Area */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-10 pb-10 scrollbar-none">
-            <AnimatePresence mode="popLayout">
-              {cloudMessages?.length === 0 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-center items-center opacity-30 text-center space-y-6">
-                  <Sparkles size={80} className="text-emerald-500 animate-pulse" />
-                  <p className="text-2xl font-light italic tracking-widest">مرحباً بك في مستقبل المحاماة الرقمية..</p>
-                </motion.div>
-              )}
-              {cloudMessages?.map((m) => (
-                <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`p-6 rounded-[2rem] max-w-[85%] text-lg leading-relaxed shadow-xl border ${
-                    m.role === 'user' ? 'bg-white text-black font-bold rounded-tr-none' : 'bg-black/40 text-emerald-400 border-emerald-500/20 rounded-tl-none font-medium'
-                  }`}>
-                    {m.text}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {isTyping && <div className="text-[10px] font-black uppercase text-emerald-500 animate-pulse tracking-[0.4em]">Processing Sovereignty...</div>}
-          </div>
-
-          {/* Cinematic Input bar */}
-          <div className="mt-auto relative group">
-            <div className="absolute inset-0 bg-emerald-500/10 blur-3xl group-focus-within:opacity-100 opacity-0 transition-opacity duration-1000" />
-            <div className="relative bg-black/60 border border-white/10 p-3 rounded-[2.5rem] flex items-center gap-3 shadow-2xl">
-               <button className="p-4 hover:bg-white/5 rounded-full text-zinc-500 transition-colors"><Mic size={24}/></button>
-               <input 
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="تحدث مع المستشار.." 
-                className="flex-1 bg-transparent py-4 px-2 outline-none text-xl font-bold text-white placeholder:text-white/10" 
-               />
-               <button 
-                onClick={handleSend}
-                disabled={!inputText.trim() || isTyping}
-                className="bg-emerald-500 text-black px-10 py-4 rounded-[1.8rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-emerald-500/20 disabled:opacity-20"
-               >
-                {isTyping ? <Loader2 className="animate-spin" /> : "إرسال"}
-               </button>
+          {isTyping && (
+            <div className="flex items-center gap-3 px-6">
+               <div className="w-2 h-2 bg-[#ff5722] rounded-full animate-ping" />
+               <span className="text-[10px] font-black text-[#ff5722] uppercase tracking-[0.4em]">Processing...</span>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* 2. Side Services Cards */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-           <ServiceCard title="صياغة العقود" icon={<FileText />} desc="توليد مستندات قانونية فورية بذكاء اصطناعي" color="blue" />
-           <ServiceCard title="المكتبة الرقمية" icon={<Book />} desc="تصفح القوانين المصرية المحدثة 2026" color="emerald" />
-           <ServiceCard title="تحدث مع خبير" icon={<UserCheck />} desc="اتصال فيديو مباشر مع أفضل المحامين" color="purple" />
-           
-           {/* History Preview Card */}
-           <div className="glass-cosmic rounded-[2.5rem] p-8 space-y-6">
-              <h4 className="font-black text-sm uppercase tracking-widest text-zinc-500 flex items-center gap-3">
-                <History size={16} /> السجل السيادي
-              </h4>
-              <div className="space-y-4">
-                {cloudMessages?.slice(-3).map(m => (
-                  <div key={m.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-bold text-zinc-400 truncate">
-                    {m.text}
-                  </div>
-                ))}
-              </div>
-           </div>
+        {/* شريط الإدخال الجرمي المدمج */}
+        <div className="mt-auto pt-6">
+          <div className="bg-[#252525] rounded-[3rem] p-2 flex items-center justify-between border border-white/5 shadow-2xl relative">
+            <button className="w-16 h-16 bg-[#ff5722] rounded-full flex items-center justify-center text-black shadow-xl shadow-[#ff5722]/20 active:scale-90 transition-all">
+              <Mic size={28} fill="currentColor" />
+            </button>
+            
+            <input 
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="اكتب رسالتك.." 
+              className="flex-1 bg-transparent border-none outline-none px-6 text-base font-bold text-white placeholder:text-zinc-600"
+            />
+
+            <button 
+              onClick={handleSend}
+              disabled={!inputText.trim() || isTyping}
+              className="w-14 h-14 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-all disabled:opacity-20"
+            >
+              {isTyping ? <Loader2 className="animate-spin" size={20}/> : <Send size={20} className="rotate-180" />}
+            </button>
+          </div>
         </div>
 
       </div>
     </SovereignLayout>
-  );
-}
-
-function ServiceCard({ title, icon, desc, color }: any) {
-  const colors: any = {
-    blue: "text-blue-400 bg-blue-500/5 hover:border-blue-500/30",
-    emerald: "text-emerald-400 bg-emerald-500/5 hover:border-emerald-500/30",
-    purple: "text-purple-400 bg-purple-500/5 hover:border-purple-500/30"
-  }
-  return (
-    <div className={`p-8 glass-cosmic rounded-[2.5rem] space-y-4 transition-all duration-500 hover:scale-[1.02] cursor-pointer group ${colors[color]}`}>
-      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-        {icon}
-      </div>
-      <h3 className="text-xl font-black text-white">{title}</h3>
-      <p className="text-xs text-zinc-500 font-bold leading-relaxed">{desc}</p>
-    </div>
   );
 }
