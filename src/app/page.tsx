@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,13 +7,16 @@ import { Sparkles, Gavel, Video, BrainCircuit, ShieldCheck, Zap, ArrowLeft } fro
 import SovereignButton from '@/components/SovereignButton';
 import FloatingCard from '@/components/FloatingCard';
 import Link from 'next/link';
+import { useFirestore, useDoc } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useMemoFirebase } from '@/firebase/provider';
 
-/**
- * الصفحة الرئيسية السيادية (Sovereign Home).
- * تجمع بين بساطة ChatGPT وفخامة "كوكب المستشار" مع محرك إدخال مطور.
- */
 export default function Home() {
   const [text, setText] = useState('');
+  const db = useFirestore();
+
+  const settingsRef = useMemoFirebase(() => db ? doc(db, "system", "settings") : null, [db]);
+  const { data: settings } = useDoc(settingsRef);
 
   return (
     <div className="flex flex-col items-center px-5 pb-10 animate-in fade-in duration-700">
@@ -27,13 +31,15 @@ export default function Home() {
         >
           <BrainCircuit className="h-9 w-9 text-white" />
         </motion.div>
-        <h1 className="text-3xl font-black text-primary tracking-tighter mt-2">المستشار AI</h1>
+        <h1 className="text-3xl font-black text-primary tracking-tighter mt-2">
+          {settings?.homeTitle || "المستشار AI"}
+        </h1>
         <p className="text-muted-foreground text-sm text-center max-w-[280px] font-medium leading-relaxed opacity-80">
-          اكتب مشكلتك، وسنرشدك لأفضل حل فوراً
+          {settings?.homeSubtitle || "اكتب مشكلتك، وسنرشدك لأفضل حل فوراً"}
         </p>
       </div>
 
-      {/* AI Sovereign Input Box - Updated Design */}
+      {/* AI Sovereign Input Box */}
       <div className="w-full mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 flex items-center gap-2 border border-border/50 focus-within:border-accent/40 transition-all">
         <input
           value={text}
@@ -52,29 +58,14 @@ export default function Home() {
       {/* Floating Features Visualizer */}
       <div className="mt-14 w-full relative h-56 bg-secondary/20 rounded-[3.5rem] overflow-hidden border border-border/20 shadow-inner">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/60 dark:to-slate-900/60" />
-        
-        <FloatingCard 
-          title="تحليل ذكي" 
-          delay={0} 
-          icon={<Zap className="h-3 w-3" />}
-        />
-        <FloatingCard 
-          title="مجلس الخبراء" 
-          delay={0.8} 
-          icon={<Gavel className="h-3 w-3" />}
-        />
-        <FloatingCard 
-          title="جلسات مباشرة" 
-          delay={1.5} 
-          icon={<Video className="h-3 w-3" />}
-        />
-        
+        <FloatingCard title="تحليل ذكي" delay={0} icon={<Zap className="h-3 w-3" />} />
+        <FloatingCard title="مجلس الخبراء" delay={0.8} icon={<Gavel className="h-3 w-3" />} />
+        <FloatingCard title="جلسات مباشرة" delay={1.5} icon={<Video className="h-3 w-3" />} />
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none text-primary">
           <ShieldCheck className="h-48 w-48" />
         </div>
       </div>
 
-      {/* Primary Call to Action */}
       <div className="w-full mt-12 mb-6">
         <Link href="/auth/signup" className="block group">
           <SovereignButton 
@@ -87,22 +78,11 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Features Detail Grid */}
       <div className="w-full space-y-4">
-        <FeatureDetail 
-          title="تحليل ذكي" 
-          desc="محرك AI يحلل معطيات حالتك فوراً ويحدد المخاطر."
-        />
-        <FeatureDetail 
-          title="مستشارين متخصصين" 
-          desc="نخبة من الخبراء القانونيين في كافة التخصصات."
-        />
-        <FeatureDetail 
-          title="جلسات مباشرة" 
-          desc="تواصل مباشر وآمن عبر الفيديو مع مستشارك الخاص."
-        />
+        <FeatureDetail title="تحليل ذكي" desc="محرك AI يحلل معطيات حالتك فوراً ويحدد المخاطر." />
+        <FeatureDetail title="مستشارين متخصصين" desc="نخبة من الخبراء القانونيين في كافة التخصصات." />
+        <FeatureDetail title="جلسات مباشرة" desc="تواصل مباشر وآمن عبر الفيديو مع مستشارك الخاص." />
       </div>
-
     </div>
   );
 }

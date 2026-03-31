@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -17,6 +18,31 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "email", "fullName", "role"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "إعدادات الواجهة والنصوص العامة للمنصة.",
+      "type": "object",
+      "properties": {
+        "homeTitle": { "type": "string" },
+        "homeSubtitle": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PricingOffer": {
+      "title": "PricingOffer",
+      "description": "باقة شحن رصيد سيادية.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "minutes": { "type": "number" },
+        "description": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "isPopular": { "type": "boolean" },
+        "icon": { "type": "string" }
+      }
     },
     "Consultant": {
       "title": "Consultant",
@@ -41,31 +67,6 @@
         "severity": { "type": "string", "enum": ["low", "medium", "high"] },
         "addedAt": { "type": "string", "format": "date-time" }
       }
-    },
-    "Booking": {
-      "title": "Booking",
-      "description": "سجل حجز جلسة استشارية بين مواطن وخبير.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "consultantId": { "type": "string" },
-        "sessionId": { "type": "string" },
-        "price": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled", "active"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "consultantId", "price", "status"]
-    },
-    "Transaction": {
-      "title": "Transaction",
-      "description": "سجل حركة مالية داخل المحفظة السيادية.",
-      "type": "object",
-      "properties": {
-        "amount": { "type": "number" },
-        "type": { "type": "string" },
-        "service": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
     }
   },
   "auth": {
@@ -76,13 +77,13 @@
       "schema": "UserProfile",
       "description": "بيانات الهوية السيادية"
     },
-    "/wallets/{userId}": {
-      "schema": "object",
-      "description": "المحفظة المالية السيادية"
+    "/system/settings": {
+      "schema": "SystemSettings",
+      "description": "إعدادات المنصة المركزية"
     },
-    "/wallets/{userId}/transactions/{id}": {
-      "schema": "Transaction",
-      "description": "سجل المعاملات المالية المفصل"
+    "/system/offers/{offerId}": {
+      "schema": "PricingOffer",
+      "description": "باقات الأسعار السيادية"
     },
     "/consultants/{id}": {
       "schema": "Consultant",
@@ -91,14 +92,6 @@
     "/system/moderation/forbiddenWords/{id}": {
       "schema": "ModerationWord",
       "description": "قاعدة بيانات الكلمات المحظورة"
-    },
-    "/bookings/{bookingId}": {
-      "schema": "Booking",
-      "description": "سجلات الحجز السيادي"
-    },
-    "/analytics/{id}": {
-      "schema": "object",
-      "description": "سجلات التحليلات والنشاط البرمجي"
     }
   }
 }
