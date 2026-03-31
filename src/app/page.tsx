@@ -1,91 +1,84 @@
+
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Send, Zap, Gavel, MessageSquare, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Sparkles, Gavel, Video, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-export default function SovereignLandingPage() {
-  const [prompt, setPrompt] = useState("");
-
+/**
+ * الصفحة الرئيسية السيادية.
+ * تم تصميمها بأسلوب Mobile-first لضمان السرعة والتركيز على الميزات الأساسية.
+ */
+export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans overflow-hidden" dir="rtl">
-      {/* Dynamic Background Glows */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-accent/10 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-primary/5 blur-[120px] rounded-full" />
+    <div className="p-5 space-y-8 animate-in fade-in duration-700">
+
+      {/* Hero Section */}
+      <div className="space-y-4">
+        <div className="space-y-2 text-right">
+          <h1 className="text-3xl font-black text-primary leading-tight tracking-tighter">
+            استشارة ذكية <br />
+            <span className="text-accent">في ثواني</span>
+          </h1>
+          <p className="text-muted-foreground text-sm font-medium leading-relaxed max-w-[280px]">
+            احصل على تحليل فوري وتواصل مع أفضل المستشارين القانونيين المعتمدين في ثواني معدودة.
+          </p>
+        </div>
+
+        <Link href="/auth/signup" className="block w-full">
+          <Button className="w-full bg-accent hover:bg-accent/90 text-white h-14 rounded-2xl text-lg font-black shadow-lg shadow-accent/20 gap-3 group">
+            ابدأ الآن <ArrowRight className="h-5 w-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
+          </Button>
+        </Link>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-32">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-10 mb-32"
-        >
-          <div className="sovereign-badge mb-4">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Sovereign Power v4.5
-          </div>
-          
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none text-primary">
-              المستشار <span className="text-accent">AI</span>
-            </h1>
-            <p className="text-2xl md:text-3xl text-muted-foreground font-bold tracking-tight">
-              استشارة ذكية في ثواني
-            </p>
-          </div>
+      {/* Features Grid */}
+      <div className="space-y-4">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 px-1 text-right">
+          مميزات النظام السيادي
+        </h2>
+        <div className="grid gap-3">
+          <Feature 
+            icon={<Sparkles className="h-5 w-5 text-accent" />} 
+            title="تحليل ذكي" 
+            desc="محرك AI يحلل تفاصيل مشكلتك فوراً وبدقة عالية." 
+          />
+          <Feature 
+            icon={<Gavel className="h-5 w-5 text-accent" />} 
+            title="مستشارين متخصصين" 
+            desc="نخبة من الخبراء في كافة المجالات القانونية تحت طلبك." 
+          />
+          <Feature 
+            icon={<Video className="h-5 w-5 text-accent" />} 
+            title="جلسات مباشرة" 
+            desc="تواصل فيديو مشفر ولحظي مع المستشار الخاص بك." 
+          />
+        </div>
+      </div>
 
-          {/* Sovereign Input Engine */}
-          <div className="w-full max-w-3xl mx-auto mt-12 px-4">
-            <div className="glass-cosmic p-2.5 rounded-[2.5rem] border-primary/10 shadow-2xl flex flex-col md:flex-row items-center gap-3 focus-within:border-accent/40 transition-all">
-              <input 
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="اطرح سؤالك القانوني أو المالي هنا..."
-                className="w-full md:flex-1 bg-transparent border-none focus:ring-0 text-xl font-medium p-5 placeholder:text-muted-foreground text-foreground text-right outline-none"
-              />
-              <Link href={`/bot?q=${encodeURIComponent(prompt)}`} className="w-full md:w-auto">
-                <Button 
-                  disabled={!prompt.trim()}
-                  className="w-full md:w-auto h-16 md:h-14 px-10 rounded-[1.8rem] bg-accent text-white font-black text-lg border-none shadow-xl transition-all hover:scale-105 active:scale-95 gap-3"
-                >
-                  إرسال <Send className="h-5 w-5 rotate-180" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-32">
-            <FeatureCard icon={<Zap className="h-6 w-6 text-accent" />} title="تحليل ذكي" desc="معالجة فورية لكافة المعطيات السيادية وتحليل المخاطر." />
-            <FeatureCard icon={<Gavel className="h-6 w-6 text-accent" />} title="مستشارين متخصصين" desc="نخبة من الخبراء القانونيين المعتمدين تحت طلبك." />
-            <FeatureCard icon={<MessageSquare className="h-6 w-6 text-accent" />} title="جلسات مباشرة" desc="اتصال فيديو مشفر وآمن بين المواطن والخبير في غرف خاصة." />
-          </div>
-
-          <div className="mt-24">
-            <Link href="/auth/signup">
-              <Button 
-                className="px-16 h-20 rounded-[1.5rem] bg-primary text-white font-black text-2xl shadow-2xl transition-all hover:scale-105 active:scale-95 flex gap-4"
-              >
-                ابدأ أول استشارة الآن <ArrowRight className="h-6 w-6 rotate-180" />
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+      {/* Secondary Action */}
+      <div className="pt-4 text-center">
+        <Link href="/about" className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors">
+          تعرف أكثر على بروتوكول المستشار AI
+        </Link>
       </div>
     </div>
   );
 }
 
-function FeatureCard({ icon, title, desc }: any) {
+/**
+ * مكون بطاقة الميزة السيادية.
+ */
+function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="p-10 glass-card rounded-[3rem] text-right space-y-5 group hover:bg-white transition-all">
-      <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center border border-accent/20 group-hover:bg-accent group-hover:text-white transition-colors">
+    <div className="p-5 bg-secondary/50 rounded-[2rem] border border-border/50 flex gap-4 items-start group hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 shadow-sm hover:shadow-md">
+      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <h3 className="text-2xl font-black text-primary">{title}</h3>
-      <p className="text-sm text-muted-foreground font-bold leading-relaxed">{desc}</p>
+      <div className="space-y-1 text-right">
+        <h3 className="font-bold text-primary text-sm">{title}</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed font-medium">{desc}</p>
+      </div>
     </div>
   );
 }
