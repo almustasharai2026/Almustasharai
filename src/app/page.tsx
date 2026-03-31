@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2
+  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -32,7 +32,6 @@ export default function LovableInspiredPage() {
 
   return (
     <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
-      {/* مؤشر تحميل غير حاجب للواجهة */}
       {isUserLoading && (
         <div className="fixed top-0 left-0 w-full h-1 bg-primary/20 z-[200]">
           <div className="h-full bg-primary animate-pulse" style={{ width: '30%' }} />
@@ -57,27 +56,42 @@ export default function LovableInspiredPage() {
             بوابة <span className="text-gradient">المستشار</span> الذكية
           </h1>
 
-          <div className="max-w-3xl mx-auto relative mt-12">
-            <div className="relative glass-cosmic rounded-[2.5rem] border-white/10 p-2.5 flex items-center gap-3 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white">
-                <Plus className="h-6 w-6" />
-              </Button>
-              
-              <input 
-                value={prompt}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="ابدأ استشارة قانونية أو صياغة عقد سيادي..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-4 placeholder:text-white/10 text-white"
-              />
+          <p className="text-white/40 text-xl font-bold max-w-2xl mx-auto">
+            النظام البيئي الأكثر تطوراً لإدارة شؤونك القانونية بخصوصية مطلقة ودقة متناهية.
+          </p>
 
-              <div className="flex items-center gap-1.5 ml-2">
-                <Link href={`/bot?q=${encodeURIComponent(prompt)}`}>
-                  <Button className="h-14 w-14 rounded-[1.8rem] bg-white text-black hover:bg-indigo-50 shadow-2xl">
-                    <ArrowUp className="h-7 w-7" />
-                  </Button>
-                </Link>
+          <div className="flex flex-col items-center gap-8 mt-12">
+            <div className="w-full max-w-3xl relative">
+              <div className="relative glass-cosmic rounded-[2.5rem] border-white/10 p-2.5 flex items-center gap-3 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white">
+                  <Plus className="h-6 w-6" />
+                </Button>
+                
+                <input 
+                  value={prompt}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="ابدأ استشارة قانونية أو صياغة عقد سيادي..."
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-4 placeholder:text-white/10 text-white"
+                />
+
+                <div className="flex items-center gap-1.5 ml-2">
+                  <Link href={`/bot?q=${encodeURIComponent(prompt)}`}>
+                    <Button className="h-14 w-14 rounded-[1.8rem] bg-white text-black hover:bg-indigo-50 shadow-2xl">
+                      <ArrowUp className="h-7 w-7" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
+
+            {/* زر "ابدأ الآن" بالنمط المطلوب */}
+            <Link href="/auth/signup" className="w-full max-w-sm">
+              <Button 
+                className="w-full h-14 rounded-[10px] text-white font-bold text-lg shadow-2xl border-none transition-all hover:scale-[1.05] active:scale-95 bg-gradient-to-br from-[#00C896] to-[#0A192F] group"
+              >
+                <Rocket className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /> ابدأ الآن
+              </Button>
+            </Link>
           </div>
         </motion.div>
 
@@ -149,6 +163,7 @@ function CardProject({ session }: any) {
           alt="Preview" 
           fill 
           className="object-cover opacity-40 group-hover:opacity-60 transition-all duration-700" 
+          data-ai-hint="project preview"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         <div className="absolute bottom-6 right-6 left-6 flex justify-between items-end">
