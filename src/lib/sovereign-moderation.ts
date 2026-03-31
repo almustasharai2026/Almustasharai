@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Firestore, doc, updateDoc } from "firebase/firestore";
@@ -5,33 +6,28 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
- * القائمة السوداء السيادية (Global Banned Words).
- * تضم الكلمات التي تستوجب الحظر الفوري والنهائي من النظام.
+ * القائمة السوداء السيادية الثابتة (Hardcoded Backup).
  */
-export const bannedWords = ["spam", "abuse", "badword", "نصب", "احتيال", "مخدرات"];
-
-/**
- * بروتوكول فحص المحتوى البسيط.
- * يقوم بمطابقة النص مع القائمة السوداء الثابتة.
- */
-export const shouldBan = (text: string) => {
-  if (!text) return false;
-  return bannedWords.some(word =>
-    text.toLowerCase().includes(word.toLowerCase())
-  );
-};
+export const staticBannedWords = ["spam", "abuse", "نصب", "احتيال", "مخدرات", "إرهاب"];
 
 /**
  * بروتوكول فحص المحتوى السيادي الشامل.
+ * يقوم بمطابقة النص مع القائمة المحلية والبعيدة من Firestore.
  */
 export function checkSovereignViolation(text: string, remoteWords: any[] = []): boolean {
   if (!text) return false;
   
-  if (shouldBan(text)) return true;
-
   const normalizedText = text.toLowerCase();
+
+  // 1. فحص القائمة الثابتة
+  const hasStaticViolation = staticBannedWords.some(word =>
+    normalizedText.includes(word.toLowerCase())
+  );
+  if (hasStaticViolation) return true;
+
+  // 2. فحص القائمة السحابية (المتحكم بها من لوحة الإدارة)
   const hasRemoteViolation = remoteWords.some(fw => {
-    const wordToCheck = String(fw.word || fw.text || "").toLowerCase();
+    const wordToCheck = String(fw.word || fw.text || "").toLowerCase().trim();
     return wordToCheck !== "" && normalizedText.includes(wordToCheck);
   });
 
@@ -40,19 +36,16 @@ export function checkSovereignViolation(text: string, remoteWords: any[] = []): 
 
 /**
  * بروتوكول الحظر السيادي (Sovereign Ban Action).
- * يقوم بتجميد أو فك تجميد حساب المواطن في قاعدة البيانات بأسلوب غير حاصر.
  */
 export function banSovereignUser(db: Firestore, userId: string, targetBannedStatus: boolean): void {
   const userRef = doc(db, "users", userId);
   const data = { isBanned: targetBannedStatus };
 
-  // تنفيذ التحديث السيادي بأسلوب غير حاصر
   updateDoc(userRef, data)
     .then(() => {
       console.log(`[Sovereign Protocol] User ${userId} status updated: ${targetBannedStatus ? 'BANNED' : 'UNBANNED'}`);
     })
     .catch(async (error) => {
-      // تبليغ النظام في حال فشل الإجراء (مثلاً بسبب نقص الصلاحيات للمراقبين)
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: userRef.path,
         operation: 'update',

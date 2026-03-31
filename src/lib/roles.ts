@@ -1,53 +1,68 @@
+
 /**
  * ميثاق الرتب السيادية (Sovereign Role Constants).
- * يحدد الرتب الرقمية المعتمدة داخل نظام المستشار AI.
+ * يحدد الرتب الرقمية المعتمدة والصلاحيات الدقيقة لكل رتبة.
  */
 export const roles = {
   ADMIN: "admin",
-  MODERATOR: "moderator",
   CONSULTANT: "consultant",
   USER: "user",
 } as const;
 
 export type UserRole = (typeof roles)[keyof typeof roles];
 
+export interface RolePermissions {
+  canManageUsers: boolean;
+  canManageSystem: boolean;
+  canConsult: boolean;
+  canChatAI: boolean;
+  canGenerateDocs: boolean;
+  canManageMoney: boolean;
+}
+
 /**
- * بروتوكول فحص الملكية السيادية.
- * يتحقق من البريد الإلكتروني لتعريف مالك النظام (The Sovereign Owner).
+ * بروتوكول استخراج الصلاحيات السيادية.
+ */
+export const getPermissions = (role: UserRole | string): RolePermissions => {
+  switch (role) {
+    case roles.ADMIN:
+      return {
+        canManageUsers: true,
+        canManageSystem: true,
+        canConsult: true,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: true,
+      };
+    case roles.CONSULTANT:
+      return {
+        canManageUsers: false,
+        canManageSystem: false,
+        canConsult: true,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+      };
+    default:
+      return {
+        canManageUsers: false,
+        canManageSystem: false,
+        canConsult: false,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+      };
+  }
+};
+
+/**
+ * بروتوكول فحص الملكية السيادية (The Sovereign Owner Protocol).
  */
 export const isOwner = (email: string | null | undefined) => {
   return email === "bishoysamy390@gmail.com";
 };
 
-/**
- * بروتوكول فحص صلاحيات الحذف.
- * متاح للمدير والمراقب لضمان نظافة المحتوى السيادي.
- */
-export const canDelete = (role: string) => {
-  return role === roles.ADMIN || role === roles.MODERATOR;
-};
-
-/**
- * بروتوكول فحص صلاحيات الحظر السيادي.
- * متاح للمدير فقط (سلطة عليا).
- */
-export const canBan = (role: string) => {
-  return role === roles.ADMIN;
-};
-
-/**
- * بروتوكول فحص صلاحيات تعديل المحتوى المعتمد.
- * متاح للمدير فقط لضمان دقة الوثائق القانونية.
- */
-export const canEditContent = (role: string) => {
-  return role === roles.ADMIN;
-};
-
-/**
- * بروتوكول استخراج الرصيد السيادي.
- * يمنح المدير رصيداً غير محدود (Infinity) بينما يلتزم المواطنون بالرصيد المتاح.
- */
-export const getBalance = (user: any) => {
-  if (user?.role === roles.ADMIN) return Infinity;
-  return user?.balance || 0;
+export const getBalance = (profile: any) => {
+  if (profile?.role === roles.ADMIN) return Infinity;
+  return profile?.balance || 0;
 };

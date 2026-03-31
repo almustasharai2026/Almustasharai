@@ -1,53 +1,93 @@
 
 "use client";
 
-import { Check, Zap, Shield, Crown, Sparkles, Star, Clock, Loader2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Zap, Shield, Crown, Sparkles, Star, Clock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createSovereignCheckout } from "@/lib/sovereign-checkout";
 import { useState } from "react";
-import { useFirestore, useCollection } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { useFirestore, useCollection, useUser } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
+import SovereignButton from "@/components/SovereignButton";
+import { useRouter } from "next/navigation";
 
 export default function PricingPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const db = useFirestore();
+  const { user } = useUser();
+  const router = useRouter();
 
   const offersQuery = useMemoFirebase(() => db ? collection(db, "system", "offers") : null, [db]);
   const { data: remoteOffers, isLoading: isOffersLoading } = useCollection(offersQuery);
 
-  // الباقات الافتراضية في حال عدم وجود باقات في Firestore
   const DEFAULT_OFFERS = [
     {
       id: "basic",
       name: "الباقة الأساسية",
-      price: "100",
+      price: 100,
       minutes: "30",
-      description: "مثالية للاستشارات البسيطة والطارئة.",
-      features: ["٣٠ دقيقة فيديو", "تحميل ٥ نماذج", "دعم فني"],
-      icon: <Zap className="h-8 w-8 text-blue-400" />,
-      color: "border-blue-500/20",
-      bg: "bg-blue-500/5"
+      description: "بداية رحلة العدالة الرقمية.",
+      features: ["٣٠ دقيقة استشارة", "إصدار عقد واحد", "دعم فني عالي"],
+      icon: <Zap className="h-8 w-8 text-blue-400" />
+    },
+    {
+      id: "pro",
+      name: "الباقة الاحترافية",
+      price: 250,
+      minutes: "100",
+      description: "للمواطنين ذوي الاحتياجات القانونية المستمرة.",
+      features: ["١٠٠ دقيقة استشارة", "إصدار ٥ عقود", "أولوية الدخول للخبراء"],
+      icon: <Crown className="h-8 w-8 text-amber-400" />,
+      isPopular: true
+    },
+    {
+      id: "vip",
+      name: "الباقة السيادية",
+      price: 500,
+      minutes: "Unlimited",
+      description: "حماية قانونية مطلقة وشاملة.",
+      features: ["دقائق غير محدودة", "إصدار كافة الوثائق", "مستشار خاص متاح"],
+      icon: <Shield className="h-8 w-8 text-emerald-400" />
     }
   ];
 
   const offersToDisplay = remoteOffers && remoteOffers.length > 0 ? remoteOffers : DEFAULT_OFFERS;
 
-  const handleSelect = async (offerId: string) => {
-    setLoadingId(offerId);
-    await createSovereignCheckout(offerId);
+  const handleSelect = async (offer: any) => {
+    if (!user || !db) {
+      router.push("/auth/login");
+      return;
+    }
+    setLoadingId(offer.id);
+    
+    // إنشاء طلب دفع سيادي (Payment Request) فعلي في Firestore
+    try {
+      await addDoc(collection(db, "paymentRequests"), {
+        userId: user.uid,
+        userName: user.displayName || user.email,
+        amount: offer.price,
+        plan: offer.name,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+      
+      // التوجيه لصفحة تأكيد الدفع اليدوي (WhatsApp/Vodafone)
+      router.push(`/checkout?plan=${offer.id}`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-24 max-w-7xl text-right" dir="rtl">
-      <div className="text-center space-y-6 mb-20 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-primary/10 blur-[120px] -z-10" />
+      <div className="text-center space-y-6 mb-20">
         <Badge variant="outline" className="text-primary border-primary/30 px-6 py-1.5 rounded-full font-black text-xs uppercase tracking-widest bg-primary/5">
-           باقات الوقت والحماية
+           باقات الرصيد السيادي
         </Badge>
-        <h1 className="text-5xl md:text-7xl font-black text-white leading-tight">اشحن وقتك <span className="text-gradient">القانوني</span></h1>
+        <h1 className="text-5xl md:text-7xl font-black text-white leading-tight">اشحن محفظتك <span className="text-gradient">القانونية</span></h1>
       </div>
 
       {isOffersLoading ? (
@@ -55,48 +95,37 @@ export default function PricingPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-10">
           {offersToDisplay.map((offer) => (
-            <Card key={offer.id} className={`glass-cosmic relative overflow-hidden flex flex-col border-2 group hover:scale-[1.02] transition-all duration-500 rounded-[3.5rem] ${offer.isPopular ? 'border-amber-500/40' : 'border-white/5'}`}>
-              {offer.isPopular && (
-                <div className="absolute top-0 right-0 bg-primary text-slate-950 text-[10px] font-black px-8 py-3 rounded-bl-[2rem] shadow-xl flex items-center gap-2">
-                  <Star className="h-3 w-3 fill-current" /> الأكثر طلباً
-                </div>
-              )}
-              
+            <Card key={offer.id} className={`glass-cosmic relative overflow-hidden flex flex-col border-2 group transition-all duration-500 rounded-[3.5rem] ${offer.isPopular ? 'border-amber-500/40' : 'border-white/5'}`}>
               <CardHeader className="pt-12 p-10 space-y-6">
-                <div className={`h-20 w-20 rounded-3xl bg-primary/5 flex items-center justify-center shadow-inner border border-white/5`}>
-                  {offer.id === 'pro' ? <Crown className="h-8 w-8 text-amber-400" /> : offer.id === 'vip' ? <Shield className="h-8 w-8 text-emerald-400" /> : <Zap className="h-8 w-8 text-blue-400" />}
+                <div className="h-20 w-20 rounded-3xl bg-primary/5 flex items-center justify-center border border-white/5">
+                  {offer.icon || <Zap className="h-8 w-8 text-blue-400" />}
                 </div>
                 <div>
                   <CardTitle className="text-3xl font-black text-white">{offer.name}</CardTitle>
                   <div className="flex items-baseline gap-2 mt-4">
                     <span className="text-6xl font-black text-white tracking-tighter">{offer.price}</span>
-                    <span className="text-muted-foreground font-bold">EGP</span>
-                    <Badge className="bg-white/5 text-primary border-none mr-2 font-black flex items-center gap-1">
-                       <Clock className="h-3 w-3" /> {offer.minutes} دقيقة
-                    </Badge>
+                    <span className="text-muted-foreground font-bold text-sm">EGP</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-4 leading-relaxed font-medium">{offer.description}</p>
                 </div>
               </CardHeader>
 
               <CardContent className="flex-grow px-10 space-y-5">
-                <div className="h-px bg-white/5 w-full mb-2" />
                 {offer.features?.map((feature: string, i: number) => (
                   <div key={i} className="flex items-start gap-4 text-sm group/item">
                     <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <Check className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <span className="opacity-70 group-hover/item:opacity-100 transition-opacity leading-relaxed font-medium">{feature}</span>
+                    <span className="opacity-70 group-hover/item:opacity-100 transition-opacity font-medium">{feature}</span>
                   </div>
                 ))}
               </CardContent>
 
               <CardFooter className="p-10 pt-6">
                 <SovereignButton 
-                  text={loadingId === offer.id ? "جاري التجهيز..." : "اشترك الآن"} 
-                  onClick={() => handleSelect(offer.id)}
+                  text={loadingId === offer.id ? "جاري المعالجة..." : "اشترك في الباقة"} 
+                  onClick={() => handleSelect(offer)}
                   disabled={loadingId === offer.id}
-                  className={offer.isPopular ? "bg-amber-600 shadow-amber-600/20" : ""}
+                  className={offer.isPopular ? "bg-amber-600" : ""}
                 />
               </CardFooter>
             </Card>
