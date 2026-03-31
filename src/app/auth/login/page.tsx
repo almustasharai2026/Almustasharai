@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -15,8 +14,7 @@ import { useRouter } from "next/navigation";
 import SovereignButton from "@/components/SovereignButton";
 
 /**
- * بوابة الدخول السيادية المحدثة.
- * تدعم بيانات الاعتماد king2026 / king2020.
+ * بوابة الدخول السيادية للمالك king2026.
  */
 export default function LoginPage() {
   const [email, setEmail] = useState("bishoysamy390@gmail.com");
@@ -37,11 +35,12 @@ export default function LoginPage() {
     if (!auth) return;
     setIsLoading(true);
     try {
+      // محاولة تسجيل الدخول للمالك أو المستخدم العادي
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول السيادي king2026." });
       router.push("/bot");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "فشل الدخول السيادي", description: "يرجى التحقق من بيانات المفتاح السيادي." });
+      toast({ variant: "destructive", title: "بيانات غير صحيحة", description: "يرجى التحقق من المفتاح السيادي الخاص بك." });
     } finally {
       setIsLoading(false);
     }
@@ -49,12 +48,12 @@ export default function LoginPage() {
 
   if (isUserLoading) return (
     <div className="h-screen flex items-center justify-center bg-[#020617]">
-      <div className="animate-pulse text-white font-black tracking-[0.5em] uppercase">Authenticating Identity...</div>
+      <div className="animate-pulse text-white font-black tracking-[0.5em] uppercase">Sovereign Link Loading...</div>
     </div>
   );
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-12 px-4">
+    <div className="container flex items-center justify-center min-h-screen py-12 px-4 bg-slate-50 dark:bg-[#020617]">
       <Card className="w-full max-w-md glass-cosmic border-none rounded-[3rem] shadow-3xl relative overflow-hidden">
         <CardHeader className="space-y-4 text-center pt-12 pb-8">
           <div className="flex justify-center mb-2">
@@ -69,19 +68,19 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
           <div className="space-y-2">
-            <Label className="text-white/40 text-xs px-2">البريد السيادي</Label>
+            <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية الرقمية</Label>
             <Input 
               type="email" 
               placeholder="name@example.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right"
+              className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-medium"
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between px-2">
-              <Link href="#" className="text-[10px] text-white/30 hover:underline">فقدان المفتاح؟</Link>
-              <Label className="text-white/40 text-xs">كلمة المرور السيادية</Label>
+              <Link href="#" className="text-[10px] text-white/30 hover:underline">طلب استعادة</Link>
+              <Label className="text-white/40 text-xs font-bold uppercase tracking-widest">المفتاح السري</Label>
             </div>
             <Input 
               type="password" 
@@ -91,7 +90,7 @@ export default function LoginPage() {
             />
           </div>
           <SovereignButton 
-            text={isLoading ? "جاري التفعيل..." : "دخول سيادي مطلق"}
+            text={isLoading ? "جاري التحقق..." : "دخول سيادي مطلق"}
             onClick={handleLogin}
             disabled={isLoading}
             className="mt-2"
@@ -100,8 +99,8 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
           <div className="text-sm text-center text-white/30">
-            ليس لديك حساب؟{" "}
-            <Link href="/auth/signup" className="text-white font-bold hover:underline">سجل كعضو جديد</Link>
+            ليس لديك هوية سيادية؟{" "}
+            <Link href="/auth/signup" className="text-white font-bold hover:underline">انضم الآن</Link>
           </div>
           <Link href="/" className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-all font-bold">
             <Home className="h-4 w-4" /> العودة للصفحة الرئيسية

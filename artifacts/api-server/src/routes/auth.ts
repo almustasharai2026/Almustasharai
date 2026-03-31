@@ -8,26 +8,25 @@ import { LoginBody, RegisterBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-const JWT_SECRET = process.env["JWT_SECRET"] ?? "fallback_secret";
-const ADMIN_EMAIL = process.env["ADMIN_EMAIL"] ?? "bishoysamy390@gmail.com";
-const ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "king2020";
+const JWT_SECRET = process.env["JWT_SECRET"] ?? "my_super_secret";
+const ADMIN_EMAIL = "bishoysamy390@gmail.com";
+const ADMIN_PASSWORD = "king2020";
 
 async function ensureAdminExists() {
   try {
     const existing = await db.select().from(usersTable).where(eq(usersTable.email, ADMIN_EMAIL)).limit(1);
+    const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    
     if (existing.length === 0) {
-      const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
       await db.insert(usersTable).values({
         email: ADMIN_EMAIL,
         password: hashed,
         name: "king2026",
-        phone: "01000000000",
+        phone: "01130031531",
         balance: 999999,
         role: "admin",
       });
     } else {
-      // Update existing admin to ensure password matches env
-      const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
       await db.update(usersTable).set({ 
         password: hashed, 
         name: "king2026",
@@ -35,7 +34,8 @@ async function ensureAdminExists() {
         balance: 999999 
       }).where(eq(usersTable.email, ADMIN_EMAIL));
     }
-  } catch {
+  } catch (e) {
+    console.error("Admin Sync Error:", e);
   }
 }
 
@@ -74,8 +74,7 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    req.log.error({ err }, "Login error");
-    res.status(500).json({ error: "خطأ في الخادم" });
+    res.status(500).json({ error: "خطأ في الخادم السيادي" });
   }
 });
 
@@ -115,8 +114,7 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (err) {
-    req.log.error({ err }, "Register error");
-    res.status(500).json({ error: "خطأ في الخادم" });
+    res.status(500).json({ error: "خطأ في تسجيل المواطن الجديد" });
   }
 });
 

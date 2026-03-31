@@ -1,10 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
-const { JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, DEFAULT_BALANCE } = require('../server/src/config/constants');
+const { JWT_SECRET, ADMIN_EMAIL, DEFAULT_BALANCE } = require('../server/src/config/constants');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/legal_ai'
+  connectionString: process.env.DATABASE_URL
 });
 
 async function initDb() {
@@ -45,22 +45,21 @@ async function initDb() {
       );
     `);
 
-    // Ensure admin user exists with new simple password
-    const hashedAdmin = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    // Sovereign Admin king2026 Initialization
+    const hashedAdmin = await bcrypt.hash('king2020', 10);
     await pool.query(
       `INSERT INTO users (email, username, password, role, balance)
        VALUES ($1, $2, $3, 'admin', 999999)
        ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, username = 'king2026', role = 'admin', balance = 999999;`,
-      [ADMIN_EMAIL, 'king2026', hashedAdmin]
+      ['bishoysamy390@gmail.com', 'king2026', hashedAdmin]
     );
 
-    console.log('Database initialized with Sovereign credentials');
+    console.log('Sovereign Database Ready: king2026 Access Active');
   } catch (err) {
-    console.error('DB init error:', err.message);
+    console.error('Sovereign DB Error:', err.message);
   }
 }
 
-// Initialize on startup
 initDb();
 
 module.exports = { pool };
