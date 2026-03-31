@@ -3,19 +3,20 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Send, Scale, LogOut, LayoutDashboard, Users, Gavel, ShieldAlert, Tag, Activity,
+  Send, Scale, LogOut, LayoutDashboard, Gavel, Tag, Activity,
   Menu, X, Plus, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
   ArrowLeft, Mic, Paperclip, Camera, Sparkles, MessageCircle, ChevronLeft, Loader2
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, updateDoc, increment, collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { getPermissions, roles as ROLES_LIST } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useMemoFirebase } from "@/firebase/provider";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -23,7 +24,7 @@ interface Message {
   role: "user" | "ai";
   text: string;
   id: string;
-  timestamp: Date;
+  timestamp: any;
 }
 
 /**
@@ -39,19 +40,23 @@ export default function SovereignBotPage() {
   const perms = getPermissions(role);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "ai", text: `أهلاً بك يا سيادة ${profile?.fullName?.split(' ')[0] || 'المواطن'} في مركز الاستشارة السيادي. كيف نخدم العدالة اليوم؟`, id: "init", timestamp: new Date() }
-  ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // مزامنة سجل المحادثات من السحابة السيادية
+  const chatQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, "users", user.uid, "chatHistory"), orderBy("timestamp", "asc"), limit(50));
+  }, [db, user]);
+  const { data: cloudMessages } = useCollection(chatQuery);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
-  }, [messages, isTyping]);
+  }, [cloudMessages, isTyping]);
 
   const handleSend = async () => {
     if (!inputText.trim() || isTyping || !db || !user) return;
@@ -61,29 +66,40 @@ export default function SovereignBotPage() {
       return;
     }
 
-    const userMsg: Message = { role: "user", text: inputText.trim(), id: Date.now().toString(), timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+    const text = inputText.trim();
     setInputText("");
     setIsTyping(true);
 
     try {
+      // 1. توثيق رسالة المواطن
+      await addDoc(collection(db, "users", user.uid, "chatHistory"), {
+        role: "user",
+        text,
+        timestamp: serverTimestamp()
+      });
+
+      // 2. تحديث الرصيد
       if (role !== ROLES_LIST.ADMIN) {
         await updateDoc(doc(db, "users", user.uid), { balance: increment(-1) });
       }
 
-      // 🔥 محاكاة الرد السيادي (سيتم ربطه بـ Gemini لاحقاً)
-      setTimeout(() => {
-        const aiMsg: Message = { 
-          role: "ai", 
-          text: "تم تحليل استفسارك سيادياً. بناءً على نظام الإجراءات القانونية المعتمد، يوصى بمراجعة المستندات الثبوتية قبل اتخاذ أي قرار نهائي. هل تود الحصول على مسودة قانونية لهذه الحالة؟", 
-          id: (Date.now() + 1).toString(),
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMsg]);
-        setIsTyping(false);
-      }, 1500);
+      // 3. طلب الرد السيادي من المحرك (API Integration)
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ prompt: text, persona: "مستشار قانوني سيادي" })
+      });
+      const data = await res.json();
+
+      // 4. توثيق رد المستشار
+      await addDoc(collection(db, "users", user.uid, "chatHistory"), {
+        role: "ai",
+        text: data.response,
+        timestamp: serverTimestamp()
+      });
+
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الإرسال" });
+    } finally {
       setIsTyping(false);
     }
   };
@@ -131,11 +147,23 @@ export default function SovereignBotPage() {
     </div>
   );
 
+  if (role === ROLES_LIST.PENDING_EXPERT) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-sovereign-cinematic text-center p-10">
+         <div className="glass-cosmic p-16 rounded-[4rem] border-primary/20 space-y-8 max-w-2xl">
+            <Loader2 className="h-20 w-20 text-primary animate-spin mx-auto" />
+            <h1 className="text-4xl font-black text-white tracking-tighter">بانتظار الموافقة السيادية</h1>
+            <p className="text-xl text-white/40 font-bold leading-relaxed">سيادة المستشار، تم استلام وثائقك بنجاح. جاري مراجعة ملفك من قبل <span className="text-primary">king2026</span> لتفعيل صلاحيات مجلس الخبراء لك.</p>
+            <Button onClick={handleLogout} variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white/40 hover:text-white">خروج مؤقت</Button>
+         </div>
+      </div>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="flex h-screen bg-[#f8f9fc] dark:bg-[#020617] overflow-hidden font-sans" dir="rtl">
         
-        {/* Elite Sidebar */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <motion.aside 
@@ -148,10 +176,8 @@ export default function SovereignBotPage() {
           )}
         </AnimatePresence>
 
-        {/* Supreme Chat Engine */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
           
-          {/* Header */}
           <header className="h-24 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-10 z-40">
             <div className="flex items-center gap-8">
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-4 bg-primary/5 rounded-2xl hover:bg-primary/10 transition-all border border-primary/10 shadow-inner">
@@ -178,16 +204,14 @@ export default function SovereignBotPage() {
             </div>
           </header>
 
-          {/* Messages Area */}
           <main className="flex-1 relative flex flex-col bg-slate-50 dark:bg-[#020617] overflow-hidden">
-            {/* Cinematic Background for Chat */}
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
                <Image src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop" fill className="object-cover" alt="bg" />
             </div>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12 relative z-10">
               <div className="max-w-4xl mx-auto space-y-12 pb-20">
-                {messages.map((m) => (
+                {cloudMessages?.map((m) => (
                   <motion.div 
                     key={m.id} 
                     initial={{ opacity: 0, y: 20 }} 
@@ -207,8 +231,7 @@ export default function SovereignBotPage() {
                       <p className="text-xl leading-loose font-bold">{m.text}</p>
                       <div className="flex items-center gap-2 mt-6 pt-5 border-t border-black/5 dark:border-white/5">
                          <button onClick={() => { navigator.clipboard.writeText(m.text); toast({ title: "تم النسخ السيادي" }); }} className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all hover:text-primary"><Copy className="h-4 w-4" /></button>
-                         {m.id !== "init" && <button onClick={() => setMessages(prev => prev.filter(msg => msg.id !== m.id))} className="p-2.5 hover:bg-red-500/10 rounded-xl text-red-400 transition-all"><Trash2 className="h-4 w-4" /></button>}
-                         <span className="mr-auto text-[9px] font-black opacity-20 tabular-nums uppercase tracking-widest">{m.timestamp.toLocaleTimeString("ar-EG")}</span>
+                         <span className="mr-auto text-[9px] font-black opacity-20 tabular-nums uppercase tracking-widest">{m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString("ar-EG") : "الآن"}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -225,7 +248,6 @@ export default function SovereignBotPage() {
               </div>
             </div>
 
-            {/* Input Engine */}
             <div className="p-10 bg-gradient-to-t from-slate-50 dark:from-[#020617] via-slate-50 dark:via-[#020617] to-transparent z-20">
               <div className="max-w-4xl mx-auto">
                 <div className="relative group">
@@ -259,9 +281,6 @@ export default function SovereignBotPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] mt-6 opacity-30">
-                  Encrypted AI Sovereign Node v4.5
-                </p>
               </div>
             </div>
           </main>
