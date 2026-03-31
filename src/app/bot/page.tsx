@@ -1,170 +1,129 @@
+
 "use client";
 
-import { useState } from "react";
-import { analyzeCase, type DecisionResult } from "@/lib/aiDecision";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { 
-  BrainCircuit, Activity, ShieldAlert, Target, RefreshCcw, 
-  ChevronRight, Loader2, Sparkles, Scale, Info 
-} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Send, BrainCircuit, Sparkles, User, ShieldCheck } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+interface Message {
+  role: "user" | "ai";
+  text: string;
+  id: string;
+}
+
 /**
- * بوابة محرك القرار السيادي.
- * واجهة متطورة لتحليل الحالات وإصدار التوصيات الاستراتيجية.
+ * محرك المحادثة السيادي (Sovereign Chat Engine).
+ * واجهة تفاعلية ذكية مصممة لتقديم الاستشارات القانونية بأسلوبChatGPT.
  */
-export default function SovereignDecisionPage() {
-  const [input, setInput] = useState("");
-  const [result, setResult] = useState<DecisionResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const handleAnalyze = () => {
-    if (!input.trim()) return;
-    
-    setIsAnalyzing(true);
-    // محاكاة معالجة المحرك السيادي
-    setTimeout(() => {
-      const data = analyzeCase(input);
-      setResult(data);
-      setIsAnalyzing(false);
-    }, 800);
-  };
-
-  const getRiskColor = (risk: string) => {
-    switch(risk) {
-      case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-amber-500 text-white';
-      default: return 'bg-emerald-500 text-white';
+export default function BotPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    { 
+      role: "ai", 
+      text: "أهلاً بك في كوكب المستشار. أنا محركك الذكي، كيف يمكنني مساعدتك في شؤونك القانونية اليوم؟",
+      id: "init"
     }
+  ]);
+  const [text, setText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // بروتوكول التمرير التلقائي لضمان رؤية أحدث الرسائل السيادية
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages, isTyping]);
+
+  const handleSend = () => {
+    if (!text.trim() || isTyping) return;
+
+    const userMsg: Message = { role: "user", text: text.trim(), id: Date.now().toString() };
+    setMessages(prev => [...prev, userMsg]);
+    setText("");
+    setIsTyping(true);
+
+    // محاكاة محرك التفكير السيادي
+    setTimeout(() => {
+      const aiMsg: Message = { 
+        role: "ai", 
+        text: "تم استلام استفسارك بنجاح. بناءً على التحليل المبدئي، نوصيك بمراجعة 'المكتبة السيادية' للحصول على مسودة عقد عمل متوافقة مع الأنظمة الجديدة. هل تود أن أقوم بتجهيز المسودة لك؟", 
+        id: (Date.now() + 1).toString() 
+      };
+      setMessages(prev => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, 1200);
   };
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12" dir="rtl">
-        <div className="max-w-5xl mx-auto space-y-12">
-          
-          <header className="text-center space-y-6">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="inline-flex h-20 w-20 rounded-[2rem] bg-indigo-600/20 border border-white/10 items-center justify-center text-primary shadow-3xl"
-            >
-              <BrainCircuit className="h-10 w-10" />
+      <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
+        
+        {/* Sovereign Messages Area */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-hide">
+          <AnimatePresence initial={false}>
+            {messages.map((m) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+              >
+                <div className="flex items-center gap-2 mb-1 px-2">
+                  <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">
+                    {m.role === "user" ? "المواطن الرقمي" : "المستشار AI"}
+                  </span>
+                  {m.role === "ai" ? <BrainCircuit className="h-3 w-3 text-accent" /> : <User className="h-3 w-3 text-primary" />}
+                </div>
+                
+                <div
+                  className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm max-w-[85%] ${
+                    m.role === "user"
+                      ? "bg-accent text-white rounded-tr-none font-bold"
+                      : "bg-white dark:bg-slate-800 text-primary border border-border/50 rounded-tl-none"
+                  }`}
+                >
+                  {m.text}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {isTyping && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+              <div className="bg-secondary/30 rounded-2xl px-4 py-3 flex gap-1.5 items-center">
+                <div className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" />
+                <div className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-100" />
+                <div className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-200" />
+              </div>
             </motion.div>
-            <h1 className="text-5xl font-black tracking-tighter">محرك <span className="text-gradient">القرار السيادي</span></h1>
-            <p className="text-white/30 text-xl font-bold max-w-2xl mx-auto">أدخل معطيات الحالة ليقوم النظام بتحليل المخاطر وإصدار بروتوكول العمل الموصى به.</p>
-          </header>
-
-          <div className="grid lg:grid-cols-12 gap-10">
-            {/* Input Side */}
-            <div className="lg:col-span-5 space-y-6">
-              <Card className="glass-cosmic border-none rounded-[3rem] p-8 shadow-2xl">
-                <CardHeader className="p-0 mb-6">
-                  <CardTitle className="text-xl font-bold flex items-center gap-3 justify-end text-white">
-                    وصف الحالة <Info className="h-5 w-5 text-primary" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 space-y-6">
-                  <Textarea 
-                    placeholder="صف الحالة القانونية أو المالية بتفصيل..."
-                    className="glass border-white/10 min-h-[250px] rounded-2xl p-6 text-lg leading-relaxed focus:ring-primary/20 text-right"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                  />
-                  <Button 
-                    onClick={handleAnalyze}
-                    disabled={isAnalyzing || !input.trim()}
-                    className="w-full btn-primary h-16 rounded-2xl text-xl font-black shadow-2xl gap-3"
-                  >
-                    {isAnalyzing ? <Loader2 className="h-6 w-6 animate-spin" /> : <>تفعيل المحرك <Sparkles className="h-5 w-5" /></>}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Results Side */}
-            <div className="lg:col-span-7">
-              <AnimatePresence mode="wait">
-                {result ? (
-                  <motion.div
-                    key="results"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-8"
-                  >
-                    <Card className="glass-cosmic border-none rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-10 opacity-5"><ShieldAlert className="h-40 w-40" /></div>
-                      
-                      <div className="flex justify-between items-start mb-10">
-                        <div className="space-y-2">
-                          <h3 className="text-3xl font-black text-white">التقرير الاستراتيجي</h3>
-                          <Badge className={`${getRiskColor(result.risk)} border-none px-6 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest`}>
-                            مخاطر {result.risk === 'high' ? 'مرتفعة' : result.risk === 'medium' ? 'متوسطة' : 'منخفضة'}
-                          </Badge>
-                        </div>
-                        <div className="text-left bg-white/5 p-4 rounded-2xl border border-white/10 min-w-[140px]">
-                          <p className="text-[9px] text-white/20 font-black uppercase mb-1 tracking-widest text-center">مستوى اليقين</p>
-                          <div className="flex items-center justify-center gap-3">
-                            <span className="text-3xl font-black text-primary tabular-nums">{result.confidence}%</span>
-                            <Target className="h-5 w-5 text-primary opacity-40" />
-                          </div>
-                          <Progress value={result.confidence} className="h-1 mt-3 bg-white/5" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-8">
-                        <div className="p-6 glass rounded-2xl bg-white/[0.02] border-white/5 border-r-4 border-r-primary">
-                          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3">القرار المبدئي</h4>
-                          <p className="text-xl font-bold text-white/90 leading-relaxed">{result.decision}</p>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] px-4 flex items-center gap-2">
-                            <Activity className="h-3 w-3" /> التوصيات الإجرائية الفورية
-                          </h4>
-                          <div className="grid gap-3">
-                            {result.recommendations.map((rec, i) => (
-                              <div key={i} className="flex items-start gap-4 text-sm text-white/50 font-bold bg-white/[0.01] p-5 rounded-2xl border border-white/5 hover:bg-white/5 transition-all group">
-                                <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 font-black text-[10px] group-hover:scale-110 transition-transform">{i+1}</div>
-                                {rec}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-12 pt-8 border-t border-white/5 flex justify-end">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => { setResult(null); setInput(""); }}
-                          className="h-12 px-6 rounded-xl text-white/20 hover:text-white gap-2 font-black text-[10px] uppercase tracking-widest"
-                        >
-                          <RefreshCcw className="h-4 w-4" /> تحليل حالة جديدة
-                        </Button>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="h-full flex flex-col items-center justify-center py-20 grayscale opacity-20 border-2 border-dashed border-white/5 rounded-[4rem]"
-                  >
-                    <Scale className="h-24 w-24 mb-6" />
-                    <p className="text-2xl font-black">انتظار تفعيل المحرك...</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+          )}
+          <div className="h-4" />
         </div>
+
+        {/* Sovereign Input Terminal */}
+        <div className="p-4 bg-white dark:bg-slate-900 border-t border-border shadow-2xl relative z-10">
+          <div className="max-w-2xl mx-auto relative flex gap-2">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="اكتب استفسارك القانوني..."
+              className="flex-1 bg-secondary/30 border border-border/50 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-accent focus:bg-white dark:focus:bg-slate-800 transition-all outline-none"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!text.trim() || isTyping}
+              className="bg-accent hover:bg-emerald-600 text-white p-4 rounded-2xl shadow-lg shadow-accent/20 transition-all active:scale-90 disabled:opacity-50 disabled:grayscale shrink-0"
+            >
+              <Send className="h-5 w-5 rotate-180" />
+            </button>
+          </div>
+          <p className="text-[9px] text-center text-muted-foreground/40 mt-3 font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+            <ShieldCheck className="h-3 w-3" /> جلسة مشفرة بنظام السيادة الرقمية
+          </p>
+        </div>
+
       </div>
     </ProtectedRoute>
   );
