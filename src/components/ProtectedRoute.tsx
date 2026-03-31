@@ -2,30 +2,29 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/firebase";
+import { useSovereignAuth } from "@/context/AuthContext";
 import { Loading } from "./Loading";
 
 /**
- * مكون حماية المسارات.
- * يضمن عدم دخول أي مواطن للمناطق السيادية بدون هوية رقمية مفعلة.
+ * مكون حماية المسارات السيادية.
+ * يقوم بمراقبة حالة الهوية الرقمية ومنع الوصول غير المصرح به للمناطق المحصنة.
  */
-export function ProtectedRoute({ children, adminOnly = false }: { children: ReactNode, adminOnly?: boolean }) {
-  const { user, role, isUserLoading } = useUser();
+export default function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { user, isUserLoading } = useSovereignAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading) {
-      if (!user) {
-        router.push("/auth/login");
-      } else if (adminOnly && role !== "admin") {
-        router.push("/dashboard");
-      }
+    // بروتوكول التوجيه: في حال اكتمال التحميل وغياب الهوية، يتم التوجه لبوابة الدخول
+    if (!isUserLoading && !user) {
+      router.push("/auth/login");
     }
-  }, [user, role, isUserLoading, adminOnly, router]);
+  }, [user, isUserLoading, router]);
 
-  if (isUserLoading) return <Loading />;
-  if (!user) return null;
-  if (adminOnly && role !== "admin") return null;
+  // عرض واجهة التحميل السيادية أثناء فحص الصلاحيات
+  if (isUserLoading) {
+    return <Loading />;
+  }
 
-  return <>{children}</>;
+  // في حال وجود هوية صالحة، يتم السماح بعبور المكونات التابعة
+  return user ? <>{children}</> : null;
 }

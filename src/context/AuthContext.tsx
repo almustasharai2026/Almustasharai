@@ -4,8 +4,8 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useUser } from '@/firebase';
 
 /**
- * سياق الهوية السيادية.
- * يوفر الوصول اللحظي لبيانات المواطن وصلاحياته ضمن النظام البيئي.
+ * سياق الهوية السيادية (Sovereign Identity Context).
+ * يوفر وصولاً مركزياً لبيانات المواطن الرقمي وحالة اتصاله بالنظام البيئي.
  */
 interface AuthContextType {
   user: any;
@@ -26,6 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * خطاف الوصول للهوية السيادية.
+ */
 export function useSovereignAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
