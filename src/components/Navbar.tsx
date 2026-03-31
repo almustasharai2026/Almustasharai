@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Scale, Coins, LayoutDashboard, Menu, X, Sparkles } from "lucide-react";
+import { Scale, Coins, LayoutDashboard, Menu, X } from "lucide-react";
 import { useUser } from "@/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * شريط التنقل السيادي (Sovereign Navbar).
- * يمثل بوابة العبور الرئيسية لكافة خدمات كوكب المستشار.
+ * تم تحديثه ليعتمد الخلفية الكحلية #0A192F والوصول السهل للوحة التحكم.
  */
 export function Navbar() {
   const { user, profile } = useUser();
@@ -21,7 +22,7 @@ export function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       className="fixed top-6 left-1/2 -translate-x-1/2 z-[150] w-full max-w-6xl px-6"
     >
-      <div className="glass-cosmic border-white/10 h-20 rounded-[2rem] px-8 flex items-center justify-between shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
+      <div className="glass-cosmic bg-[#0A192F]/90 border-white/10 h-20 rounded-[2rem] px-8 flex items-center justify-between shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
         
         {/* Logo & Identity Section */}
         <div className="flex items-center gap-10">
@@ -54,7 +55,6 @@ export function Navbar() {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-6"
               >
-                {/* Real-time Balance Protocol */}
                 <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-2.5 rounded-2xl shadow-inner">
                    <Coins className="h-4 w-4 text-amber-400 animate-pulse" />
                    <span className="text-sm font-black tabular-nums text-white">
@@ -86,7 +86,6 @@ export function Navbar() {
             )}
           </AnimatePresence>
           
-          {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
             className="lg:hidden h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
@@ -96,14 +95,13 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation Portal */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-24 left-6 right-6 glass-cosmic rounded-[2.5rem] p-8 lg:hidden border-white/10 shadow-3xl"
+            className="absolute top-24 left-6 right-6 glass-cosmic bg-[#0A192F] rounded-[2.5rem] p-8 lg:hidden border-white/10 shadow-3xl"
           >
             <div className="grid gap-6">
               <MobileNavLink href="/bot" onClick={() => setIsMobileMenuOpen(false)}>محرك القرار</MobileNavLink>
@@ -124,9 +122,6 @@ export function Navbar() {
   );
 }
 
-/**
- * مكون روابط التنقل لسطح المكتب.
- */
 function NavLink({ href, children }: { href: string, children: React.ReactNode }) {
   return (
     <Link href={href} className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:text-white transition-all relative group py-2">
@@ -136,16 +131,13 @@ function NavLink({ href, children }: { href: string, children: React.ReactNode }
   );
 }
 
-/**
- * مكون روابط التنقل للجوال.
- */
 function MobileNavLink({ href, children, onClick, className }: any) {
   return (
     <Link 
       href={href} 
       onClick={onClick} 
       className={cn(
-        "text-xl font-black text-white/60 hover:text-primary block py-3 border-b border-white/5 last:border-0 transition-all active:translate-x-2",
+        "text-xl font-black text-white/60 hover:text-primary block py-3 border-b border-white/5 last:border-0 transition-all active:translate-x-2 text-right",
         className
       )}
     >

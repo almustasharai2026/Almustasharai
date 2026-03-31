@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket, Zap, Gavel, MessageSquare
+  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket, Zap, Gavel, MessageSquare, Send
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 
 /**
  * الواجهة الرئيسية المحدثة لكوكب المستشار.
- * تعكس الهوية السيادية والمميزات التقنية المتقدمة.
+ * تدمج محرك الإدخال السيادي الجديد مع الهوية البصرية الكحلية #0A192F.
  */
 export default function SovereignLandingPage() {
   const { user, isUserLoading } = useUser();
@@ -69,8 +69,28 @@ export default function SovereignLandingPage() {
             </p>
           </div>
 
+          {/* محرك الإدخال السيادي المطور */}
+          <div className="w-full max-w-3xl mx-auto mt-12 px-4">
+            <div className="glass-cosmic bg-[#0A192F]/80 p-2.5 rounded-[2.5rem] border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row items-center gap-3 transition-all focus-within:border-primary/40 focus-within:shadow-[0_0_50px_rgba(99,102,241,0.2)]">
+              <input 
+                value={prompt}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="اطرح سؤالك القانوني أو المالي هنا..."
+                className="w-full sm:flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-5 placeholder:text-white/20 text-white text-right outline-none"
+              />
+              <Link href={`/bot?q=${encodeURIComponent(prompt)}`} className="w-full sm:w-auto">
+                <Button 
+                  disabled={!prompt.trim()}
+                  className="w-full sm:w-auto h-16 sm:h-14 px-10 rounded-[1.8rem] bg-gradient-to-r from-[#00C896] to-[#0A192F] text-white font-black text-lg border-none shadow-2xl transition-all hover:scale-105 active:scale-95 gap-3"
+                >
+                  إرسال <Send className="h-5 w-5 rotate-180" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
           {/* Sovereign Features Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-24">
             <FeatureCard 
               icon={<Zap className="h-6 w-6 text-amber-400" />} 
               title="تحليل ذكي" 
@@ -88,42 +108,18 @@ export default function SovereignLandingPage() {
             />
           </div>
 
-          <div className="flex flex-col items-center gap-8 mt-20">
-            {/* Supreme CTA Button */}
-            <Link href="/auth/signup" className="w-full max-w-md group">
+          <div className="mt-20">
+            <Link href="/auth/signup" className="group">
               <Button 
                 style={{
                   background: "linear-gradient(135deg, #00C896, #0A192F)",
                 }}
-                className="w-full h-20 rounded-[1.5rem] text-white font-black text-2xl shadow-[0_20px_50px_rgba(0,200,150,0.2)] border-none transition-all hover:scale-[1.05] active:scale-95 flex items-center justify-center gap-4"
+                className="px-16 h-20 rounded-[1.5rem] text-white font-black text-2xl shadow-[0_20px_50px_rgba(0,200,150,0.2)] border-none transition-all hover:scale-[1.05] active:scale-95 flex items-center justify-center gap-4"
               >
-                <Rocket className="h-7 w-7 group-hover:translate-x-1 transition-transform" /> 
+                <Rocket className="h-7 w-7" /> 
                 ابدأ أول استشارة الآن
               </Button>
             </Link>
-
-            <div className="w-full max-w-3xl relative mt-8">
-              <div className="relative glass-cosmic rounded-[2.5rem] border-white/10 p-2.5 flex items-center gap-3 shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all focus-within:border-primary/30">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white">
-                  <Plus className="h-6 w-6" />
-                </Button>
-                
-                <input 
-                  value={prompt}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="اطرح سؤالك القانوني أو المالي هنا..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-4 placeholder:text-white/10 text-white text-right"
-                />
-
-                <div className="flex items-center gap-1.5 ml-2">
-                  <Link href={`/bot?q=${encodeURIComponent(prompt)}`}>
-                    <Button className="h-14 w-14 rounded-[1.8rem] bg-white text-black hover:bg-indigo-50 shadow-2xl transition-transform hover:scale-105 active:scale-95">
-                      <ArrowUp className="h-7 w-7" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </motion.div>
 
