@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from "react";
@@ -22,7 +21,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-// بيانات تجريبية لمحاكاة نمو الأرباح والاستشارات (Sovereign Pulse Data)
 const intelligenceData = [
   { name: 'السبت', profit: 4000, consultations: 24 },
   { name: 'الأحد', profit: 3000, consultations: 18 },
@@ -33,9 +31,6 @@ const intelligenceData = [
   { name: 'الجمعة', profit: 4490, consultations: 30 },
 ];
 
-/**
- * غرفة القيادة العليا - إصدار "الذكاء السيادي" (Sovereign Intel v5.5).
- */
 export default function SupremeCommandCenter() {
   const { user, profile, role, isUserLoading } = useUser();
   const db = useFirestore();
@@ -55,17 +50,27 @@ export default function SupremeCommandCenter() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // تأمين الاستعلامات: لا يتم الطلب إلا إذا تأكدنا أن المستخدم أدمن وليس في حالة تحميل
+  const canQuery = !isUserLoading && user && role === ROLES_LIST.ADMIN;
+
   const usersQuery = useMemoFirebase(() => {
-    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    if (!db || !canQuery) return null;
     return collection(db, "users");
-  }, [db, user, role]);
-  const { data: allUsers } = useCollection(usersQuery);
+  }, [db, canQuery]);
+  const { data: allUsers, error: usersError } = useCollection(usersQuery);
 
   const pendingRequestsQuery = useMemoFirebase(() => {
-    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    if (!db || !canQuery) return null;
     return query(collection(db, "paymentRequests"), where("status", "==", "pending"));
-  }, [db, user, role]);
-  const { data: pendingRequests } = useCollection(pendingRequestsQuery);
+  }, [db, canQuery]);
+  const { data: pendingRequests, error: requestsError } = useCollection(pendingRequestsQuery);
+
+  useEffect(() => {
+    if (usersError || requestsError) {
+      console.error("Sovereign Sync Error:", usersError || requestsError);
+      setLogs(prev => [...prev, "⚠️ خطأ في مزامنة البيانات السحابية.. جاري إعادة المحاولة."]);
+    }
+  }, [usersError, requestsError]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -136,8 +141,6 @@ export default function SupremeCommandCenter() {
   return (
     <SovereignLayout activeId="dash">
       <div className="min-h-screen bg-[#020202] text-white p-10 font-sans relative overflow-hidden" dir="rtl">
-        
-        {/* Sovereign Background Image Overlay */}
         <div className="absolute inset-0 -z-10 opacity-10 grayscale">
           <Image 
             src="https://picsum.photos/seed/court1/1920/1080"
@@ -163,7 +166,6 @@ export default function SupremeCommandCenter() {
           </div>
         </header>
 
-        {/* Intelligence Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           <div className="lg:col-span-2 glass-cosmic border border-white/10 rounded-[3.5rem] p-10 shadow-3xl">
             <div className="flex justify-between items-center mb-10">
@@ -205,14 +207,13 @@ export default function SupremeCommandCenter() {
                <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest mt-1">Global Expert Density</p>
              </div>
              <div className="w-full space-y-6">
-                <ProgressItem label="القاهرة" value={65} color="blue" />
-                <ProgressItem label="الإسكندرية" value={20} color="emerald" />
-                <ProgressItem label="المنصورة" value={15} color="amber" />
+                <ProgressItem label="إجمالي المواطنين" value={allUsers?.length || 0} color="blue" isCount />
+                <ProgressItem label="طلبات الشحن المعلقة" value={pendingRequests?.length || 0} color="emerald" isCount />
+                <ProgressItem label="معدل الامتثال" value={98} color="amber" />
              </div>
           </div>
         </div>
 
-        {/* Communication Broadcast Center */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <NotifyCard 
             icon={<MessageCircle />} 
@@ -284,21 +285,23 @@ export default function SupremeCommandCenter() {
   );
 }
 
-function ProgressItem({ label, value, color }: any) {
+function ProgressItem({ label, value, color, isCount }: any) {
   const colors: any = {
     blue: "bg-blue-500",
     emerald: "bg-emerald-500",
     amber: "bg-amber-500"
   };
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 text-right">
       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
         <span>{label}</span>
-        <span className="text-white">{value}%</span>
+        <span className="text-white">{value}{isCount ? "" : "%"}</span>
       </div>
-      <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-        <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 1.5 }} className={`h-full ${colors[color]} shadow-[0_0_10px_rgba(0,0,0,0.5)]`} />
-      </div>
+      {!isCount && (
+        <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+          <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 1.5 }} className={`h-full ${colors[color]} shadow-[0_0_10px_rgba(0,0,0,0.5)]`} />
+        </div>
+      )}
     </div>
   );
 }
@@ -316,7 +319,7 @@ function NotifyCard({ icon, title, desc, color, onClick, loading }: any) {
   };
 
   return (
-    <div className="glass-cosmic border border-white/10 p-8 rounded-[3.5rem] group hover:border-primary/30 transition-all cursor-pointer shadow-3xl">
+    <div className="glass-cosmic border border-white/10 p-8 rounded-[3.5rem] group hover:border-primary/30 transition-all cursor-pointer shadow-3xl text-right">
       <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-8 bg-white/5 border border-white/5 transition-all duration-700 group-hover:rotate-12 ${colors[color]}`}>
         <div className="scale-125">{icon}</div>
       </div>
