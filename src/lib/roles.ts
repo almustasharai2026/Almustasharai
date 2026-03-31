@@ -1,4 +1,3 @@
-
 /**
  * ميثاق الرتب السيادية (The Sovereign Hierarchy king2026).
  * الإصدار النهائي المعتمد لإدارة كوكب المستشار AI.
@@ -30,7 +29,7 @@ export interface RolePermissions {
 
 /**
  * تصحيح منطق الهوية السيادية (Sovereign Identity Check).
- * هذا البروتوكول يمنح المالك bishoysamy390@gmail.com صلاحيات الـ GOD_MODE.
+ * هذا البروتوكول يمنح المالك bishoysamy390@gmail.com صلاحيات الـ GOD_MODE والرصيد اللانهائي.
  */
 export const checkSovereignStatus = (email: string | null | undefined) => {
   const KING_EMAIL = SOVEREIGN_ADMIN_EMAIL;
@@ -47,7 +46,6 @@ export const checkSovereignStatus = (email: string | null | undefined) => {
 export const getPermissions = (role: UserRole | string | null | undefined, email?: string | null): RolePermissions => {
   const sovereign = checkSovereignStatus(email);
   
-  // المالك king2026 يمتلك كافة مفاتيح الكوكب (GOD_MODE)
   if (role === roles.ADMIN || sovereign.isOwner) {
     return {
       canManageUsers: true,
@@ -112,5 +110,5 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
 export const getBalance = (profile: any) => {
   const sovereign = checkSovereignStatus(profile?.email);
   if (sovereign.hasInfiniteVault) return Infinity;
-  return Number(profile?.balance ?? 50); // الافتراضي 50 ج.م
+  return Number(profile?.balance ?? 50); // الافتراضي 50 EGP للمواطن
 };
