@@ -5,7 +5,7 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  ArrowUp, BrainCircuit, Activity, Coins, Loader2, Scale, ShieldAlert, Terminal, Brain, Sparkles, RefreshCcw, UserCheck, Star, ChevronRight
+  ArrowUp, BrainCircuit, Activity, Coins, Loader2, Scale, ShieldAlert, Terminal, Brain, Sparkles, RefreshCcw, UserCheck, Star, ChevronRight, AlertTriangle, Info
 } from "lucide-react";
 import { collection, addDoc, doc, updateDoc, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -13,10 +13,11 @@ import { executeDecisionEngine, type DecisionOutput } from "@/ai/flows/decision-
 import { matchConsultantSovereign } from "@/lib/sovereign-match";
 import { checkSovereignViolation } from "@/lib/sovereign-moderation";
 import { getSovereignQuickReply } from "@/lib/sovereign-ai";
+import { analyzeSovereignCase, type DecisionResult } from "@/lib/sovereign-decision";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -30,6 +31,7 @@ export default function SovereignDecisionBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [decisionData, setDecisionData] = useState<DecisionOutput | null>(null);
   const [quickReply, setQuickReply] = useState<string | null>(null);
+  const [fastAnalysis, setFastAnalysis] = useState<DecisionResult | null>(null);
   const [bestMatch, setBestMatch] = useState<any | null>(null);
 
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
@@ -44,7 +46,6 @@ export default function SovereignDecisionBot() {
       return;
     }
 
-    // 🔥 تفعيل الدرع الواقي (Sovereign Moderation Shield)
     const isViolated = checkSovereignViolation(input, forbiddenWords || []);
     
     if (isViolated) {
@@ -68,14 +69,19 @@ export default function SovereignDecisionBot() {
     setIsLoading(true);
     setDecisionData(null);
     setQuickReply(null);
+    setFastAnalysis(null);
     setBestMatch(null);
 
     try {
-      // 1. الحصول على الرد السريع (Keyword-based)
+      // 1. التحليل الاستراتيجي السريع (Fast Decision Logic)
+      const fast = analyzeSovereignCase(input);
+      setFastAnalysis(fast);
+
+      // 2. الحصول على الرد السريع (Keyword-based)
       const quick = await getSovereignQuickReply(input);
       setQuickReply(quick);
 
-      // 2. تفعيل محرك القرار (Genkit AI)
+      // 3. تفعيل محرك القرار المعمق (Genkit AI)
       const result = await executeDecisionEngine({ context: input });
       setDecisionData(result);
       
@@ -89,7 +95,6 @@ export default function SovereignDecisionBot() {
         });
       }
       
-      // 3. مطابقة الخبير
       const match = await matchConsultantSovereign(db, input);
       setBestMatch(match);
 
@@ -116,7 +121,7 @@ export default function SovereignDecisionBot() {
                    </div>
                    <div className="space-y-6">
                       <h2 className="text-6xl font-black tracking-tighter leading-tight">محرك <span className="text-gradient">اتخاذ القرار</span></h2>
-                      <p className="text-white/30 text-xl font-bold max-w-lg mx-auto">أدخل معطيات الحالة ليقوم الذكاء الاصطناعي السيادي بتحليل المخاطر وإصدار التوصيات.</p>
+                      <p className="text-white/30 text-xl font-bold max-w-lg mx-auto">أدخل معطيات الحالة ليقوم الذكاء الاصطناعي السيادي بتحليل المخاطر وإصدار التوصيات الفورية.</p>
                    </div>
                 </motion.div>
               ) : isLoading ? (
@@ -131,6 +136,36 @@ export default function SovereignDecisionBot() {
                 </div>
               ) : (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-10 pb-40">
+                   
+                   {/* Fast Analysis Results */}
+                   {fastAnalysis && (
+                     <Card className={`glass-cosmic border-none rounded-[3rem] p-1 shadow-2xl relative overflow-hidden ${fastAnalysis.risk === 'high' ? 'ring-2 ring-red-500/20' : ''}`}>
+                        <div className="p-10 space-y-8">
+                           <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-4">
+                                 <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${fastAnalysis.risk === 'high' ? 'bg-red-500/20 text-red-500' : 'bg-primary/20 text-primary'}`}>
+                                    <ShieldAlert />
+                                 </div>
+                                 <h4 className="text-2xl font-black">تحليل أولي: مستوى الخطورة {fastAnalysis.risk === 'high' ? 'مرتفع' : fastAnalysis.risk === 'medium' ? 'متوسط' : 'منخفض'}</h4>
+                              </div>
+                              <Badge variant="outline" className="px-4 py-1 text-[10px] font-black uppercase opacity-40">Fast Logic Layer</Badge>
+                           </div>
+                           
+                           <div className="space-y-4">
+                              <p className="text-xl font-bold text-white/80">{fastAnalysis.decision}</p>
+                              <div className="grid gap-3">
+                                 {fastAnalysis.recommendations.map((rec, i) => (
+                                   <div key={i} className="flex items-center gap-3 text-sm text-white/40 font-medium bg-white/5 p-4 rounded-2xl">
+                                      <Info className="h-4 w-4 text-primary shrink-0" /> {rec}
+                                   </div>
+                                 ))}
+                              </div>
+                           </div>
+                        </div>
+                     </Card>
+                   )}
+
+                   {/* Main AI Decision Report */}
                    <Card className="glass-cosmic border-none rounded-[4rem] p-12 lg:p-20 shadow-2xl relative overflow-hidden">
                       <div className="absolute top-0 right-0 p-12 opacity-5"><ShieldAlert className="h-64 w-64" /></div>
                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-16 relative z-10">
@@ -138,7 +173,7 @@ export default function SovereignDecisionBot() {
                            <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl"><Terminal className="h-8 w-8 text-white" /></div>
                            <h3 className="text-4xl font-black text-white">تقرير القرار السيادي</h3>
                         </div>
-                        <Badge className="bg-primary/10 text-primary border-none px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest">Confidential Report</Badge>
+                        <Badge className="bg-primary/10 text-primary border-none px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest">Confidential AI Report</Badge>
                       </div>
 
                       {quickReply && (
@@ -178,7 +213,7 @@ export default function SovereignDecisionBot() {
                       )}
                       
                       <div className="mt-16 pt-12 border-t border-white/5 flex justify-end">
-                         <Button variant="ghost" onClick={() => { setDecisionData(null); setBestMatch(null); setQuickReply(null); }} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
+                         <Button variant="ghost" onClick={() => { setDecisionData(null); setBestMatch(null); setQuickReply(null); setFastAnalysis(null); }} className="h-14 px-8 rounded-2xl font-black text-sm border border-white/5 hover:bg-white/5 gap-3">
                            <RefreshCcw className="h-4 w-4" /> تحليل جديد
                          </Button>
                       </div>
@@ -195,7 +230,7 @@ export default function SovereignDecisionBot() {
                 <textarea 
                   rows={1}
                   placeholder="صف الحالة القانونية أو التجارية بتفصيل..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-xl py-5 px-8 text-white placeholder:text-white/10 resize-none font-medium"
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-xl py-5 px-8 text-white placeholder:text-white/10 resize-none font-medium text-right"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
