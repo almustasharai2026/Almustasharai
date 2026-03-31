@@ -6,7 +6,7 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { roles, isOwner, type UserRole } from '@/lib/roles';
+import { roles, isOwner, type UserRole, SOVEREIGN_ADMIN_EMAIL } from '@/lib/roles';
 
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
@@ -36,7 +36,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // التحقق الفوري والسيادي من الهوية king2026
+        // 🔥 التفعيل الفوري للرتبة السيادية للمالك king2026
         if (isOwner(firebaseUser.email)) {
           setRole(roles.ADMIN);
         } else {
@@ -53,7 +53,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     return () => unsubscribeAuth();
   }, [auth]);
 
-  // مزامنة الملف الشخصي اللحظية من السحابة لضمان دقة الموافقات والأرصدة
+  // مزامنة الملف الشخصي اللحظية لضمان دقة الموافقات والأرصدة
   useEffect(() => {
     if (!firestore || !user) return;
     
@@ -62,7 +62,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
         const data = snap.data();
         setProfile(data);
         
-        // تحديث الرتبة السيادية بناءً على بيانات السحابة أو الهوية الملكية
+        // تحديث الرتبة بناءً على السحابة أو الهوية السيادية
         if (isOwner(user.email) || data.role === roles.ADMIN) {
           setRole(roles.ADMIN);
         } else {
@@ -70,7 +70,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
         }
       }
     }, (err) => {
-      console.warn("Sovereign Profile sync paused:", err.message);
+      console.warn("Sovereign Profile sync error:", err.message);
     });
 
     return () => unsub();

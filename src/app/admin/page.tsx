@@ -6,10 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, ShieldAlert, Wallet, Crown, Search, Bell, LogOut, 
   Trash2, CheckCircle2, XCircle, ShieldCheck, 
-  Activity, Settings, MessageSquare, 
-  ArrowLeft, Loader2, Plus, Zap, ArrowRightLeft,
-  UserCheck, History, Cpu, Globe, RefreshCcw, X, Send, CreditCard,
-  UserMinus, UserPlus, Filter, ChevronLeft
+  Activity, ArrowLeft, Loader2, ArrowRightLeft,
+  Zap, History, Cpu, Globe, ChevronLeft, UserMinus, Star
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -56,16 +54,16 @@ export default function SupremeCommandCenter() {
     if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً؟")) return;
     try {
       await deleteDoc(doc(db!, "users", id));
-      toast({ title: "تم التطهير السيادي", description: "تم مسح المواطن من قاعدة البيانات." });
+      toast({ title: "تم التطهير السيادي ✅" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التطهير" });
     }
   };
 
-  const handleBanToggle = async (user: any) => {
+  const handleBanToggle = async (u: any) => {
     try {
-      await updateDoc(doc(db!, "users", user.id), { isBanned: !user.isBanned });
-      toast({ title: user.isBanned ? "تم فك الحظر" : "تم الحظر السيادي" });
+      await updateDoc(doc(db!, "users", u.id), { isBanned: !u.isBanned });
+      toast({ title: u.isBanned ? "تم فك الحظر" : "تم الحظر السيادي 🚫" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل العملية" });
     }
@@ -112,7 +110,7 @@ export default function SupremeCommandCenter() {
     }
   };
 
-  // محاكاة الطيار الآلي للموافقات التلقائية (Sovereign Auto-Pilot)
+  // Sovereign Auto-Pilot
   useEffect(() => {
     if (isAutoApprove && paymentRequests) {
       const pending = paymentRequests.filter(r => r.status === 'pending');
@@ -122,7 +120,7 @@ export default function SupremeCommandCenter() {
     }
   }, [isAutoApprove, paymentRequests]);
 
-  if (role !== "admin") {
+  if (role !== ROLES_LIST.ADMIN) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-[#02040a] text-red-500 font-black gap-8">
         <Crown className="h-32 w-32 animate-pulse" />
@@ -249,7 +247,7 @@ export default function SupremeCommandCenter() {
                             </div>
                             <div className="flex gap-3">
                               <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="محرك التحويل السيادي" color="emerald" />
-                              <ActionBtn icon={<ShieldCheck />} onClick={() => handleUpdateRole(u.id, "vip")} tooltip="ترقية لرتبة VIP" color="amber" />
+                              <ActionBtn icon={<Star />} onClick={() => handleUpdateRole(u.id, "vip")} tooltip="ترقية لرتبة VIP" color="amber" />
                               <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleBanToggle(u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
                               <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير نهائي" />
                             </div>
@@ -264,48 +262,11 @@ export default function SupremeCommandCenter() {
 
             {activeTab === "transfer" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <div className="bg-white dark:bg-slate-900 rounded-[4rem] p-12 shadow-3xl border border-primary/10">
-                  <div className="text-center space-y-4 mb-12">
-                    <div className="h-20 w-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20 text-primary">
-                      <ArrowRightLeft className="h-10 w-10" />
-                    </div>
-                    <h2 className="text-4xl font-black tracking-tighter">محرك التحويل السيادي</h2>
-                    <p className="text-muted-foreground font-bold">ابحث عن المواطن لتفعيل بروتوكول تحويل الوحدات المالية.</p>
-                  </div>
-
-                  <div className="max-w-2xl mx-auto space-y-10">
-                    <div className="relative">
-                      <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
-                      <Input 
-                        placeholder="ابحث بالاسم أو الرقم لتحديد المواطن..." 
-                        className="pr-16 h-20 rounded-[2rem] bg-secondary/30 border-white/5 text-xl font-bold"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      {filteredUsers?.slice(0, 3).map(u => (
-                        <button 
-                          key={u.id}
-                          onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }}
-                          className="w-full flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-white/10 transition-all group"
-                        >
-                          <div className="flex items-center gap-6">
-                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black">{u.fullName?.charAt(0)}</div>
-                            <div className="text-right">
-                              <p className="font-black text-lg">{u.fullName}</p>
-                              <p className="text-xs text-muted-foreground font-bold">{u.phone || u.email}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <p className="text-xl font-black tabular-nums text-white/40 group-hover:text-primary transition-colors">{u.balance} EGP</p>
-                            <ChevronLeft className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className="bg-white dark:bg-slate-900 rounded-[4rem] p-12 shadow-3xl border border-primary/10 text-center">
+                  <ArrowRightLeft className="h-20 w-20 mx-auto mb-8 text-primary opacity-20" />
+                  <h2 className="text-4xl font-black tracking-tighter mb-4">محرك التحويل السيادي</h2>
+                  <p className="text-muted-foreground font-bold mb-12">ابحث عن المواطن في قائمة "إدارة المواطنين" لتفعيل بروتوكول التحويل المباشر.</p>
+                  <Button onClick={() => setActiveTab("users")} className="btn-primary h-16 px-12 rounded-2xl text-xl">اذهب لسجل المواطنين</Button>
                 </div>
               </motion.div>
             )}
@@ -377,7 +338,7 @@ export default function SupremeCommandCenter() {
                             <p className="text-lg font-bold text-slate-700 dark:text-slate-300 mt-2">{log.detail}</p>
                             <div className="flex items-center gap-2 mt-2 opacity-40">
                                <ShieldCheck className="h-3 w-3" />
-                               <p className="text-[9px] font-black uppercase tracking-widest">Authorized Operator: {log.admin}</p>
+                               <p className="text-[9px] font-black uppercase tracking-widest">Operator: {log.admin || "System"}</p>
                             </div>
                           </div>
                         </div>
@@ -392,7 +353,7 @@ export default function SupremeCommandCenter() {
         </div>
       </main>
 
-      {/* Sovereign Transfer Modal (Supreme Engine) */}
+      {/* Sovereign Transfer Modal */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl" dir="rtl">
           <DialogHeader>
@@ -401,7 +362,6 @@ export default function SupremeCommandCenter() {
           </DialogHeader>
           
           <div className="py-10 space-y-8">
-            {/* User Preview */}
             <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-between gap-6 shadow-inner">
                <div className="flex items-center gap-6">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary">

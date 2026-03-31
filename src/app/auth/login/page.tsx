@@ -6,24 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { SOVEREIGN_ADMIN_EMAIL } from "@/lib/roles";
 import SovereignButton from "@/components/SovereignButton";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("king2026");
   const [password, setPassword] = useState("king2026");
   const [isLoading, setIsLoading] = useState(false);
+  const [lockoutTime, setLockoutTime] = useState(0);
+  
   const auth = useAuth();
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
+
+  // محاكاة عداد فك الحظر في حال وجود خطأ too-many-requests
+  useEffect(() => {
+    if (lockoutTime > 0) {
+      const timer = setTimeout(() => setLockoutTime(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [lockoutTime]);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -38,32 +49,32 @@ export default function LoginPage() {
     // بروتوكول تحويل الهوية السيادية king2026
     let loginEmail = identifier.trim();
     if (loginEmail.toLowerCase() === "king2026") {
-      loginEmail = "bishoysamy390@gmail.com";
+      loginEmail = SOVEREIGN_ADMIN_EMAIL;
     }
 
     try {
-      // 1. محاولة الدخول السيادية
+      // 1. محاولة الدخول السيادي
       await signInWithEmailAndPassword(auth, loginEmail, password);
-      toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول king2026 بنجاح." });
+      toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول king2026." });
       router.push("/bot");
     } catch (error: any) {
       console.error("Login Protocol Check:", error.code);
       
-      // معالجة خطأ كثرة المحاولات
       if (error.code === 'auth/too-many-requests') {
+        setLockoutTime(60);
         toast({ 
           variant: "destructive", 
           title: "حماية السيادة نشطة", 
-          description: "تم رصد محاولات دخول مكثفة. يرجى الانتظار قليلاً قبل إعادة المحاولة لتأمين الحدود الرقمية." 
+          description: "تم رصد محاولات دخول مكثفة. يرجى الانتظار دقيقة واحدة لتأمين الحدود الرقمية." 
         });
         setIsLoading(false);
         return;
       }
 
-      // 2. إذا كان المالك يحاول الدخول والبيانات هي king2026 ولكن الحساب غير متزامن
+      // 2. بروتوكول التصحيح الذكي للمالك (Sovereign Auto-Repair)
       if (identifier.toLowerCase() === "king2026" && password === "king2026") {
         try {
-          // محاولة الإنشاء القسري لضمان السيادة المطلقة
+          // محاولة إنشاء الحساب إذا كان غير موجود أو يحتاج لمزامنة
           const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
           const newUser = userCredential.user;
           await updateProfile(newUser, { displayName: "king2026" });
@@ -76,21 +87,21 @@ export default function LoginPage() {
             createdAt: new Date().toISOString(),
             isBanned: false
           });
-          toast({ title: "تم التأسيس السيادي ✅", description: "تم إنشاء حساب المالك وتفعيله فوراً." });
+          toast({ title: "تم التأسيس السيادي بنجاح ✅" });
           router.push("/bot");
         } catch (signupError: any) {
           if (signupError.code === 'auth/email-already-in-use') {
             toast({ 
               variant: "destructive", 
               title: "تنبيه السيادة", 
-              description: "الهوية موجودة ولكن المفتاح السري غير متطابق. يرجى استخدام المفتاح الصحيح." 
+              description: "الهوية موجودة ولكن المفتاح السري غير متطابق. يرجى استخدام المفتاح الصحيح المعتمد." 
             });
           } else {
-            toast({ variant: "destructive", title: "فشل الوصول", description: "تأكد من استقرار الشبكة السيادية." });
+            toast({ variant: "destructive", title: "فشل الوصول السيادي" });
           }
         }
       } else {
-        toast({ variant: "destructive", title: "فشل الدخول", description: "بيانات الاعتماد غير صالحة." });
+        toast({ variant: "destructive", title: "خطأ في الهوية", description: "بيانات الاعتماد غير صالحة." });
       }
     } finally {
       setIsLoading(false);
@@ -119,6 +130,12 @@ export default function LoginPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
+          {lockoutTime > 0 && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 text-red-500">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <p className="text-xs font-bold">محرك الحماية نشط. يرجى الانتظار {lockoutTime} ثانية قبل المحاولة التالية.</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية الملكية</Label>
             <div className="relative">
@@ -128,6 +145,7 @@ export default function LoginPage() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-bold pr-4"
+                disabled={lockoutTime > 0}
               />
             </div>
           </div>
@@ -140,13 +158,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right pr-4"
+                disabled={lockoutTime > 0}
               />
             </div>
           </div>
           <SovereignButton 
-            text={isLoading ? "جاري التحقق..." : "فتح بوابة القيادة"}
+            text={isLoading ? "جاري التحقق..." : lockoutTime > 0 ? `انتظر ${lockoutTime}ث` : "فتح بوابة القيادة"}
             onClick={handleLogin}
-            disabled={isLoading}
+            disabled={isLoading || lockoutTime > 0}
             className="mt-2"
             icon={isLoading ? <Loader2 className="animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
           />

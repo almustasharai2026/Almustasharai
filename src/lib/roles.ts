@@ -1,6 +1,7 @@
 
 /**
  * ميثاق الرتب السيادية (Sovereign Role Constants).
+ * الإصدار النهائي المعتمد للمالك king2026.
  */
 export const roles = {
   ADMIN: "admin",       // المالك الملكي (king2026)
@@ -11,6 +12,9 @@ export const roles = {
 } as const;
 
 export type UserRole = (typeof roles)[keyof typeof roles];
+
+// البريد السيادي للمالك - المرجع النهائي للسلطة
+export const SOVEREIGN_ADMIN_EMAIL = "bishoysamy390@gmail.com";
 
 export interface RolePermissions {
   canManageUsers: boolean;
@@ -27,12 +31,11 @@ export interface RolePermissions {
  * التحقق من الهوية الملكية للمالك king2026 عبر البريد المعتمد.
  */
 export const isOwner = (email: string | null | undefined) => {
-  const adminEmails = ["bishoysamy390@gmail.com"];
-  return email ? adminEmails.includes(email.toLowerCase()) : false;
+  return email?.toLowerCase() === SOVEREIGN_ADMIN_EMAIL;
 };
 
-export const getPermissions = (role: UserRole | string): RolePermissions => {
-  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً
+export const getPermissions = (role: UserRole | string | null | undefined): RolePermissions => {
+  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً بغض النظر عن المدخلات
   if (role === roles.ADMIN) {
     return {
       canManageUsers: true,
