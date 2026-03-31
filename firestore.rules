@@ -5,7 +5,7 @@ service cloud.firestore {
     // Sovereign Access Helpers
     function isSignedIn() { return request.auth != null; }
     
-    // وظيفة التحقق من الرتبة السيادية (Admin)
+    // وظيفة التحقق من الرتبة السيادية (Admin) - king2026
     function isAdmin() { 
       return isSignedIn() && (
         request.auth.token.email == 'bishoysamy390@gmail.com' || 
@@ -15,8 +15,7 @@ service cloud.firestore {
     
     function isModerator() { 
       return isSignedIn() && (
-        (request.auth.token.keys().contains('role') && request.auth.token.role == "moderator") || 
-        request.auth.token.email.matches('.*moderator.*')
+        (request.auth.token.keys().contains('role') && request.auth.token.role == "moderator")
       ); 
     }
     
@@ -31,7 +30,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin() || isModerator();
       allow create: if isSignedIn();
-      // المالك فقط يمكنه تعديل الرصيد والرتبة
+      // المالك فقط يمكنه تعديل الرصيد والرتبة وحالة الحظر
       allow update: if isAdmin() || (isOwner(userId) && isNotBanned() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
       allow delete: if isAdmin();
     }
@@ -42,18 +41,24 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Sovereign System Hierarchy
+    // Sovereign System Hierarchy (Logs, Moderation, Config)
     match /system/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Live Consultations
+    // Live Consultations & Bookings
     match /liveConsultations/{sessionId} {
       allow read, write: if isSignedIn() && isNotBanned();
       match /messages/{messageId} {
         allow read, write: if isSignedIn() && isNotBanned();
       }
+    }
+    
+    match /bookings/{id} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn() && isNotBanned();
+      allow update, delete: if isAdmin();
     }
 
     // Payment Requests
@@ -62,7 +67,7 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Analytics
+    // Analytics (Restricted)
     match /analytics/{id} {
       allow create: if isSignedIn();
       allow read: if isAdmin() || isModerator();

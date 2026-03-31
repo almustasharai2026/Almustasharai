@@ -15,83 +15,73 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
- * إنشاء المحفظة السيادية للمواطن الجديد في مسار /wallets.
+ * بروتوكول التعديل المالي السيادي المباشر.
+ * @param db مثيل Firestore
+ * @param userId معرف المواطن
+ * @param amount المبلغ (موجب للشحن، سالب للخصم)
+ * @param reason سبب العملية لتوثيقها في السجلات
  */
-export function createSovereignWallet(db: Firestore, userId: string, initialBalance: number = 50) {
-  const walletRef = doc(db, "wallets", userId);
-  
-  const data = {
-    balance: initialBalance,
-    lastUpdate: serverTimestamp(),
-  };
-
-  setDoc(walletRef, data, { merge: true })
-    .catch(async (serverError) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: walletRef.path,
-        operation: 'create',
-        requestResourceData: data,
-      } satisfies SecurityRuleContext));
-    });
-}
-
-/**
- * بروتوكول الدفع مقابل جلسة استشارية.
- * يستخدم الخصم الذري (Atomic Deduction) لضمان سلامة الرصيد.
- */
-export function payForSovereignSession(
+export async function executeSovereignFinancialOp(
   db: Firestore, 
   userId: string, 
-  consultantId: string, 
-  amount: number
-): void {
-  const walletRef = doc(db, "wallets", userId);
-  const transactionRef = collection(db, "wallets", userId, "transactions");
+  amount: number, 
+  reason: string = "تعديل إداري"
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  const logRef = collection(db, "system", "logs", "events");
 
-  // خصم الرصيد بأسلوب غير حاصر
-  updateDoc(walletRef, {
-    balance: increment(-amount),
-    lastUpdate: serverTimestamp()
-  }).catch(async (error) => {
+  try {
+    // 1. تنفيذ التعديل المالي اللحظي
+    await updateDoc(userRef, {
+      balance: increment(amount)
+    });
+
+    // 2. توثيق العملية في سجل الأحداث السيادي
+    await addDoc(logRef, {
+      type: amount > 0 ? "BALANCE_RECHARGE" : "BALANCE_DEDUCTION",
+      detail: `${amount > 0 ? 'شحن' : 'خصم'} مبلغ ${Math.abs(amount)} EGP. السبب: ${reason}`,
+      userId,
+      admin: "king2026",
+      timestamp: serverTimestamp()
+    });
+
+    console.log(`[Sovereign Finance] Operation completed for user: ${userId}`);
+  } catch (error: any) {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: walletRef.path,
+      path: userRef.path,
       operation: 'update',
-      requestResourceData: { amount: -amount, consultantId },
+      requestResourceData: { balance: amount, reason },
     } satisfies SecurityRuleContext));
-  });
-
-  // تسجيل المعاملة في السجل السيادي
-  addDoc(transactionRef, {
-    amount: -amount,
-    type: "session_payment",
-    service: "استشارة فيديو مباشرة",
-    consultantId: consultantId,
-    timestamp: new Date().toISOString()
-  });
+    throw error;
+  }
 }
 
 /**
- * شحن الرصيد السيادي في مسار /wallets.
+ * بروتوكول التحويل السيادي (Manual Transfer).
+ * يستخدم لنقل الوحدات المالية مباشرة من سلطة الإدارة إلى المواطن.
  */
-export function rechargeSovereignBalance(db: Firestore, userId: string, amount: number, reason: string = "شحن رصيد") {
-  const walletRef = doc(db, "wallets", userId);
-  const transactionRef = collection(db, "wallets", userId, "transactions");
-
-  updateDoc(walletRef, {
-    balance: increment(amount),
-    lastUpdate: serverTimestamp()
-  }).catch(async (error) => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({
-      path: walletRef.path,
-      operation: 'update',
-      requestResourceData: { amount, type: 'recharge' },
-    } satisfies SecurityRuleContext));
-  });
-
-  addDoc(transactionRef, {
-    amount: amount,
-    type: "recharge",
-    service: reason,
-    timestamp: new Date().toISOString()
-  });
+export function manualSovereignTransfer(
+  db: Firestore,
+  userId: string,
+  amount: number
+): void {
+  const userRef = doc(db, "users", userId);
+  
+  updateDoc(userRef, { balance: increment(amount) })
+    .then(() => {
+      // تسجيل الحدث بأسلوب غير حاصر
+      addDoc(collection(db, "system", "logs", "events"), {
+        type: "MANUAL_TRANSFER",
+        detail: `تم تحويل ${amount} EGP يدوياً للمواطن`,
+        userId,
+        timestamp: serverTimestamp()
+      });
+    })
+    .catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: { balance: amount, action: 'transfer' },
+      } satisfies SecurityRuleContext));
+    });
 }
