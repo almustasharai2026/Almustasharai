@@ -16,7 +16,7 @@ async function initDb() {
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'user',
-        balance NUMERIC NOT NULL DEFAULT 10
+        balance NUMERIC NOT NULL DEFAULT 50
       );
     `);
 
@@ -45,18 +45,22 @@ async function initDb() {
       );
     `);
 
-    // Sovereign Admin king2026 Initialization
+    // Sovereign Admin king2026 Initialization Protocol
     const hashedAdmin = await bcrypt.hash('king2020', 10);
     await pool.query(
       `INSERT INTO users (email, username, password, role, balance)
        VALUES ($1, $2, $3, 'admin', 999999)
-       ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, username = 'king2026', role = 'admin', balance = 999999;`,
+       ON CONFLICT (email) DO UPDATE SET 
+       password = EXCLUDED.password, 
+       username = 'king2026', 
+       role = 'admin', 
+       balance = 999999;`,
       ['bishoysamy390@gmail.com', 'king2026', hashedAdmin]
     );
 
-    console.log('Sovereign Database Ready: king2026 Access Active');
+    console.log('Sovereign Hub Active: king2026 Authority Recognized');
   } catch (err) {
-    console.error('Sovereign DB Error:', err.message);
+    console.error('Sovereign DB Failure:', err.message);
   }
 }
 

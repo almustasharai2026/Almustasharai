@@ -35,7 +35,7 @@ async function ensureAdminExists() {
       }).where(eq(usersTable.email, ADMIN_EMAIL));
     }
   } catch (e) {
-    console.error("Admin Sync Error:", e);
+    console.error("Supreme Admin Sync Error:", e);
   }
 }
 
@@ -74,7 +74,7 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "خطأ في الخادم السيادي" });
+    res.status(500).json({ error: "فشل الدخول السيادي" });
   }
 });
 
@@ -114,7 +114,7 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: "خطأ في تسجيل المواطن الجديد" });
+    res.status(500).json({ error: "خطأ في تسجيل الهوية الجديدة" });
   }
 });
 
