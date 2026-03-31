@@ -14,6 +14,7 @@ import { useUser } from '@/firebase';
 import { roles as ROLES_LIST } from '@/lib/roles';
 import { useTheme } from 'next-themes';
 import SovereignButton from '@/components/SovereignButton';
+import SovereignGuidanceNode from '@/components/SovereignGuidanceNode';
 import Image from 'next/image';
 
 // --- مكون الخلفية الحية السيادية (Supreme Mesh Gradient) ---
@@ -71,7 +72,6 @@ export default function AlmustasharaiElite() {
   const { user, profile, role, signOut } = useUser();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [guidanceInput, setGuidanceInput] = useState("");
 
   useEffect(() => setMounted(true), []);
 
@@ -83,7 +83,7 @@ export default function AlmustasharaiElite() {
       
       {/* Navigation - Elite Minimalist */}
       <nav className="fixed top-0 w-full z-[100] px-10 py-6 flex justify-between items-center backdrop-blur-xl bg-black/10 border-b border-white/5">
-        <div className="flex items-center gap-4 group cursor-pointer">
+        <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.location.href = '/'}>
           <div className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center group-hover:rotate-[360deg] transition-transform duration-1000 shadow-2xl">
             <Scale size={24} />
           </div>
@@ -224,7 +224,7 @@ export default function AlmustasharaiElite() {
           />
         </div>
 
-        {/* The Central Guidance Node */}
+        {/* The Central Guidance Node - تم دمج المكون الذكي الجديد هنا */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -246,20 +246,9 @@ export default function AlmustasharaiElite() {
               </p>
             </div>
 
-            <div className="w-full max-w-3xl relative group z-10">
-              <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-[3rem] opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <input 
-                value={guidanceInput}
-                onChange={(e) => setGuidanceInput(e.target.value)}
-                placeholder="اكتب استفسارك هنا برصانة.. (مثال: أريد تأسيس شركة)"
-                className="w-full bg-white/[0.03] border-2 border-white/10 rounded-[3rem] py-10 px-16 text-3xl font-bold text-white placeholder:text-white/10 focus:border-primary/40 outline-none transition-all pr-24 shadow-3xl relative"
-              />
-              <button 
-                onClick={() => window.location.href = `/bot?q=${encodeURIComponent(guidanceInput)}`}
-                className="absolute left-5 top-1/2 -translate-y-1/2 bg-primary text-[#020617] p-6 rounded-[2rem] hover:scale-110 active:scale-95 transition-all shadow-3xl group/btn"
-              >
-                <ArrowRight size={32} className="rotate-180 group-hover:-translate-x-2 transition-transform" />
-              </button>
+            {/* تم استبدال حقل الإدخال العادي بالمكون الذكي الجديد */}
+            <div className="w-full z-10">
+              <SovereignGuidanceNode />
             </div>
           </div>
         </motion.div>
@@ -269,7 +258,7 @@ export default function AlmustasharaiElite() {
       <footer className="border-t border-white/5 py-24 px-10 relative bg-black/40 backdrop-blur-3xl overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-20" />
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-12 text-center">
-          <div className="flex items-center gap-4 opacity-30 grayscale">
+          <div className="flex items-center gap-4 opacity-30 grayscale cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-2xl"><Scale size={18} className="text-black" /></div>
             <span className="font-black text-xl tracking-tighter text-white">المستشار AI</span>
           </div>
