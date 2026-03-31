@@ -1,8 +1,10 @@
+
 'use client';
 
 import { useState, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,10 +18,10 @@ interface IdCaptureWizardProps {
 }
 
 const STEPS = [
-  { id: 'syndicateFront', title: 'وجه كارنيه النقابة', icon: <CreditCard /> },
-  { id: 'syndicateBack', title: 'ظهر كارنيه النقابة', icon: <CreditCard /> },
-  { id: 'nationalFront', title: 'وجه بطاقة الهوية', icon: <ShieldCheck /> },
-  { id: 'nationalBack', title: 'ظهر بطاقة الهوية', icon: <ShieldCheck /> },
+  { id: 'syndicateFront', title: 'وجه كارنيه النقابة', icon: <CreditCard className="h-6 w-6" /> },
+  { id: 'syndicateBack', title: 'ظهر كارنيه النقابة', icon: <CreditCard className="h-6 w-6" /> },
+  { id: 'nationalFront', title: 'وجه بطاقة الهوية', icon: <ShieldCheck className="h-6 w-6" /> },
+  { id: 'nationalBack', title: 'ظهر بطاقة الهوية', icon: <ShieldCheck className="h-6 w-6" /> },
 ];
 
 export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
@@ -91,7 +93,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center relative">
                     {capturedImages[STEPS[currentStep].id] ? (
-                      <img src={capturedImages[STEPS[currentStep].id]} className="w-full h-full object-cover" />
+                      <img src={capturedImages[STEPS[currentStep].id]} className="w-full h-full object-cover" alt="captured" />
                     ) : (
                       <div className="text-center space-y-4">
                         <Camera className="h-16 w-16 mx-auto text-white/10" />
@@ -104,7 +106,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
 
               <div className="flex gap-3">
                 {isCameraActive ? (
-                  <Button onClick={capture} className="flex-1 h-14 rounded-2xl btn-primary text-lg">التقاط الآن</Button>
+                  <Button onClick={capture} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg">التقاط الآن</Button>
                 ) : (
                   <>
                     <Button 
@@ -117,7 +119,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
                     </Button>
                     
                     {capturedImages[STEPS[currentStep].id] && (
-                      <Button onClick={handleNext} className="flex-1 h-14 rounded-2xl btn-primary text-lg gap-2">
+                      <Button onClick={handleNext} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg gap-2">
                         {currentStep === 3 ? 'إتمام المصادقة' : 'التالي'} <ChevronLeft className="h-5 w-5" />
                       </Button>
                     )}
@@ -141,5 +143,3 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
     </div>
   );
 }
-
-import { Card, CardContent } from "./ui/card";
