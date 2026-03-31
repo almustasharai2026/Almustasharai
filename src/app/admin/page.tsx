@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,74 +8,97 @@ import {
   Trash2, CheckCircle2, XCircle, ShieldCheck, 
   Activity, Settings, MessageSquare, 
   ArrowLeft, Loader2, Plus, Zap, ArrowRightLeft,
-  UserCheck, History, Cpu, Globe, RefreshCcw
+  UserCheck, History, Cpu, Globe, RefreshCcw, X, Send, CreditCard
 } from "lucide-react";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, 
-  DialogFooter, DialogDescription 
-} from "@/components/ui/dialog";
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { collection, doc, updateDoc, deleteDoc, increment, serverTimestamp, addDoc, query, orderBy } from "firebase/firestore";
+import { useMemoFirebase } from "@/firebase/provider";
 import Link from "next/link";
+import { roles as ROLES_LIST } from "@/lib/roles";
 
-/**
- * مركز القيادة العليا السيادي - king2026 Ultimate Edition
- * واجهة الإدارة الشاملة (PostgreSQL Linked).
- */
 export default function SupremeCommandCenter() {
   const { user, profile, role, signOut } = useUser();
+  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // States for Actions
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [newRole, setNewRole] = useState("");
   const [isAutoApprove, setIsAutoApprove] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Queries
+  const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
+  const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersQuery);
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    // محاكاة جلب البيانات من محرك API السيادي
-    // في بيئة Nextjs سيتم استبدال هذا بـ fetch('/api/admin/users')
-    setTimeout(() => {
-      setUsers([
-        { id: "1", fullName: "بيشوي سامي", email: "bishoysamy390@gmail.com", role: "admin", balance: 999999, isBanned: false },
-        { id: "2", fullName: "أحمد علي", email: "ahmed@example.com", role: "user", balance: 50, isBanned: false },
-        { id: "3", fullName: "سارة محمد", email: "sara@example.com", role: "consultant", balance: 120, isBanned: true }
-      ]);
-      setIsLoading(false);
-    }, 800);
+  const requestsQuery = useMemoFirebase(() => db ? query(collection(db, "paymentRequests"), orderBy("createdAt", "desc")) : null, [db]);
+  const { data: paymentRequests } = useCollection(requestsQuery);
+
+  const logsQuery = useMemoFirebase(() => db ? query(collection(db, "system", "logs", "events"), orderBy("timestamp", "desc")) : null, [db]);
+  const { data: systemLogs } = useCollection(logsQuery);
+
+  // Action States
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferTarget, setTransferTarget] = useState(""); // Number or Username
+
+  const handlePurgeUser = async (id: string) => {
+    if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً؟")) return;
+    try {
+      await deleteDoc(doc(db!, "users", id));
+      toast({ title: "تم التطهير السيادي", description: "تم مسح المواطن من قاعدة البيانات." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل التطهير" });
+    }
   };
 
-  const handleAction = async (action: string, u: any) => {
-    toast({ title: `جاري تنفيذ بروتوكول: ${action}`, description: "يتم تحديث السحابة السيادية..." });
-    // تنفيذ حقيقي عبر محرك API (سيتم برمجته في مسارات /api)
-    setTimeout(() => {
-      toast({ title: "تم التنفيذ بنجاح ✅" });
-      fetchUsers();
-    }, 500);
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    try {
+      await updateDoc(doc(db!, "users", userId), { role: newRole });
+      toast({ title: "تم تحديث الرتبة", description: `المواطن الآن برتبة: ${newRole}` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل تحديث الرتبة" });
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!selectedUser || !transferAmount) return;
+    const amountNum = Number(transferAmount);
+    try {
+      await updateDoc(doc(db!, "users", selectedUser.id), { balance: increment(amountNum) });
+      await addDoc(collection(db!, "system", "logs", "events"), {
+        type: "MANUAL_TRANSFER",
+        detail: `تحويل ${amountNum} EGP للمواطن ${selectedUser.fullName}`,
+        admin: "king2026",
+        timestamp: serverTimestamp()
+      });
+      toast({ title: "تم التحويل بنجاح ✅" });
+      setIsTransferModalOpen(false);
+      setTransferAmount("");
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل التحويل" });
+    }
+  };
+
+  const handleRequestAction = async (request: any, status: 'approved' | 'rejected') => {
+    try {
+      await updateDoc(doc(db!, "paymentRequests", request.id), { status, updatedAt: serverTimestamp() });
+      if (status === 'approved') {
+        await updateDoc(doc(db!, "users", request.userId), { balance: increment(request.amount) });
+      }
+      toast({ title: status === 'approved' ? "تم القبول والشحن" : "تم الرفض" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل معالجة الطلب" });
+    }
   };
 
   if (role !== "admin") {
@@ -86,6 +110,11 @@ export default function SupremeCommandCenter() {
       </div>
     );
   }
+
+  const filteredUsers = allUsers?.filter(u => 
+    u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen bg-[#f8faff] dark:bg-[#02040a] text-slate-900 dark:text-white font-sans overflow-hidden" dir="rtl">
@@ -147,10 +176,10 @@ export default function SupremeCommandCenter() {
             
             {activeTab === "overview" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <StatBox label="المواطنون" value={users.length} icon={<Users />} color="blue" />
-                <StatBox label="طلبات معلقة" value="٥" icon={<Zap />} color="amber" />
-                <StatBox label="انتهاكات مرصودة" value="٠" icon={<ShieldAlert />} color="red" />
-                <StatBox label="إجمالي السيولة" value="١,٢٥٠,٠٠٠" icon={<Wallet />} color="emerald" />
+                <StatBox label="المواطنون" value={allUsers?.length || 0} icon={<Users />} color="blue" />
+                <StatBox label="طلبات معلقة" value={paymentRequests?.filter(r => r.status === 'pending').length || 0} icon={<Zap />} color="amber" />
+                <StatBox label="العمليات المنفذة" value={systemLogs?.length || 0} icon={<Activity />} color="emerald" />
+                <StatBox label="إجمالي الأرصدة" value={allUsers?.reduce((acc, u) => acc + (u.balance || 0), 0).toLocaleString()} icon={<Wallet />} color="emerald" />
                 
                 <Card className="md:col-span-4 rounded-[3.5rem] border-none shadow-3xl bg-white dark:bg-slate-900/50 p-12 text-center relative overflow-hidden">
                    <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
@@ -172,40 +201,43 @@ export default function SupremeCommandCenter() {
                 </div>
 
                 <div className="grid gap-6">
-                  {users.map((u) => (
-                    <Card key={u.id} className={`rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01]'}`}>
-                      <CardContent className="p-10 flex items-center justify-between">
-                        <div className="flex items-center gap-8">
-                          <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-3xl font-black text-primary shadow-inner">{u.fullName?.charAt(0)}</div>
-                          <div>
-                            <div className="flex items-center gap-4">
-                              <h3 className="text-2xl font-black">{u.fullName}</h3>
-                              <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 font-black uppercase text-[10px]">{u.role}</Badge>
+                  {isUsersLoading ? (
+                    <div className="py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" /></div>
+                  ) : (
+                    filteredUsers?.map((u) => (
+                      <Card key={u.id} className={`rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01]'}`}>
+                        <CardContent className="p-10 flex items-center justify-between">
+                          <div className="flex items-center gap-8">
+                            <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-3xl font-black text-primary shadow-inner">{u.fullName?.charAt(0)}</div>
+                            <div>
+                              <div className="flex items-center gap-4">
+                                <h3 className="text-2xl font-black">{u.fullName}</h3>
+                                <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 font-black uppercase text-[10px]">{u.role}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-12">
-                          <div className="text-left border-l border-border pl-12">
-                            <p className="text-[10px] text-muted-foreground font-black uppercase mb-1">الرصيد السيادي</p>
-                            <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
+                          <div className="flex items-center gap-12">
+                            <div className="text-left border-l border-border pl-12">
+                              <p className="text-[10px] text-muted-foreground font-black uppercase mb-1">الرصيد السيادي</p>
+                              <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
+                            </div>
+                            <div className="flex gap-3">
+                              <ActionBtn icon={<Wallet />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="شحن رصيد" color="emerald" />
+                              <ActionBtn icon={<Crown />} onClick={() => setSelectedUser(u)} tooltip="ترقية الرتبة" color="amber" />
+                              <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handlePurgeUser(u.id)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
+                              <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير" />
+                            </div>
                           </div>
-                          <div className="flex gap-3">
-                            <ActionBtn icon={<Wallet />} onClick={() => { setSelectedUser(u); setIsBalanceModalOpen(true); }} tooltip="شحن رصيد" color="emerald" />
-                            <ActionBtn icon={<Crown />} onClick={() => { setSelectedUser(u); setIsRoleModalOpen(true); }} tooltip="ترقية الرتبة" color="amber" />
-                            <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleAction(u.isBanned ? "unban" : "ban", u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
-                            <ActionBtn icon={<Trash2 />} onClick={() => handleAction("purge", u)} color="red" tooltip="تطهير" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </motion.div>
             )}
 
-            {/* Billing & Auto-Approval Tab */}
             {activeTab === "billing" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                 <div className="flex justify-between items-center bg-white dark:bg-white/5 p-8 rounded-[3rem] shadow-xl border border-primary/10">
@@ -223,11 +255,54 @@ export default function SupremeCommandCenter() {
                 </div>
 
                 <div className="grid gap-6">
-                  {/* طلبات الشحن الحقيقية ستظهر هنا */}
-                  <div className="py-40 text-center grayscale opacity-10">
-                    <Globe className="h-32 w-32 mx-auto mb-6" />
-                    <p className="text-3xl font-black">لا توجد طلبات تحويل معلقة حالياً</p>
-                  </div>
+                  {paymentRequests?.filter(r => r.status === 'pending').map(r => (
+                    <Card key={r.id} className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900/80 p-8">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500"><Zap /></div>
+                          <div>
+                            <h3 className="text-xl font-black">{r.userName}</h3>
+                            <p className="text-xs text-muted-foreground font-bold">باقة: {r.plan} | القيمة: {r.amount} EGP</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-4">
+                          <Button onClick={() => handleRequestAction(r, 'rejected')} variant="ghost" className="h-14 px-8 rounded-2xl text-red-500 font-black">رفض</Button>
+                          <Button onClick={() => handleRequestAction(r, 'approved')} className="btn-primary h-14 px-10 rounded-2xl text-lg">قبول وشحن 🚀</Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  {paymentRequests?.filter(r => r.status === 'pending').length === 0 && (
+                    <div className="py-40 text-center grayscale opacity-10">
+                      <Globe className="h-32 w-32 mx-auto mb-6" />
+                      <p className="text-3xl font-black">لا توجد طلبات تحويل معلقة حالياً</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "logs" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                <h2 className="text-4xl font-black text-primary tracking-tighter">سجلات الأحداث السيادية</h2>
+                <div className="bg-white dark:bg-slate-900/50 rounded-[3rem] p-8 shadow-2xl border border-white/5">
+                  <ScrollArea className="h-[600px] pr-6">
+                    <div className="space-y-6">
+                      {systemLogs?.map((log, i) => (
+                        <div key={i} className="flex items-start gap-6 p-6 rounded-3xl bg-black/5 dark:bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] transition-all">
+                          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><History className="h-5 w-5" /></div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <Badge className="bg-indigo-500/10 text-indigo-400 border-none font-black text-[9px] uppercase">{log.type}</Badge>
+                              <span className="text-[10px] text-muted-foreground font-bold">{log.timestamp?.toDate?.().toLocaleString('ar-EG')}</span>
+                            </div>
+                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{log.detail}</p>
+                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Operator: {log.admin}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
               </motion.div>
             )}
@@ -236,19 +311,43 @@ export default function SupremeCommandCenter() {
         </div>
       </main>
 
-      {/* Sovereign Modals */}
-      <Dialog open={isBalanceModalOpen} onOpenChange={setIsBalanceModalOpen}>
-        <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right" dir="rtl">
+      {/* Sovereign Transfer Modal */}
+      <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
+        <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-4xl font-black text-white mb-4">تعديل الرصيد السيادي</DialogTitle>
-            <DialogDescription className="text-white/40 font-bold text-lg">تحديث محفظة: {selectedUser?.fullName}</DialogDescription>
+            <DialogTitle className="text-4xl font-black text-white mb-4">محرك التحويل السيادي</DialogTitle>
+            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن: {selectedUser?.fullName}</DialogDescription>
           </DialogHeader>
-          <div className="py-12">
-            <Input type="number" placeholder="أدخل القيمة الجديدة (EGP)" value={amount} onChange={e => setAmount(e.target.value)} className="h-20 rounded-3xl bg-white/5 border-white/10 text-4xl font-black text-primary text-center shadow-inner" />
+          
+          <div className="py-10 space-y-8">
+            <div className="grid grid-cols-2 gap-6">
+               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-1">
+                  <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">رقم الهاتف</p>
+                  <p className="text-xl font-bold text-white tabular-nums">{selectedUser?.phone || "غير مسجل"}</p>
+               </div>
+               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-1">
+                  <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">الرصيد الحالي</p>
+                  <p className="text-xl font-bold text-primary tabular-nums">{selectedUser?.balance} EGP</p>
+               </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">المبلغ المراد تحويله</Label>
+              <Input 
+                type="number" 
+                placeholder="أدخل القيمة (EGP)" 
+                value={transferAmount} 
+                onChange={e => setTransferAmount(e.target.value)} 
+                className="h-20 rounded-3xl bg-white/5 border-white/10 text-4xl font-black text-primary text-center shadow-inner focus:ring-primary/20" 
+              />
+            </div>
           </div>
+
           <DialogFooter className="gap-6 pt-4">
-            <Button variant="ghost" onClick={() => setIsBalanceModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء</Button>
-            <Button onClick={() => handleAction("update_balance", selectedUser)} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl">تثبيت القيمة 🚀</Button>
+            <Button variant="ghost" onClick={() => setIsTransferModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء العملية</Button>
+            <Button onClick={handleTransfer} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl gap-3">
+               إتمام المعاملة السيادية <ArrowRightLeft className="h-6 w-6" />
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

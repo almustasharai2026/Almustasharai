@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck } from "lucide-react";
+import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -15,10 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import SovereignButton from "@/components/SovereignButton";
 
-/**
- * بوابة الدخول السيادية للمالك king2026.
- * تدعم الدخول والإنشاء التلقائي للهوية الملكية لضمان عدم الانقطاع.
- */
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("king2026");
   const [password, setPassword] = useState("king2026");
@@ -39,35 +35,27 @@ export default function LoginPage() {
     if (!auth || !db) return;
     setIsLoading(true);
     
-    // بروتوكول تحويل الهوية السيادية king2026 إلى البريد المعتمد سحابياً
+    // بروتوكول تحويل الهوية السيادية king2026 إلى البريد المعتمد
     let loginEmail = identifier.trim();
     if (loginEmail.toLowerCase() === "king2026") {
       loginEmail = "bishoysamy390@gmail.com";
     }
 
     try {
-      // 1. محاولة الدخول المعتادة
+      // 1. محاولة الدخول السيادية
       await signInWithEmailAndPassword(auth, loginEmail, password);
-      toast({ 
-        title: "مرحباً سيادة المالك", 
-        description: "تم تفعيل بروتوكول الوصول السيادي king2026 بنجاح." 
-      });
+      toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول king2026 بنجاح." });
       router.push("/bot");
     } catch (error: any) {
       console.error("Login Protocol Check:", error.code);
       
-      // 2. إذا كانت البيانات هي بيانات المالك ولم يجد الحساب، نقوم بإنشائه فوراً (Sovereign Force Creation)
-      if ((error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') && 
-          identifier.toLowerCase() === "king2026" && password === "king2026") {
-        
+      // 2. معالجة خطأ الاعتمادات لـ king2026 (Force Sync Protocol)
+      if (identifier.toLowerCase() === "king2026" && password === "king2026") {
         try {
-          toast({ title: "تنبيه سيادي", description: "جاري تهيئة الهوية الملكية في السحابة..." });
+          // محاولة الإنشاء إذا كان غير موجود
           const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
           const newUser = userCredential.user;
-          
           await updateProfile(newUser, { displayName: "king2026" });
-          
-          // توثيق الرتبة في Firestore
           await setDoc(doc(db, "users", newUser.uid), {
             id: newUser.uid,
             email: loginEmail,
@@ -77,23 +65,23 @@ export default function LoginPage() {
             createdAt: new Date().toISOString(),
             isBanned: false
           });
-
-          toast({ title: "تمت السيادة ✅", description: "تم إنشاء وتفعيل حساب المالك بنجاح." });
+          toast({ title: "تم التأسيس السيادي ✅", description: "تم إنشاء حساب المالك وتفعيله فوراً." });
           router.push("/bot");
           return;
         } catch (signupError: any) {
-          toast({ variant: "destructive", title: "فشل التأسيس", description: signupError.message });
+          if (signupError.code === 'auth/email-already-in-use') {
+            toast({ 
+              variant: "destructive", 
+              title: "تنبيه الهوية", 
+              description: "الحساب موجود بكلمة مرور مختلفة. يرجى استخدام كلمة المرور الصحيحة أو التواصل مع الدعم الفني لإعادة التعيين." 
+            });
+          } else {
+            toast({ variant: "destructive", title: "فشل الوصول", description: signupError.message });
+          }
         }
+      } else {
+        toast({ variant: "destructive", title: "فشل الدخول", description: "بيانات الاعتماد غير صالحة." });
       }
-
-      let errorMsg = "يرجى التحقق من المفتاح السيادي الخاص بك.";
-      if (error.code === 'auth/wrong-password') errorMsg = "كلمة المرور غير صحيحة.";
-      
-      toast({ 
-        variant: "destructive", 
-        title: "فشل الوصول السيادي", 
-        description: errorMsg 
-      });
     } finally {
       setIsLoading(false);
     }
@@ -101,16 +89,14 @@ export default function LoginPage() {
 
   if (isUserLoading) return (
     <div className="h-screen flex items-center justify-center bg-[#020617]">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
-        <div className="animate-pulse text-white font-black tracking-[0.5em] uppercase text-[10px]">Sovereign Link Active</div>
-      </div>
+      <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
     </div>
   );
 
   return (
     <div className="container flex items-center justify-center min-h-screen py-12 px-4 bg-slate-50 dark:bg-[#020617]">
       <Card className="w-full max-w-md glass-cosmic border-none rounded-[3rem] shadow-3xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
         <CardHeader className="space-y-4 text-center pt-12 pb-8">
           <div className="flex justify-center mb-2">
             <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-inner">
@@ -119,19 +105,19 @@ export default function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-black text-white">الدخول السيادي</CardTitle>
-            <CardDescription className="text-white/30 font-bold">مركز القيادة العليا - king2026</CardDescription>
+            <CardDescription className="text-white/30 font-bold uppercase tracking-widest text-[10px] mt-2">Supreme Command - king2026 Edition</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
           <div className="space-y-2">
-            <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية أو البريد</Label>
+            <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية الملكية</Label>
             <div className="relative">
               <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/20" />
               <Input 
-                placeholder="king2026 أو البريد الإلكتروني" 
+                placeholder="king2026" 
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-medium pr-4 focus:ring-primary/20"
+                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-bold pr-4"
               />
             </div>
           </div>
@@ -143,12 +129,12 @@ export default function LoginPage() {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right pr-4 focus:ring-primary/20"
+                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right pr-4"
               />
             </div>
           </div>
           <SovereignButton 
-            text={isLoading ? "جاري التحقق من السيادة..." : "دخول سيادي مطلق"}
+            text={isLoading ? "جاري التحقق..." : "فتح بوابة القيادة"}
             onClick={handleLogin}
             disabled={isLoading}
             className="mt-2"
@@ -156,12 +142,8 @@ export default function LoginPage() {
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
-          <div className="text-sm text-center text-white/30">
-            ليس لديك هوية سيادية؟{" "}
-            <Link href="/auth/signup" className="text-white font-bold hover:underline">انضم الآن</Link>
-          </div>
           <Link href="/" className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-all font-bold">
-            <Home className="h-4 w-4" /> العودة للصفحة الرئيسية
+            <Home className="h-4 w-4" /> العودة للرئيسية
           </Link>
         </CardFooter>
       </Card>

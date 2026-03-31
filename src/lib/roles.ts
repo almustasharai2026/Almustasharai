@@ -32,18 +32,21 @@ export const isOwner = (email: string | null | undefined) => {
 };
 
 export const getPermissions = (role: UserRole | string): RolePermissions => {
+  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً
+  if (role === roles.ADMIN) {
+    return {
+      canManageUsers: true,
+      canPromoteRoles: true,
+      canManageSystem: true,
+      canConsult: true,
+      canChatAI: true,
+      canGenerateDocs: true,
+      canManageMoney: true,
+      consultationDiscount: 0,
+    };
+  }
+
   switch (role) {
-    case roles.ADMIN:
-      return {
-        canManageUsers: true,
-        canPromoteRoles: true,
-        canManageSystem: true,
-        canConsult: true,
-        canChatAI: true,
-        canGenerateDocs: true,
-        canManageMoney: true,
-        consultationDiscount: 0,
-      };
     case roles.MODERATOR:
       return {
         canManageUsers: true,
@@ -93,5 +96,5 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
 
 export const getBalance = (profile: any) => {
   if (profile?.role === roles.ADMIN || isOwner(profile?.email)) return Infinity;
-  return profile?.balance || 0;
+  return Number(profile?.balance || 0);
 };

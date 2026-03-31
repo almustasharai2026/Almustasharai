@@ -4,7 +4,6 @@
 import { 
   Firestore, 
   doc, 
-  setDoc, 
   updateDoc, 
   increment, 
   serverTimestamp,
@@ -57,36 +56,6 @@ export async function executeSovereignFinancialOp(
 }
 
 /**
- * بروتوكول التحويل السيادي (Manual Transfer).
- * يستخدم لنقل الوحدات المالية مباشرة من سلطة الإدارة إلى المواطن.
- */
-export function manualSovereignTransfer(
-  db: Firestore,
-  userId: string,
-  amount: number
-): void {
-  const userRef = doc(db, "users", userId);
-  
-  updateDoc(userRef, { balance: increment(amount) })
-    .then(() => {
-      // تسجيل الحدث بأسلوب غير حاصر
-      addDoc(collection(db, "system", "logs", "events"), {
-        type: "MANUAL_TRANSFER",
-        detail: `تم تحويل ${amount} EGP يدوياً للمواطن`,
-        userId,
-        timestamp: serverTimestamp()
-      });
-    })
-    .catch(async (error) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update',
-        requestResourceData: { balance: amount, action: 'transfer' },
-      } satisfies SecurityRuleContext));
-    });
-}
-
-/**
  * بروتوكول دفع رسوم الجلسة الاستشارية السيادي (Non-blocking).
  * يتم استدعاؤه فور الحجز لخصم الرصيد بأسلوب غير حاصر.
  */
@@ -119,4 +88,36 @@ export function payForSovereignSession(
       requestResourceData: { balance: increment(-amount) },
     } satisfies SecurityRuleContext));
   });
+}
+
+/**
+ * بروتوكول التحويل المباشر السيادي (Manual Sovereign Transfer).
+ * يسمح للمالك king2026 بتحويل رصيد لأي مستخدم فوراً.
+ */
+export async function manualSovereignTransfer(
+  db: Firestore,
+  userId: string,
+  amount: number
+): Promise<void> {
+  const userRef = doc(db, "users", userId);
+  
+  try {
+    await updateDoc(userRef, {
+      balance: increment(amount)
+    });
+    
+    await addDoc(collection(db, "system", "logs", "events"), {
+      type: "MANUAL_TRANSFER",
+      detail: `تحويل سيادي بقيمة ${amount} EGP للمواطن`,
+      userId,
+      admin: "king2026",
+      timestamp: serverTimestamp()
+    });
+  } catch (error: any) {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: userRef.path,
+      operation: 'update',
+      requestResourceData: { balance: increment(amount), action: 'transfer' },
+    } satisfies SecurityRuleContext));
+  }
 }
