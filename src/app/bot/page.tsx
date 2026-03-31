@@ -13,7 +13,7 @@ import SovereignLayout from "@/components/SovereignLayout";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, updateDoc, increment } from "firebase/firestore";
+import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { roles as ROLES_LIST } from "@/lib/roles";
 import { 
   Dialog, 
@@ -25,6 +25,7 @@ import {
 import { useMemoFirebase } from "@/firebase/provider";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
 import Image from "next/image";
+import { executeSovereignBilling } from "@/lib/sovereign-billing";
 
 export default function SmartConsultantPage() {
   const { user, profile, role } = useUser();
@@ -56,8 +57,14 @@ export default function SmartConsultantPage() {
     const text = customText || inputText.trim();
     if (!text || isTyping || !db || !user) return;
 
-    if (role === ROLES_LIST.USER && (profile?.balance || 0) < 1) {
-      toast({ variant: "destructive", title: "الرصيد السيادي نفذ", description: "يرجى التوجه للخزنة لشحن الوحدات." });
+    // --- بروتوكول الفوترة السيادي قبل المعالجة ---
+    const billing = await executeSovereignBilling(db, user.uid, 'ai_chat', role);
+    if (!billing.canProceed) {
+      toast({ 
+        variant: "destructive", 
+        title: "الرصيد السيادي نفذ 💰", 
+        description: "يرجى شحن محفظتك لتتمكن من متابعة استشارتك الذكية." 
+      });
       return;
     }
 
@@ -70,10 +77,6 @@ export default function SmartConsultantPage() {
         text,
         timestamp: serverTimestamp()
       });
-
-      if (role !== ROLES_LIST.ADMIN) {
-        await updateDoc(doc(db, "users", user.uid), { balance: increment(-1) });
-      }
 
       const res = await fetch('/api/chat', {
         method: 'POST',
