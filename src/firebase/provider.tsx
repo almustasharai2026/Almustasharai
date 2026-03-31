@@ -3,8 +3,8 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, onSnapshot } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { Firestore, doc, onSnapshot, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { Auth, User, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { roles as ROLES_LIST, checkSovereignStatus, SOVEREIGN_ADMIN_EMAIL } from '@/lib/roles';
 
@@ -29,6 +29,7 @@ export interface FirebaseContextState extends UserAuthState {
   firestore: Firestore | null;
   auth: Auth | null;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -50,41 +51,41 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const sovereign = checkSovereignStatus(firebaseUser.email);
         const initialRole = sovereign.isOwner ? ROLES_LIST.ADMIN : ROLES_LIST.USER;
         
-        setAuthState(prev => ({
-          ...prev,
-          user: firebaseUser,
-          role: initialRole,
-          isUserLoading: true 
-        }));
+        // التحقق من وجود الملف الشخصي أو إنشاؤه (منحة الـ 50 EGP)
+        const userRef = doc(firestore, "users", firebaseUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          const newProfile = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            fullName: firebaseUser.displayName || 'مواطن سيادي',
+            balance: sovereign.isOwner ? 999999 : 50,
+            role: initialRole,
+            createdAt: serverTimestamp(),
+            isBanned: false
+          };
+          await setDoc(userRef, newProfile);
+        }
 
-        const unsubscribeProfile = onSnapshot(doc(firestore, "users", firebaseUser.uid), (snap) => {
+        const unsubscribeProfile = onSnapshot(userRef, (snap) => {
           const data = snap.data();
           let detectedRole = data?.role || initialRole;
           
-          if (sovereign.isOwner) {
-            detectedRole = ROLES_LIST.ADMIN;
-          }
+          if (sovereign.isOwner) detectedRole = ROLES_LIST.ADMIN;
 
           setAuthState({
             user: firebaseUser,
-            profile: data || (sovereign.isOwner ? { fullName: 'king2026', email: SOVEREIGN_ADMIN_EMAIL, balance: 999999 } : null),
+            profile: data || null,
             role: detectedRole,
             isUserLoading: false,
             userError: null
           });
-        }, (err) => {
-          setAuthState(prev => ({ 
-            ...prev, 
-            user: firebaseUser, 
-            role: sovereign.isOwner ? ROLES_LIST.ADMIN : (prev.role || ROLES_LIST.USER),
-            isUserLoading: false, 
-            userError: err 
-          }));
         });
 
         return () => unsubscribeProfile();
@@ -108,7 +109,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     firebaseApp,
     firestore,
     auth,
-    signOut: () => firebaseSignOut(auth)
+    signOut: () => firebaseSignOut(auth),
+    signInWithGoogle: async () => {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    }
   }), [firebaseApp, firestore, auth, authState]);
 
   return (
@@ -128,8 +133,8 @@ export const useFirebase = () => {
 export const useAuth = () => useFirebase().auth;
 export const useFirestore = () => useFirebase().firestore;
 export const useUser = () => {
-  const { user, profile, role, isUserLoading, userError, signOut } = useFirebase();
-  return { user, profile, role, isUserLoading, userError, signOut };
+  const { user, profile, role, isUserLoading, userError, signOut, signInWithGoogle } = useFirebase();
+  return { user, profile, role, isUserLoading, userError, signOut, signInWithGoogle };
 };
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {

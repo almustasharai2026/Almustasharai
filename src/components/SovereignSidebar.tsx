@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, User, History, CreditCard, 
   Settings, LogOut, ShieldCheck,
-  LayoutDashboard, Sparkles, Gift, Zap
+  LayoutDashboard, Sparkles
 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { roles as ROLES_LIST, checkSovereignStatus } from '@/lib/roles';
@@ -17,9 +17,6 @@ interface SovereignSidebarProps {
   onClose: () => void;
 }
 
-/**
- * القائمة الجانبية السيادية (Sovereign Sidebar).
- */
 export default function SovereignSidebar({ isOpen, onClose }: SovereignSidebarProps) {
   const { user, profile, role, signOut } = useUser();
   const sovereign = checkSovereignStatus(user?.email);
@@ -64,7 +61,7 @@ export default function SovereignSidebar({ isOpen, onClose }: SovereignSidebarPr
               {sovereign.isOwner && (
                 <>
                   <div className="h-px bg-white/5 my-6" />
-                  <p className="text-[8px] font-black text-primary uppercase tracking-[0.4em] px-4 mb-2">Supreme Authority</p>
+                  <p className="text-[8px] font-black text-[#ff5722] uppercase tracking-[0.4em] px-4 mb-2">Supreme Authority</p>
                   <SidebarLink 
                     href="/admin"
                     icon={<ShieldCheck size={18} className="text-[#ff5722]" />} 
