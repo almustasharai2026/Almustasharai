@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -8,19 +7,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { 
   Users, Gavel, ShieldAlert, Tag, Activity, Trash2, 
-  UserPlus, Plus, Ban, CheckCircle2, History, ShieldCheck, Lock
+  UserPlus, Plus, Ban, History, ShieldCheck, Lock, Settings
 } from "lucide-react";
 import { collection, doc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
 import { banSovereignUser } from "@/lib/sovereign-moderation";
 import { Loading } from "@/components/Loading";
 
 /**
  * غرفة القيادة العليا - النسخة المتقدمة.
- * توفر تحكماً تبويبياً شاملاً في كافة مفاصل المنصة.
+ * تتميز بنظام التبويبات الملونة والأزرار المخصصة للإدارة.
  */
 export default function MasterAdminPanel() {
   const { user, role } = useUser();
@@ -29,7 +27,6 @@ export default function MasterAdminPanel() {
   
   const [newBannedWord, setNewBannedWord] = useState("");
 
-  // استعلامات سحابية سيادية
   const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
   const { data: citizens, isLoading: usersLoading } = useCollection(usersQuery);
 
@@ -45,7 +42,6 @@ export default function MasterAdminPanel() {
   const logsQuery = useMemoFirebase(() => db ? collection(db, "analytics") : null, [db]);
   const { data: sovereignLogs } = useCollection(logsQuery);
 
-  // بروتوكول حماية الحدود: لا يسمح إلا للمالك king2026 بالدخول
   if (user?.email !== "bishoysamy390@gmail.com") {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-950 text-red-500 font-black gap-8">
@@ -63,156 +59,168 @@ export default function MasterAdminPanel() {
         addedAt: serverTimestamp()
       });
       setNewBannedWord("");
-      toast({ title: "تم تحديث الرقابة", description: "أضيفت الكلمة لدرع الحماية السيادي." });
+      toast({ title: "تم التحديث" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التحديث" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] p-5 lg:p-10 text-right" dir="rtl">
-      <header className="mb-10 flex items-center gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-          <ShieldCheck className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#020617] p-5 lg:p-10 text-right" dir="rtl">
+      <header className="mb-10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-[#007bff] flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <ShieldCheck className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">لوحة القيادة العليا</h1>
+            <p className="text-[10px] text-[#007bff] font-black uppercase tracking-widest">Advanced Admin Hub</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">غرفة القيادة العليا</h1>
-          <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Master Control Hub | v5.5</p>
-        </div>
+        <Button variant="outline" className="rounded-xl gap-2 font-black text-xs border-blue-500/20 text-blue-600">
+          <Settings className="h-4 w-4" /> الإعدادات
+        </Button>
       </header>
 
       <Tabs defaultValue="users" className="space-y-8">
-        <TabsList className="bg-slate-900/50 border border-white/5 p-1 rounded-2xl h-auto flex flex-wrap gap-1">
-          <TabTrigger value="users" icon={<Users className="h-4 w-4" />} label="المواطنون" />
+        <TabsList className="bg-white dark:bg-slate-900 border border-border p-1 rounded-2xl h-auto flex flex-wrap gap-1 shadow-sm">
+          <TabTrigger value="users" icon={<Users className="h-4 w-4" />} label="المستخدمون" />
           <TabTrigger value="advisors" icon={<Gavel className="h-4 w-4" />} label="المستشارون" />
-          <TabTrigger value="banned" icon={<ShieldAlert className="h-4 w-4" />} label="المحظورات" />
+          <TabTrigger value="banned" icon={<ShieldAlert className="h-4 w-4" />} label="الكلمات المحظورة" />
           <TabTrigger value="offers" icon={<Tag className="h-4 w-4" />} label="العروض" />
           <TabTrigger value="logs" icon={<Activity className="h-4 w-4" />} label="سجل الأحداث" />
         </TabsList>
 
-        <TabsContent value="users">
-          <Card className="glass-cosmic border-none rounded-[2.5rem] shadow-2xl overflow-hidden">
-            <CardHeader className="bg-white/[0.02] border-b border-white/5 p-8 flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-black text-white">إدارة المواطنين الرقميين</CardTitle>
-              <Button className="rounded-xl bg-accent hover:bg-emerald-600 gap-2 font-black text-xs">
-                <UserPlus className="h-4 w-4" /> إضافة مواطن
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-white/5">
-                {citizens?.map(citizen => (
-                  <div key={citizen.id} className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black ${citizen.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>
-                        {citizen.fullName?.charAt(0)}
+        <div className="mt-8">
+          <TabsContent value="users">
+            <Card className="border-none rounded-3xl shadow-xl overflow-hidden bg-white dark:bg-slate-900">
+              <CardHeader className="bg-slate-50 dark:bg-white/[0.02] border-b border-border p-8 flex flex-row items-center justify-between">
+                <CardTitle className="text-xl font-black">إدارة المواطنين</CardTitle>
+                <Button className="rounded-xl bg-[#17a2b8] hover:bg-[#138496] gap-2 font-black text-xs text-white">
+                  <UserPlus className="h-4 w-4" /> إضافة مستخدم
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {citizens?.map(citizen => (
+                    <div key={citizen.id} className="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black ${citizen.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                          {citizen.fullName?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-sm">{citizen.fullName}</p>
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{citizen.email}</p>
+                        </div>
                       </div>
+                      <div className="flex gap-2">
+                        <Button className="admin-btn bg-red-500 hover:bg-red-600">حذف</Button>
+                        <Button 
+                          className={`admin-btn ${citizen.isBanned ? 'bg-emerald-500' : 'bg-[#17a2b8]'}`}
+                          onClick={() => banSovereignUser(db!, citizen.id, !citizen.isBanned)}
+                        >
+                          {citizen.isBanned ? "فك الحظر" : "حظر"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="advisors">
+            <Card className="border-none rounded-3xl shadow-xl bg-white dark:bg-slate-900">
+              <CardHeader className="p-8 border-b border-border flex flex-row items-center justify-between">
+                <CardTitle className="text-xl font-black">هيئة المستشارين</CardTitle>
+                <Button className="admin-btn">إضافة مستشار</Button>
+              </CardHeader>
+              <CardContent className="p-8 pt-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {experts?.map(exp => (
+                    <div key={exp.id} className="p-5 bg-[#f8f9fa] dark:bg-white/5 rounded-2xl border border-border flex flex-col gap-4">
                       <div>
-                        <p className="font-black text-white text-sm">{citizen.fullName}</p>
-                        <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{citizen.email}</p>
+                        <p className="font-black text-lg">{exp.name}</p>
+                        <p className="text-[10px] text-[#007bff] font-black uppercase">{exp.specialization}</p>
+                      </div>
+                      <div className="flex gap-2">
+                         <Button className="admin-btn flex-1 !m-0">تعديل</Button>
+                         <Button className="admin-btn bg-red-500 flex-1 !m-0">حذف</Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" className="text-white/20 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
-                      <Button 
-                        variant={citizen.isBanned ? "destructive" : "outline"}
-                        onClick={() => banSovereignUser(db!, citizen.id, !citizen.isBanned)}
-                        className="rounded-xl h-9 text-[10px] font-black"
-                      >
-                        {citizen.isBanned ? "فك الحظر" : <Ban className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="advisors">
-          <Card className="glass-cosmic border-none rounded-[2.5rem]">
-            <CardHeader className="p-8">
-              <CardTitle className="text-xl font-black flex items-center gap-3">هيئة الخبراء المعتمدين <Plus className="h-5 w-5 text-accent cursor-pointer" /></CardTitle>
-            </CardHeader>
-            <CardContent className="p-8 pt-0">
-              <div className="grid md:grid-cols-2 gap-4">
-                {experts?.map(exp => (
-                  <div key={exp.id} className="p-5 glass rounded-3xl border-white/5 flex items-center justify-between">
+          <TabsContent value="banned">
+            <Card className="border-none rounded-3xl shadow-xl p-8 bg-white dark:bg-slate-900">
+              <div className="space-y-6">
+                <div className="flex gap-2">
+                  <Input 
+                    value={newBannedWord} 
+                    onChange={e => setNewBannedWord(e.target.value)}
+                    placeholder="أدخل كلمة محظورة..." 
+                    className="h-12 rounded-xl text-right font-bold bg-[#f8f9fa] dark:bg-white/5" 
+                  />
+                  <Button onClick={handleAddWord} className="h-12 px-8 bg-[#007bff] rounded-xl font-black text-white">إضافة</Button>
+                </div>
+                <div className="flex flex-wrap gap-2 p-6 bg-[#f8f9fa] dark:bg-white/5 rounded-2xl min-h-[150px]">
+                  {bannedWords?.map(bw => (
+                    <div key={bw.id} className="bg-white dark:bg-slate-800 border border-border px-4 py-2 rounded-xl flex items-center gap-3 group shadow-sm">
+                      <span className="font-bold text-sm">{bw.word}</span>
+                      <button onClick={() => deleteDoc(doc(db!, "system", "moderation", "forbiddenWords", bw.id))} className="text-red-500 hover:scale-110 transition-transform">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="offers">
+            <div className="grid md:grid-cols-2 gap-6">
+              {currentOffers?.map(offer => (
+                <Card key={offer.id} className="border-none rounded-3xl p-6 bg-white dark:bg-slate-900 shadow-xl flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-[#007bff]">
+                      <Tag className="h-7 w-7" />
+                    </div>
                     <div>
-                      <p className="font-black text-white">{exp.name}</p>
-                      <p className="text-[10px] text-primary font-bold uppercase">{exp.specialization}</p>
+                      <p className="font-black text-xl">{offer.name}</p>
+                      <p className="text-2xl font-black text-emerald-500 tabular-nums">{offer.price} EGP</p>
                     </div>
-                    <Button variant="outline" size="sm" className="rounded-xl border-white/5 text-[9px] font-black uppercase">تعديل الصلاحيات</Button>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="banned">
-          <Card className="glass-cosmic border-none rounded-[2.5rem] p-8">
-            <div className="space-y-6">
-              <div className="flex gap-2">
-                <Input 
-                  value={newBannedWord} 
-                  onChange={e => setNewBannedWord(e.target.value)}
-                  placeholder="أضف كلمة للقائمة السوداء..." 
-                  className="glass h-12 rounded-xl text-right font-bold" 
-                />
-                <Button onClick={handleAddWord} className="h-12 px-8 bg-primary rounded-xl font-black">إدراج</Button>
-              </div>
-              <div className="flex flex-wrap gap-2 p-6 bg-white/5 rounded-3xl min-h-[100px]">
-                {bannedWords?.map(bw => (
-                  <Badge key={bw.id} className="bg-slate-800 text-white border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 group">
-                    {bw.word}
-                    <Trash2 onClick={() => deleteDoc(doc(db!, "system", "moderation", "forbiddenWords", bw.id))} className="h-3 w-3 text-red-500 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="offers">
-          <div className="grid gap-4">
-            {currentOffers?.map(offer => (
-              <Card key={offer.id} className="glass-cosmic border-none rounded-3xl p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
-                    <Tag className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="font-black text-white">{offer.name}</p>
-                    <p className="text-xl font-black text-accent tabular-nums">{offer.price} EGP</p>
-                  </div>
-                </div>
-                <Button variant="ghost" onClick={() => deleteDoc(doc(db!, "system", "offers", offer.id))} className="text-red-500">حذف</Button>
-              </Card>
-            ))}
-            <Button variant="outline" className="border-dashed border-white/10 h-20 rounded-3xl text-white/30 font-black gap-2">
-              <Plus className="h-5 w-5" /> إضافة عرض سيادي جديد
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="logs">
-          <Card className="bg-slate-900 border-none rounded-[2.5rem] overflow-hidden">
-            <div className="p-8 bg-black/40 border-b border-white/5 flex items-center gap-3">
-              <History className="h-5 w-5 text-primary" />
-              <h3 className="font-black text-white">سجل العمليات السيادي</h3>
-            </div>
-            <div className="p-6 font-mono text-[10px] text-emerald-500 space-y-2 max-h-[500px] overflow-y-auto scrollbar-hide bg-black/20">
-              {sovereignLogs?.map((log, i) => (
-                <div key={i} className="flex gap-4 opacity-80 hover:opacity-100 transition-opacity">
-                  <span className="text-white/20 shrink-0">[{new Date(log.createdAt?.seconds * 1000).toLocaleTimeString()}]</span>
-                  <span className="text-primary shrink-0">PROTOCOL_OK:</span>
-                  <span className="break-all">{log.event}: {JSON.stringify(log.data)}</span>
-                </div>
+                  <Button className="admin-btn bg-red-500 hover:bg-red-600" onClick={() => deleteDoc(doc(db!, "system", "offers", offer.id))}>حذف</Button>
+                </Card>
               ))}
-              {sovereignLogs?.length === 0 && <div className="text-center py-10 text-white/10">لا توجد عمليات مسجلة حالياً...</div>}
+              <Button variant="outline" className="border-dashed border-primary/20 h-32 rounded-3xl text-primary/40 font-black gap-2 hover:bg-primary/5 text-lg">
+                <Plus className="h-6 w-6" /> إضافة عرض جديد
+              </Button>
             </div>
-          </Card>
-        </TabsContent>
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <Card className="border-none rounded-3xl overflow-hidden bg-slate-900 shadow-2xl">
+              <div className="p-8 bg-black/40 border-b border-white/5 flex items-center gap-3">
+                <Activity className="h-5 w-5 text-blue-400" />
+                <h3 className="font-black text-white">سجل العمليات السيادي</h3>
+              </div>
+              <div className="p-6 font-mono text-[11px] text-emerald-400 space-y-2 max-h-[450px] overflow-y-auto scrollbar-hide bg-black/20">
+                {sovereignLogs?.map((log, i) => (
+                  <div key={i} className="flex gap-4 opacity-80 hover:opacity-100 transition-opacity border-b border-white/5 pb-2">
+                    <span className="text-white/20 shrink-0">[{new Date(log.createdAt?.seconds * 1000).toLocaleTimeString()}]</span>
+                    <span className="text-blue-400 shrink-0 uppercase font-black">LOG:</span>
+                    <span className="break-all">{log.event}: {JSON.stringify(log.data)}</span>
+                  </div>
+                ))}
+                {sovereignLogs?.length === 0 && <div className="text-center py-10 text-white/10">لا توجد سجلات حديثة...</div>}
+              </div>
+            </Card>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
@@ -222,7 +230,7 @@ function TabTrigger({ value, icon, label }: { value: string; icon: React.ReactNo
   return (
     <TabsTrigger 
       value={value} 
-      className="flex-1 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+      className="flex-1 rounded-xl px-6 py-3.5 text-[11px] font-black uppercase tracking-widest data-[state=active]:bg-[#007bff] data-[state=active]:text-white transition-all gap-2"
     >
       {icon} {label}
     </TabsTrigger>

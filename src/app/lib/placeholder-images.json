@@ -1,23 +1,22 @@
-
 {
   "placeholderImages": [
     {
       "id": "char-1",
-      "description": "Legal Expert Character",
-      "imageUrl": "https://picsum.photos/seed/legalexpert/400/400",
-      "imageHint": "legal character"
+      "description": "المحامي السيادي المتحرك",
+      "imageUrl": "https://picsum.photos/seed/sovereignlawyer/400/400",
+      "imageHint": "legal man"
     },
     {
       "id": "char-2",
-      "description": "Supreme Judge Character",
-      "imageUrl": "https://picsum.photos/seed/judgeexpert/400/400",
-      "imageHint": "judge character"
+      "description": "المستشار الذكي المتحرك",
+      "imageUrl": "https://picsum.photos/seed/smartconsultant/400/400",
+      "imageHint": "consultant woman"
     },
     {
       "id": "hero-bg",
-      "description": "Advanced tech background for justice planet",
-      "imageUrl": "https://picsum.photos/seed/planetjustice/1200/600",
-      "imageHint": "cyberpunk office"
+      "description": "خلفية كوكب العدالة المتقدمة",
+      "imageUrl": "https://picsum.photos/seed/advancedjustice/1200/600",
+      "imageHint": "technology legal"
     }
   ]
 }
