@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, User, Scale, ArrowUp, 
-  Camera, Zap, ShieldCheck, LayoutGrid, Loader2
+  LayoutGrid, Loader2, Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,105 +18,69 @@ interface SovereignLayoutProps {
   activeId: string;
 }
 
-/**
- * واجهة الجسد الرقمي المحمول (The Sovereign Handheld Body).
- * تم تحديث البروتوكول لضمان عدم حدوث تعليق (Hang) أثناء التحميل وتفعيل الرصيد اللحظي.
- */
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
   const { profile, user, isUserLoading } = useUser();
   
-  // تفعيل الحالات السيادية في بداية الملف كما هو موضح في الميثاق
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isCameraActive, setCameraActive] = useState(false);
-  const [activeVaultBalance, setVaultBalance] = useState(50); // الرصيد الافتراضي
-  
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // مزامنة رصيد الخزنة مع ملف المواطن
-    if (profile?.balance !== undefined) {
-      setVaultBalance(profile.balance);
-    }
-  }, [profile]);
+  }, []);
 
-  // فحص الهوية السيادية king2026
   const sovereign = checkSovereignStatus(user?.email);
 
-  // منع أخطاء الترطيب (Hydration) لضمان استقرار التشغيل
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 lg:p-10 font-sans selection:bg-[#ff5722]/20" dir="rtl">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 lg:p-10 font-sans selection:bg-primary/20" dir="rtl">
       
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-[450px] h-[880px] bg-[#1a1a1a] rounded-[4.5rem] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.9)] border-[10px] border-[#252525] relative overflow-hidden flex flex-col"
+        className="w-full max-w-[450px] h-[880px] bg-[#1a1a1a] rounded-[4.5rem] shadow-3xl border-[10px] border-[#252525] relative overflow-hidden flex flex-col"
       >
         
-        {/* العدسة السيادية المضيئة (The Lens) */}
-        <div 
-          onClick={() => setSidebarOpen(true)}
-          className="absolute top-12 right-12 w-16 h-16 bg-[#252525] rounded-[2rem] flex items-center justify-center border border-[#ff5722]/10 hover:border-[#ff5722] z-50 group cursor-pointer transition-all duration-700 shadow-2xl active:scale-95"
-        >
-           <div className="relative">
-              <Camera size={28} className={`text-zinc-600 group-hover:text-[#ff5722] transition-colors ${isCameraActive ? 'text-[#ff5722]' : ''}`} />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_15px_#ff5722]" />
-           </div>
-        </div>
+        {/* Simplified Header */}
+        <div className="p-12 pt-20 flex justify-between items-center relative z-50">
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className="w-14 h-14 bg-[#252525] rounded-2xl flex items-center justify-center border border-white/5 hover:bg-white/5"
+          >
+            <Menu size={24} className="text-zinc-500" />
+          </button>
 
-        {/* القائمة الجانبية المنزلقة (Sovereign Sidebar) */}
-        <SovereignSidebar 
-          isOpen={isSidebarOpen} 
-          onClose={() => setSidebarOpen(false)} 
-        />
-
-        {/* الهوية العلوية وحالة الخزنة */}
-        <div className="p-12 pt-24 flex justify-between items-end">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black tracking-tighter italic text-white leading-none">المستشار</h1>
-            <div className="flex items-center gap-3">
-               <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.6)]" />
-               <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] font-black">Sovereign OS 1.0</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-end gap-1.5">
-             <span className="text-[9px] font-black text-[#ff5722] uppercase tracking-[0.3em] opacity-60">Vault Status</span>
+          <div className="flex flex-col items-end">
              <div className="flex items-center gap-2">
                 <span className="text-2xl font-black tabular-nums text-white">
-                  {sovereign.isOwner ? '∞' : activeVaultBalance}
+                  {sovereign.isOwner ? '∞' : (profile?.balance || 0)}
                 </span>
                 <span className="text-[10px] font-black text-zinc-500 uppercase">EGP</span>
              </div>
           </div>
         </div>
 
-        {/* مساحة العمل المركزية */}
+        {/* Global Loading or Content */}
         <main className="flex-1 px-10 overflow-y-auto custom-scrollbar relative scroll-smooth">
           {isUserLoading ? (
-            <div className="h-full flex flex-col items-center justify-center gap-4 opacity-20">
+            <div className="h-full flex flex-col items-center justify-center opacity-20">
               <Loader2 className="animate-spin text-primary h-8 w-8" />
-              <p className="text-[8px] font-black uppercase tracking-[0.5em]">Syncing Authority...</p>
             </div>
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="h-full"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <div className="h-full">
+              {children}
+            </div>
           )}
         </main>
 
-        {/* قاعدة التنقل الموحدة (Sovereign Dock) */}
+        {/* Sidebar Component */}
+        <SovereignSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+        />
+
+        {/* Minimal Dock */}
         <div className="p-10 pb-16 relative z-50">
           <div className="bg-[#252525]/80 backdrop-blur-3xl rounded-[3.5rem] p-3 flex items-center justify-between border border-white/5 shadow-3xl">
             <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={26} />} />
@@ -135,10 +100,10 @@ function DockItem({ href, active, icon }: any) {
     <Link href={href}>
       <motion.button 
         whileTap={{ scale: 0.9 }}
-        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 ${
+        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
           active 
-            ? 'bg-[#ff5722] text-black shadow-[0_15px_40px_rgba(255,87,34,0.4)]' 
-            : 'text-zinc-600 hover:text-white hover:bg-white/5'
+            ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            : 'text-zinc-600 hover:text-white'
         }`}
       >
         {icon}
