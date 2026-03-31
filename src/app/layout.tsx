@@ -24,19 +24,23 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
-      <body className="antialiased selection:bg-primary/30 bg-black">
+      <body className="antialiased selection:bg-accent/30 bg-background text-foreground">
         <FirebaseClientProvider>
           <AuthProvider>
-            <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
-              <div className="bg-indigo-600/10 border-b border-white/5 py-2 px-4 text-center text-[9px] text-indigo-400 font-black flex items-center justify-center gap-3 relative z-[150] backdrop-blur-3xl">
-                <ShieldCheck className="h-3 w-3" />
-                SOVEREIGN ENCRYPTION ACTIVE
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+              <div className="flex flex-col min-h-screen">
+                <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-[9px] font-black flex items-center justify-center gap-3 relative z-[150] backdrop-blur-3xl">
+                  <ShieldCheck className="h-3 w-3" />
+                  SOVEREIGN ENCRYPTION ACTIVE
+                </div>
+                <Navbar />
+                <main className="flex-grow pt-20">
+                  <div className="w-full max-w-full mx-auto">
+                    {children}
+                  </div>
+                </main>
+                <Footer />
               </div>
-              <Navbar />
-              <div className="pt-20 min-h-screen">
-                {children}
-              </div>
-              <Footer />
             </ThemeProvider>
           </AuthProvider>
         </FirebaseClientProvider>
