@@ -71,7 +71,7 @@ export default function SupremeCommandCenter() {
         timestamp: serverTimestamp()
       });
 
-      // بروتوكول معالجة الأوامر السيادية (Simulation of Backend Commands)
+      // بروتوكول معالجة الأوامر السيادية
       let persona = isAutopilot ? "المتحكم الآلي السيادي" : "المستشار السيادي الخاص";
       
       const res = await fetch('/api/chat', {
