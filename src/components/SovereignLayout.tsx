@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -20,21 +19,31 @@ interface SovereignLayoutProps {
 
 /**
  * واجهة الجسد الرقمي المحمول (The Sovereign Handheld Body).
- * تم تحديث البروتوكول لضمان عدم حدوث تعليق (Hang) أثناء التحميل.
+ * تم تحديث البروتوكول لضمان عدم حدوث تعليق (Hang) أثناء التحميل وتفعيل الرصيد اللحظي.
  */
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
   const { profile, user, isUserLoading } = useUser();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // تفعيل الحالات السيادية في بداية الملف كما هو موضح في الميثاق
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isCameraActive, setCameraActive] = useState(false);
+  const [activeVaultBalance, setVaultBalance] = useState(50); // الرصيد الافتراضي
+  
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // مزامنة رصيد الخزنة مع ملف المواطن
+    if (profile?.balance !== undefined) {
+      setVaultBalance(profile.balance);
+    }
+  }, [profile]);
 
+  // فحص الهوية السيادية king2026
   const sovereign = checkSovereignStatus(user?.email);
 
-  // منع تعليق الواجهة: إذا استغرق التحميل وقتاً طويلاً، نعرض المحتوى مع شارة انتظار بسيطة
+  // منع أخطاء الترطيب (Hydration) لضمان استقرار التشغيل
   if (!isMounted) return null;
 
   return (
@@ -46,24 +55,24 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
         className="w-full max-w-[450px] h-[880px] bg-[#1a1a1a] rounded-[4.5rem] shadow-[0_80px_150px_-30px_rgba(0,0,0,0.9)] border-[10px] border-[#252525] relative overflow-hidden flex flex-col"
       >
         
-        {/* العدسة السيادية المضيئة */}
+        {/* العدسة السيادية المضيئة (The Lens) */}
         <div 
-          onClick={() => setIsSidebarOpen(true)}
+          onClick={() => setSidebarOpen(true)}
           className="absolute top-12 right-12 w-16 h-16 bg-[#252525] rounded-[2rem] flex items-center justify-center border border-[#ff5722]/10 hover:border-[#ff5722] z-50 group cursor-pointer transition-all duration-700 shadow-2xl active:scale-95"
         >
            <div className="relative">
-              <Camera size={28} className="text-zinc-600 group-hover:text-[#ff5722] transition-colors" />
+              <Camera size={28} className={`text-zinc-600 group-hover:text-[#ff5722] transition-colors ${isCameraActive ? 'text-[#ff5722]' : ''}`} />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_15px_#ff5722]" />
            </div>
         </div>
 
-        {/* القائمة الجانبية المنزلقة */}
+        {/* القائمة الجانبية المنزلقة (Sovereign Sidebar) */}
         <SovereignSidebar 
           isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)} 
+          onClose={() => setSidebarOpen(false)} 
         />
 
-        {/* الهوية العلوية */}
+        {/* الهوية العلوية وحالة الخزنة */}
         <div className="p-12 pt-24 flex justify-between items-end">
           <div className="space-y-2">
             <h1 className="text-4xl font-black tracking-tighter italic text-white leading-none">المستشار</h1>
@@ -77,19 +86,19 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
              <span className="text-[9px] font-black text-[#ff5722] uppercase tracking-[0.3em] opacity-60">Vault Status</span>
              <div className="flex items-center gap-2">
                 <span className="text-2xl font-black tabular-nums text-white">
-                  {sovereign.isOwner ? '∞' : (profile?.balance || 0)}
+                  {sovereign.isOwner ? '∞' : activeVaultBalance}
                 </span>
                 <span className="text-[10px] font-black text-zinc-500 uppercase">EGP</span>
              </div>
           </div>
         </div>
 
-        {/* مساحة العمل */}
+        {/* مساحة العمل المركزية */}
         <main className="flex-1 px-10 overflow-y-auto custom-scrollbar relative scroll-smooth">
           {isUserLoading ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 opacity-20">
               <Loader2 className="animate-spin text-primary h-8 w-8" />
-              <p className="text-[8px] font-black uppercase tracking-[0.5em]">Synchronizing Sovereignty...</p>
+              <p className="text-[8px] font-black uppercase tracking-[0.5em]">Syncing Authority...</p>
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -106,7 +115,7 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
           )}
         </main>
 
-        {/* قاعدة التنقل الجرمية */}
+        {/* قاعدة التنقل الموحدة (Sovereign Dock) */}
         <div className="p-10 pb-16 relative z-50">
           <div className="bg-[#252525]/80 backdrop-blur-3xl rounded-[3.5rem] p-3 flex items-center justify-between border border-white/5 shadow-3xl">
             <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={26} />} />

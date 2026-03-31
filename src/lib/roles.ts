@@ -34,7 +34,7 @@ export interface RolePermissions {
  */
 export const checkSovereignStatus = (email: string | null | undefined) => {
   const KING_EMAIL = SOVEREIGN_ADMIN_EMAIL;
-  const normalizedEmail = email?.toLowerCase();
+  const normalizedEmail = email?.toLowerCase() || "";
   const isKing = normalizedEmail === KING_EMAIL;
   
   return {
@@ -42,13 +42,6 @@ export const checkSovereignStatus = (email: string | null | undefined) => {
     hasInfiniteVault: isKing,
     permissions: isKing ? 'GOD_MODE' : 'CITIZEN'
   };
-};
-
-/**
- * التحقق من الهوية الملكية للمالك king2026.
- */
-export const isOwner = (email: string | null | undefined) => {
-  return checkSovereignStatus(email).isOwner;
 };
 
 export const getPermissions = (role: UserRole | string | null | undefined, email?: string | null): RolePermissions => {
@@ -118,8 +111,6 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
 
 export const getBalance = (profile: any) => {
   const sovereign = checkSovereignStatus(profile?.email);
-  
-  // المالك دائماً لديه رصيد لا نهائي سيادياً ولا يتأثر بعمليات الخصم (hasInfiniteVault)
   if (profile?.role === roles.ADMIN || sovereign.hasInfiniteVault) return Infinity;
   return Number(profile?.balance || 0);
 };

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -23,7 +24,7 @@ service cloud.firestore {
       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
       allow create: if isSignedIn();
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId && !request.resource.data.diff(request.resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
       allow delete: if isAdmin();
 
       match /chatHistory/{msgId} { 

@@ -39,7 +39,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
 }) => {
-  // بروتوكول التأسيس الفوري للمالك king2026 لتجنب تعليق التحميل
   const [authState, setAuthState] = useState<UserAuthState>({
     user: null,
     profile: null,
@@ -90,7 +89,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
         return () => unsubscribeProfile();
       } else {
-        // في بيئة التطوير، إذا لم يكن هناك مستخدم، نقوم ببدء الهوية السيادية للمالك افتراضياً لتجنب الـ Access Denied
         setAuthState({ 
           user: null, 
           profile: null, 

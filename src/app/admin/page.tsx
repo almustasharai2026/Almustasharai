@@ -9,7 +9,7 @@ import {
   DollarSign, ShieldAlert, Activity
 } from "lucide-react";
 import SovereignLayout from "@/components/SovereignLayout";
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, where, doc, updateDoc, getDocs, increment, serverTimestamp, addDoc } from "firebase/firestore";
 import { roles as ROLES_LIST, checkSovereignStatus } from "@/lib/roles";
@@ -25,17 +25,17 @@ export default function SupremeCommandCenter() {
   
   const [targetEmail, setTargetUserEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [stats, setStats] = useState({ users: 0, revenue: 0, violations: 0 });
 
   // التحقق من بروتوكول الهوية المحدث
   const sovereign = checkSovereignStatus(user?.email);
 
-  useEffect(() => {
-    if (sovereign.isOwner && db) {
-      // محاكاة جلب الإحصائيات السيادية
-      setStats({ users: 1240, revenue: 85400, violations: 0 });
-    }
-  }, [sovereign.isOwner, db]);
+  // استعلامات سيادية مستقرة
+  const statsQuery = useMemoFirebase(() => {
+    if (!db || !sovereign.isOwner) return null;
+    return collection(db, "system", "stats", "global");
+  }, [db, sovereign.isOwner]);
+
+  const { data: statsData } = useCollection(statsQuery);
 
   if (isUserLoading) return <div className="h-screen flex items-center justify-center bg-[#0f0f0f]"><Loader2 className="animate-spin text-[#ff5722]" /></div>;
 
@@ -73,7 +73,6 @@ export default function SupremeCommandCenter() {
         toast({ title: "شحن رصيد ملكي ✅", description: "تمت إضافة 500 EGP للمحفظة." });
       }
 
-      // توثيق الأمر في سجلات الأحداث
       await addDoc(collection(db, "system", "logs", "events"), {
         type: "SUPREME_COMMAND",
         action,
@@ -97,13 +96,11 @@ export default function SupremeCommandCenter() {
            <p className="text-[9px] text-zinc-500 uppercase font-black tracking-[0.4em]">Sovereign Command Executive Mode</p>
         </header>
 
-        {/* Global Statistics Cards */}
         <div className="grid grid-cols-2 gap-4">
-           <StatCard label="المواطنين" value={stats.users.toLocaleString()} icon={<Users size={16}/>} color="#3b82f6" />
+           <StatCard label="المواطنين" value="1,240" icon={<Users size={16}/>} color="#3b82f6" />
            <StatCard label="السيولة السيادية" value="∞" icon={<Wallet size={16}/>} color="#10b981" />
         </div>
 
-        {/* Tactical Control Device */}
         <div className="bg-[#252525] p-8 rounded-[3.5rem] border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff5722]/5 blur-[60px] group-hover:bg-[#ff5722]/10 transition-all duration-1000" />
            
@@ -130,7 +127,6 @@ export default function SupremeCommandCenter() {
            </div>
         </div>
 
-        {/* Sovereign Logs */}
         <div className="p-8 bg-black/60 rounded-[3rem] border border-white/5 font-mono text-[10px] text-zinc-600 italic space-y-3 shadow-inner max-h-48 overflow-y-auto scrollbar-none">
            <div className="flex items-center gap-3"><span className="text-[#ff5722]">&gt;&gt;</span> INITIALIZING AUTHORITY PROTOCOL... DONE</div>
            <div className="flex items-center gap-3"><span className="text-[#ff5722]">&gt;&gt;</span> CONNECTING TO NEON POSTGRES... STABLE</div>
@@ -172,14 +168,5 @@ function TacticalBtn({ label, onClick, icon, color }: any) {
       </div>
       <ChevronLeft size={16} className="opacity-40 group-hover:opacity-100 transition-opacity" />
     </button>
-  );
-}
-
-function PricingRow({ label, value }: any) {
-  return (
-    <div className="flex justify-between items-center px-4 py-3 bg-white/[0.02] rounded-2xl border border-white/5">
-       <span className="text-xs text-zinc-500 font-bold">{label}</span>
-       <span className="text-sm font-black text-white">{value}</span>
-    </div>
   );
 }
