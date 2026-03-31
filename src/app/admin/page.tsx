@@ -21,7 +21,12 @@ import { collection, doc, updateDoc, deleteDoc, increment, serverTimestamp, addD
 import { useMemoFirebase } from "@/firebase/provider";
 import Link from "next/link";
 import { roles as ROLES_LIST } from "@/lib/roles";
+import SovereignButton from "@/components/SovereignButton";
 
+/**
+ * غرفة القيادة السيادية العليا (The Supreme Command Center).
+ * واجهة مخصصة للمالك king2026 للتحكم الكامل في كافة مفاصل الكوكب القانوني.
+ */
 export default function SupremeCommandCenter() {
   const { user, profile, role, signOut } = useUser();
   const db = useFirestore();
@@ -43,7 +48,7 @@ export default function SupremeCommandCenter() {
   const [viewingDocs, setViewingDocs] = useState<any>(null);
 
   const handlePurgeUser = async (id: string) => {
-    if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً؟")) return;
+    if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً من الوجود الرقمي؟")) return;
     try {
       await deleteDoc(doc(db!, "users", id));
       toast({ title: "تم التطهير السيادي ✅" });
@@ -67,12 +72,12 @@ export default function SupremeCommandCenter() {
       await addDoc(collection(db!, "consultants"), {
         id: u.id,
         name: u.fullName,
-        specialization: u.verificationRequest?.aiPreCheck?.profession || "خبير قانوني",
+        specialization: u.verificationRequest?.aiPreCheck?.profession || "خبير قانوني سيادي",
         rating: 5.0,
         reviews: 0,
         isApproved: true
       });
-      toast({ title: "تم الاعتماد كخبير ✅" });
+      toast({ title: "تم الاعتماد كخبير رسمي ✅" });
       setViewingDocs(null);
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الاعتماد" });
@@ -83,7 +88,7 @@ export default function SupremeCommandCenter() {
     if (!selectedUser || !transferAmount) return;
     try {
       await updateDoc(doc(db!, "users", selectedUser.id), { balance: increment(Number(transferAmount)) });
-      toast({ title: "تم إتمام المعاملة بنجاح ✅" });
+      toast({ title: "تم إتمام المعاملة السيادية ✅" });
       setIsTransferModalOpen(false);
       setTransferAmount("");
       setSelectedUser(null);
@@ -96,8 +101,8 @@ export default function SupremeCommandCenter() {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-[#02040a] text-red-500 font-black gap-8">
         <Crown className="h-32 w-32 animate-pulse" />
-        <h1 className="text-5xl uppercase tracking-[0.5em] text-center">Unauthorized Identity</h1>
-        <Button onClick={() => router.push("/")} className="bg-red-600 text-white px-12 h-16 rounded-2xl text-xl font-black">الهروب</Button>
+        <h1 className="text-5xl uppercase tracking-[0.5em] text-center">Unauthorized Identity Access</h1>
+        <Button onClick={() => router.push("/")} className="bg-red-600 text-white px-12 h-16 rounded-2xl text-xl font-black shadow-2xl">الهروب</Button>
       </div>
     );
   }
@@ -119,7 +124,7 @@ export default function SupremeCommandCenter() {
           </div>
           <div>
             <h2 className="text-2xl font-black tracking-tighter">غرفة القيادة</h2>
-            <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">king2026 Sovereign</p>
+            <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">king2026 Authority</p>
           </div>
         </div>
 
@@ -140,21 +145,21 @@ export default function SupremeCommandCenter() {
 
       {/* Supreme Workspace */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-24 bg-white dark:bg-[#02040a]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-12 z-40">
+        <header className="h-24 bg-white/80 dark:bg-[#02040a]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-12 z-40">
           <div className="flex items-center gap-8">
             <div className="h-12 w-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary border border-primary/10">
               <Cpu className="h-6 w-6 animate-pulse" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-primary uppercase">Supreme Sovereign Protocol active</h1>
+            <h1 className="text-2xl font-black tracking-tight text-primary uppercase">Supreme Command Node Active</h1>
           </div>
 
           <div className="flex items-center gap-8">
             <div className="text-right">
                <p className="text-sm font-black text-slate-900 dark:text-white">سيادة المالك king2026</p>
-               <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Global Node Active</p>
+               <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Global Master Node</p>
             </div>
             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 p-0.5 shadow-2xl">
-               <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-slate-900 flex items-center justify-center font-black text-2xl text-primary">K</div>
+               <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-slate-900 flex items-center justify-center font-black text-2xl text-primary shadow-inner">K</div>
             </div>
           </div>
         </header>
@@ -164,29 +169,29 @@ export default function SupremeCommandCenter() {
             
             {activeTab === "overview" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <StatBox label="المواطنون" value={allUsers?.length || 0} icon={<Users />} color="blue" />
+                <StatBox label="إجمالي المواطنين" value={allUsers?.length || 0} icon={<Users />} color="blue" />
                 <StatBox label="طلبات انضمام" value={allUsers?.filter(u => u.role === ROLES_LIST.PENDING_EXPERT).length || 0} icon={<Gavel />} color="violet" />
                 <StatBox label="طلبات مالية" value={paymentRequests?.filter(r => r.status === 'pending').length || 0} icon={<Zap />} color="amber" />
-                <StatBox label="إجمالي الأرصدة" value={allUsers?.reduce((acc, u) => acc + (u.balance || 0), 0).toLocaleString()} icon={<Wallet />} color="emerald" />
+                <StatBox label="الميزانية الكلية" value={allUsers?.reduce((acc, u) => acc + (u.balance || 0), 0).toLocaleString()} icon={<Wallet />} color="emerald" />
               </motion.div>
             )}
 
             {activeTab === "users" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <div className="flex justify-between items-center glass-cosmic p-4 rounded-[2.5rem] border-white/10 dark:border-white/5 bg-white dark:bg-white/5">
-                  <h2 className="text-4xl font-black text-primary tracking-tighter px-6">سجل المواطنين</h2>
-                  <div className="relative w-[400px]">
+                <div className="flex justify-between items-center glass-cosmic p-6 rounded-[3rem] bg-white dark:bg-white/5 border border-white/10">
+                  <h2 className="text-4xl font-black text-primary tracking-tighter px-6">سجل المواطنين السيادي</h2>
+                  <div className="relative w-[450px]">
                     <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
-                    <Input placeholder="ابحث بالاسم أو الرقم..." className="pr-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-900 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <Input placeholder="ابحث بالاسم أو الهوية الرقمية..." className="pr-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-950 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
                 </div>
 
-                <div className="grid gap-6">
+                <div className="grid gap-6 pb-20">
                   {isUsersLoading ? (
                     <div className="py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" /></div>
                   ) : (
                     filteredUsers?.map((u) => (
-                      <Card key={u.id} className={`rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01] transition-all'}`}>
+                      <Card key={u.id} className={`rounded-[3.5rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01] transition-all'}`}>
                         <CardContent className="p-10 flex items-center justify-between">
                           <div className="flex items-center gap-8">
                             <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-3xl font-black text-primary shadow-inner">{u.fullName?.charAt(0)}</div>
@@ -201,12 +206,12 @@ export default function SupremeCommandCenter() {
 
                           <div className="flex items-center gap-12">
                             <div className="text-left border-l border-border pl-12">
-                              <p className="text-[10px] text-white/20 font-black uppercase mb-1 tracking-widest">الميزانية</p>
+                              <p className="text-[10px] text-white/20 font-black uppercase mb-1 tracking-widest">الوحدات المالية</p>
                               <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
                             </div>
                             <div className="flex gap-3">
-                              <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="محرك التحويل السيادي" color="emerald" />
-                              <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleBanToggle(u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
+                              <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="توجيه وحدات مالية" color="emerald" />
+                              <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleBanToggle(u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر سيادي" />
                               <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير نهائي" />
                             </div>
                           </div>
@@ -227,7 +232,7 @@ export default function SupremeCommandCenter() {
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl bg-white dark:bg-slate-900 shadow-3xl" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-4xl font-black text-slate-900 dark:text-white mb-4">إتمام المعاملة السيادية</DialogTitle>
-            <DialogDescription className="text-slate-500 dark:text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية الموثقة.</DialogDescription>
+            <DialogDescription className="text-slate-500 dark:text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الصلاحيات المطلقة للمالك.</DialogDescription>
           </DialogHeader>
           
           <div className="py-10 space-y-8">
@@ -248,7 +253,7 @@ export default function SupremeCommandCenter() {
             </div>
 
             <div className="space-y-4">
-              <Label className="text-muted-foreground text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد تحويلها</Label>
+              <Label className="text-muted-foreground text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد توجيهها</Label>
               <div className="relative">
                 <Input 
                   type="number" 
@@ -264,7 +269,7 @@ export default function SupremeCommandCenter() {
 
           <DialogFooter className="gap-6 pt-4">
             <Button variant="ghost" onClick={() => setIsTransferModalOpen(false)} className="text-muted-foreground hover:text-slate-900 dark:hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء العملية</Button>
-            <SovereignButton text="تأكيد وإتمام التحويل" onClick={handleTransfer} icon={<ArrowRightLeft className="h-6 w-6" />} className="flex-1 h-16 rounded-[1.8rem]" />
+            <SovereignButton text="تأكيد التوجيه المالي" onClick={handleTransfer} icon={<ArrowRightLeft className="h-6 w-6" />} className="flex-1 h-16 rounded-[1.8rem]" />
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -275,7 +280,7 @@ export default function SupremeCommandCenter() {
 
 function AdminNavBtn({ icon, text, active, onClick }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${active ? "bg-white/20 text-white shadow-3xl scale-[1.05]" : "text-white/30 hover:text-white hover:bg-white/5"}`}>
+    <button onClick={onClick} className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${active ? "bg-white/20 text-white shadow-3xl scale-[1.05]" : "text-white/20 hover:text-white hover:bg-white/5"}`}>
       {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
       <span className={`shrink-0 transition-transform duration-500 ${active ? "scale-125" : "group-hover:scale-110"}`}>{icon}</span>
       <span className="tracking-tight text-lg">{text}</span>
@@ -292,7 +297,7 @@ function StatBox({ label, value, icon, color }: any) {
     violet: "text-violet-500 bg-violet-500/10 border-violet-500/20",
   };
   return (
-    <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 overflow-hidden relative group hover:scale-[1.05] transition-all duration-500">
+    <Card className="rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 overflow-hidden relative group hover:scale-[1.05] transition-all duration-500">
       <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-700 text-primary">{icon}</div>
       <CardContent className="p-10 flex flex-col items-start gap-4 relative z-10 text-right">
         <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner border ${colors[color]}`}>{icon}</div>
@@ -318,5 +323,3 @@ function ActionBtn({ icon, onClick, color = "primary", tooltip }: any) {
     </Button>
   );
 }
-
-import SovereignButton from "@/components/SovereignButton";

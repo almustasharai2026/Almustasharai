@@ -15,9 +15,9 @@ import { useRouter } from "next/navigation";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { getPermissions, roles as ROLES_LIST } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Message {
   role: "user" | "ai";
@@ -26,6 +26,10 @@ interface Message {
   timestamp: Date;
 }
 
+/**
+ * مركز قيادة البوت السيادي (Elite AI Command Hub).
+ * واجهة فائقة الاحترافية تعتمد نظام Glassmorphism لتعزيز تجربة الاستشارة القانونية.
+ */
 export default function SovereignBotPage() {
   const { user, profile, signOut, role } = useUser();
   const db = useFirestore();
@@ -67,11 +71,11 @@ export default function SovereignBotPage() {
         await updateDoc(doc(db, "users", user.uid), { balance: increment(-1) });
       }
 
-      // Simulate AI Processing
+      // 🔥 محاكاة الرد السيادي (سيتم ربطه بـ Gemini لاحقاً)
       setTimeout(() => {
         const aiMsg: Message = { 
           role: "ai", 
-          text: "تم استلام استفسارك سيادياً. جاري تحليل المعطيات وفقاً لأحدث التشريعات والسابقة القضائية. هل تود التعمق في جانب معين؟", 
+          text: "تم تحليل استفسارك سيادياً. بناءً على نظام الإجراءات القانونية المعتمد، يوصى بمراجعة المستندات الثبوتية قبل اتخاذ أي قرار نهائي. هل تود الحصول على مسودة قانونية لهذه الحالة؟", 
           id: (Date.now() + 1).toString(),
           timestamp: new Date()
         };
@@ -90,27 +94,29 @@ export default function SovereignBotPage() {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#1e1b4b] dark:bg-[#0a0a1f]">
+    <div className="flex flex-col h-full bg-[#0a0a1f]/95 dark:bg-[#02020a]/95 backdrop-blur-3xl border-l border-white/5 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+      
       <div className="p-10 border-b border-white/5 flex items-center gap-5 bg-black/20 relative z-10">
-        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-2xl border border-white/20">
+        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-3xl border border-white/20">
           <Scale className="h-8 w-8 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-black tracking-tighter text-white">المستشار AI</h2>
-          <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Sovereign Control</p>
+          <h2 className="text-2xl font-black tracking-tighter text-white">المستشار <span className="text-primary">AI</span></h2>
+          <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Sovereign Elite</p>
         </div>
       </div>
 
       <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10 scrollbar-thin">
-        <p className="text-[10px] text-white/30 font-black uppercase tracking-widest px-4 mb-2">القائمة السيادية</p>
-        <SideBtn icon={<MessageCircle />} text="المحادثة الذكية" active={true} />
+        <p className="text-[10px] text-white/20 font-black uppercase tracking-widest px-4 mb-2">القائمة السيادية</p>
+        <SideBtn icon={<MessageCircle />} text="الدردشة الذكية" active={true} />
         <SideBtn icon={<Gavel />} text="مجلس الخبراء" onClick={() => router.push("/consultants")} />
         <SideBtn icon={<Tag />} text="المكتبة القانونية" onClick={() => router.push("/templates")} />
         <SideBtn icon={<Wallet />} text="باقات الشحن" onClick={() => router.push("/pricing")} />
         
         {perms.canManageUsers && (
           <>
-            <p className="text-[10px] text-white/30 font-black uppercase tracking-widest pt-10 px-4 mb-2">غرفة القيادة</p>
+            <p className="text-[10px] text-white/20 font-black uppercase tracking-widest pt-10 px-4 mb-2">غرفة القيادة</p>
             <SideBtn icon={<LayoutDashboard />} text="لوحة التحكم" onClick={() => router.push("/admin")} />
             <SideBtn icon={<ShieldAlert />} text="الدرع الواقي" onClick={() => router.push("/admin")} />
           </>
@@ -118,7 +124,7 @@ export default function SovereignBotPage() {
       </nav>
 
       <div className="p-8 border-t border-white/5 bg-black/30 relative z-10">
-        <button onClick={handleLogout} className="w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
+        <button onClick={handleLogout} className="w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-white/40 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
           <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
         </button>
       </div>
@@ -130,13 +136,12 @@ export default function SovereignBotPage() {
       <div className="flex h-screen bg-[#f8f9fc] dark:bg-[#020617] overflow-hidden font-sans" dir="rtl">
         
         {/* Elite Sidebar */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <motion.aside 
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              className="w-80 h-full text-white flex flex-col z-50 shadow-3xl border-l border-white/5 flex-shrink-0 relative overflow-hidden"
+              initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-80 h-full text-white flex flex-col z-50 shadow-3xl flex-shrink-0 relative overflow-hidden"
             >
               <SidebarContent />
             </motion.aside>
@@ -147,16 +152,16 @@ export default function SovereignBotPage() {
         <div className="flex-1 flex flex-col relative overflow-hidden">
           
           {/* Header */}
-          <header className="h-24 bg-white dark:bg-[#020617]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-10 z-40">
+          <header className="h-24 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-10 z-40">
             <div className="flex items-center gap-8">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-4 bg-primary/5 rounded-[1.2rem] hover:bg-primary/10 transition-all border border-primary/10 shadow-inner">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-4 bg-primary/5 rounded-2xl hover:bg-primary/10 transition-all border border-primary/10 shadow-inner">
                 {isSidebarOpen ? <ChevronLeft className="h-6 w-6 text-primary" /> : <Menu className="h-6 w-6 text-primary" />}
               </button>
               <div className="flex flex-col">
-                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Sovereign Chat Active</h1>
+                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Sovereign Chat Node Active</h1>
                 <div className="flex items-center gap-3 mt-1">
                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Secure Connection Protocol</span>
+                   <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Encrypted Connection Active</span>
                 </div>
               </div>
             </div>
@@ -167,15 +172,20 @@ export default function SovereignBotPage() {
                 <span className="text-lg font-black tabular-nums text-slate-900 dark:text-white">{role === ROLES_LIST.ADMIN ? '∞' : (profile?.balance || 0)} <span className="text-[10px] opacity-40">EGP</span></span>
                 <Plus className="h-4 w-4 text-primary opacity-40 group-hover:opacity-100" />
               </div>
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-border dark:border-white/5 hover:bg-primary/5 transition-all text-primary">
+              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-border dark:border-white/5 hover:bg-primary/5 transition-all text-primary shadow-sm">
                 {theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
               </button>
             </div>
           </header>
 
           {/* Messages Area */}
-          <main className="flex-1 relative flex flex-col bg-white dark:bg-[#020617]">
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12">
+          <main className="flex-1 relative flex flex-col bg-slate-50 dark:bg-[#020617] overflow-hidden">
+            {/* Cinematic Background for Chat */}
+            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+               <Image src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop" fill className="object-cover" alt="bg" />
+            </div>
+
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12 relative z-10">
               <div className="max-w-4xl mx-auto space-y-12 pb-20">
                 {messages.map((m) => (
                   <motion.div 
@@ -185,20 +195,20 @@ export default function SovereignBotPage() {
                     className={`flex flex-col ${m.role === "user" ? "items-start" : "items-end"}`}
                   >
                     <div className="flex items-center gap-3 mb-3 px-6">
-                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                       <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                          {m.role === "user" ? profile?.fullName || "المواطن" : "المستشار السيادي"}
                        </span>
                     </div>
                     <div className={`p-8 rounded-[3rem] text-sm max-w-[90%] shadow-2xl border leading-relaxed ${
                       m.role === "user" 
                         ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-800 rounded-tr-none" 
-                        : "bg-primary/5 dark:bg-primary/10 text-primary dark:text-white border-primary/20 dark:border-primary/20 rounded-tl-none font-medium backdrop-blur-md"
+                        : "bg-primary/5 dark:bg-primary/10 text-primary dark:text-white border-primary/20 dark:border-primary/20 rounded-tl-none font-medium backdrop-blur-xl"
                     }`}>
-                      <p className="text-lg leading-loose">{m.text}</p>
+                      <p className="text-xl leading-loose font-bold">{m.text}</p>
                       <div className="flex items-center gap-2 mt-6 pt-5 border-t border-black/5 dark:border-white/5">
                          <button onClick={() => { navigator.clipboard.writeText(m.text); toast({ title: "تم النسخ السيادي" }); }} className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all hover:text-primary"><Copy className="h-4 w-4" /></button>
                          {m.id !== "init" && <button onClick={() => setMessages(prev => prev.filter(msg => msg.id !== m.id))} className="p-2.5 hover:bg-red-500/10 rounded-xl text-red-400 transition-all"><Trash2 className="h-4 w-4" /></button>}
-                         <span className="mr-auto text-[10px] font-black opacity-20 tabular-nums">{m.timestamp.toLocaleTimeString("ar-EG")}</span>
+                         <span className="mr-auto text-[9px] font-black opacity-20 tabular-nums uppercase tracking-widest">{m.timestamp.toLocaleTimeString("ar-EG")}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -209,25 +219,25 @@ export default function SovereignBotPage() {
                     <div className="w-2 h-2 bg-primary rounded-full" />
                     <div className="w-2 h-2 bg-primary rounded-full delay-100" />
                     <div className="w-2 h-2 bg-primary rounded-full delay-200" />
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest mr-2">Analyzing Sovereign Data</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest mr-2">Sovereign Intel Processing</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Input Engine */}
-            <div className="p-10 bg-gradient-to-t from-white dark:from-[#020617] via-white dark:via-[#020617] to-transparent z-20">
+            <div className="p-10 bg-gradient-to-t from-slate-50 dark:from-[#020617] via-slate-50 dark:via-[#020617] to-transparent z-20">
               <div className="max-w-4xl mx-auto">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
                   
-                  <div className="relative bg-[#f1f5f9] dark:bg-slate-900 border-2 border-border dark:border-white/5 rounded-[2.5rem] shadow-3xl flex flex-col overflow-hidden focus-within:border-primary/40 transition-all">
-                    <div className="flex items-center gap-2 px-6 py-4 border-b border-black/5 dark:border-white/5 bg-black/[0.02]">
+                  <div className="relative bg-white dark:bg-slate-900 border-2 border-border dark:border-white/5 rounded-[2.5rem] shadow-3xl flex flex-col overflow-hidden focus-within:border-primary/40 transition-all">
+                    <div className="flex items-center gap-2 px-6 py-4 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
                        <ToolBtn icon={<Paperclip />} tooltip="إرفاق ملفات" />
                        <ToolBtn icon={<Camera />} tooltip="التقاط وثيقة" />
                        <ToolBtn icon={<Mic />} tooltip="إملاء صوتي" />
                        <div className="h-6 w-px bg-black/5 dark:bg-white/5 mx-2" />
-                       <ToolBtn icon={<Sparkles />} tooltip="تحسين الصياغة" />
+                       <ToolBtn icon={<Sparkles />} tooltip="تحسين الصياغة السيادية" />
                     </div>
 
                     <div className="flex items-center px-8 py-4 gap-6">
@@ -249,8 +259,8 @@ export default function SovereignBotPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-6 opacity-30">
-                  Encrypted AI Sovereign Interface v4.5
+                <p className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] mt-6 opacity-30">
+                  Encrypted AI Sovereign Node v4.5
                 </p>
               </div>
             </div>
@@ -268,7 +278,7 @@ function SideBtn({ icon, text, active, onClick }: any) {
       className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${
         active 
           ? "bg-white/20 text-white shadow-3xl scale-[1.05]" 
-          : "text-white/30 hover:text-white hover:bg-white/5"
+          : "text-white/20 hover:text-white hover:bg-white/5"
       }`}
     >
       {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
