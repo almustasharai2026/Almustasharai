@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutGrid, MessageSquare, Settings, User, Wallet, Scale, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
+import SovereignSidebar from './SovereignSidebar';
 
 interface SovereignLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ interface SovereignLayoutProps {
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
   const { profile } = useUser();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 lg:p-10 font-sans" dir="rtl">
@@ -30,10 +32,16 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
         className="w-full max-w-[450px] h-[850px] bg-[#1a1a1a] rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-[8px] border-[#252525] relative overflow-hidden flex flex-col"
       >
         
-        {/* الكاميرا السيادية (The Lens) */}
-        <div className="absolute top-10 right-12 w-14 h-14 bg-[#252525] rounded-[1.5rem] flex items-center justify-center border border-white/5 z-50 group cursor-pointer hover:rotate-90 transition-transform duration-700">
+        {/* الكاميرا السيادية (The Lens) - تفتح القائمة الجانبية الآن */}
+        <div 
+          onClick={() => setIsSidebarOpen(true)}
+          className="absolute top-10 right-12 w-14 h-14 bg-[#252525] rounded-[1.5rem] flex items-center justify-center border border-white/5 z-50 group cursor-pointer hover:rotate-90 transition-transform duration-700"
+        >
            <div className="w-3 h-3 bg-[#ff5722] rounded-full animate-pulse shadow-[0_0_15px_#ff5722]" />
         </div>
+
+        {/* القائمة الجانبية المنزلقة */}
+        <SovereignSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* الجزء العلوي: الهوية السيادية */}
         <div className="p-12 pt-20 flex justify-between items-start">
