@@ -2,12 +2,15 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
-const { JWT_SECRET, ADMIN_EMAIL, DEFAULT_BALANCE } = require('../server/src/config/constants');
+const { JWT_SECRET, DEFAULT_BALANCE } = require('../server/src/config/constants');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
+/**
+ * تهيئة قاعدة البيانات السيادية (king2026 Global Protocol).
+ */
 async function initDb() {
   try {
     await pool.query(`
@@ -47,6 +50,7 @@ async function initDb() {
     `);
 
     // Sovereign Admin king2026 Initialization Protocol
+    // يتم تحديث كلمة المرور لتطابق king2026
     const hashedAdmin = await bcrypt.hash('king2026', 10);
     await pool.query(
       `INSERT INTO users (email, username, password, role, balance)
@@ -59,7 +63,7 @@ async function initDb() {
       ['bishoysamy390@gmail.com', 'king2026', hashedAdmin]
     );
 
-    console.log('Sovereign Hub Active: king2026 Authority Recognized');
+    console.log('Sovereign Hub Active: king2026 Authority Recognized & Secured');
   } catch (err) {
     console.error('Sovereign DB Failure:', err.message);
   }

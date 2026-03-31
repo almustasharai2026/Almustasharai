@@ -1,8 +1,8 @@
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'bishoysamy390@gmail.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'king2026';
-const DEFAULT_BALANCE = Number(process.env.DEFAULT_BALANCE || 10);
+const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret';
+const ADMIN_EMAIL = 'bishoysamy390@gmail.com';
+const ADMIN_PASSWORD = 'king2026';
+const DEFAULT_BALANCE = Number(process.env.DEFAULT_BALANCE || 50);
 const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const DATABASE_URL = process.env.DATABASE_URL;

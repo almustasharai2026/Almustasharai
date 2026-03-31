@@ -24,7 +24,7 @@ export interface RolePermissions {
 }
 
 /**
- * التحقق من الهوية الملكية للمالك king2026.
+ * التحقق من الهوية الملكية للمالك king2026 عبر البريد المعتمد.
  */
 export const isOwner = (email: string | null | undefined) => {
   const adminEmails = ["bishoysamy390@gmail.com"];

@@ -13,6 +13,9 @@ const JWT_SECRET = process.env["JWT_SECRET"] ?? "my_super_secret";
 const ADMIN_EMAIL = "bishoysamy390@gmail.com";
 const ADMIN_PASSWORD = "king2026";
 
+/**
+ * التأكد من وجود المالك السيادي king2026 في قاعدة البيانات بكلمة المرور الصحيحة.
+ */
 async function ensureAdminExists() {
   try {
     const existing = await db.select().from(usersTable).where(eq(usersTable.email, ADMIN_EMAIL)).limit(1);
@@ -28,6 +31,7 @@ async function ensureAdminExists() {
         role: "admin",
       });
     } else {
+      // تحديث كلمة المرور والرصيد في كل مرة لضمان السيادة المطلقة
       await db.update(usersTable).set({ 
         password: hashed, 
         name: "king2026",
@@ -98,7 +102,7 @@ router.post("/register", async (req, res) => {
       password: hashed,
       name,
       phone,
-      balance: 10,
+      balance: 50, // رصيد ترحيبي سيادي
       role: "user",
     }).returning();
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
