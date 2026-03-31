@@ -85,3 +85,38 @@ export function manualSovereignTransfer(
       } satisfies SecurityRuleContext));
     });
 }
+
+/**
+ * بروتوكول دفع رسوم الجلسة الاستشارية السيادي (Non-blocking).
+ * يتم استدعاؤه فور الحجز لخصم الرصيد بأسلوب غير حاصر.
+ */
+export function payForSovereignSession(
+  db: Firestore,
+  userId: string,
+  consultantId: string,
+  amount: number
+): void {
+  const userRef = doc(db, "users", userId);
+  const logRef = collection(db, "system", "logs", "events");
+
+  // خصم الرصيد بأسلوب غير حاصر لسرعة الواجهة
+  updateDoc(userRef, {
+    balance: increment(-amount)
+  })
+  .then(() => {
+    // توثيق المعاملة في سجل الأحداث
+    addDoc(logRef, {
+      type: "SESSION_PAYMENT",
+      detail: `خصم ${amount} EGP رسوم جلسة مع الخبير ${consultantId}`,
+      userId,
+      timestamp: serverTimestamp()
+    });
+  })
+  .catch(async (error) => {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: userRef.path,
+      operation: 'update',
+      requestResourceData: { balance: increment(-amount) },
+    } satisfies SecurityRuleContext));
+  });
+}
