@@ -1,97 +1,89 @@
+"use client";
 
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Gavel, Video, BrainCircuit, ShieldCheck, Zap, ArrowLeft } from 'lucide-react';
-import SovereignButton from '@/components/SovereignButton';
-import FloatingCard from '@/components/FloatingCard';
+import { Scale, Sparkles, ShieldCheck, Gavel, Video, FileText, ArrowLeft, Crown } from 'lucide-react';
 import Link from 'next/link';
-import { useFirestore, useDoc } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { useMemoFirebase } from '@/firebase/provider';
+import { useUser } from '@/firebase';
+import SovereignButton from '@/components/SovereignButton';
 
-export default function Home() {
-  const [text, setText] = useState('');
-  const db = useFirestore();
-
-  const settingsRef = useMemoFirebase(() => db ? doc(db, "system", "settings") : null, [db]);
-  const { data: settings } = useDoc(settingsRef);
+export default function SovereignLanding() {
+  const { user, profile } = useUser();
 
   return (
-    <div className="flex flex-col items-center px-5 pb-10 animate-in fade-in duration-700">
-      
-      {/* Header / Logo Section */}
-      <div className="mt-10 flex flex-col items-center gap-3">
-        <motion.div 
-          initial={{ rotate: -10, scale: 0.9 }}
-          animate={{ rotate: 0, scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="h-16 w-16 rounded-[2rem] bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 border border-white/10"
-        >
-          <BrainCircuit className="h-9 w-9 text-white" />
-        </motion.div>
-        <h1 className="text-3xl font-black text-primary tracking-tighter mt-2">
-          {settings?.homeTitle || "المستشار AI"}
+    <div className="min-h-screen flex flex-col items-center px-6 py-12 relative overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-primary/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full" />
+
+      {/* Hero Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="text-center space-y-6 mt-10 z-10"
+      >
+        <div className="flex justify-center">
+          <div className="h-24 w-24 rounded-[2.5rem] bg-gradient-to-br from-primary to-amber-700 flex items-center justify-center shadow-3xl border border-white/20 float-sovereign">
+            <Scale className="h-12 w-12 text-white" />
+          </div>
+        </div>
+        <h1 className="text-5xl font-black tracking-tighter text-white">
+          كوكب <span className="text-gradient">المستشار AI</span>
         </h1>
-        <p className="text-muted-foreground text-sm text-center max-w-[280px] font-medium leading-relaxed opacity-80">
-          {settings?.homeSubtitle || "اكتب مشكلتك، وسنرشدك لأفضل حل فوراً"}
+        <p className="text-xl text-white/40 font-bold max-w-sm mx-auto leading-relaxed">
+          العدالة الرقمية بمعايير سيادية. استشارات قانونية فورية، حماية مطلقة، وخبراء معتمدون.
         </p>
+      </motion.div>
+
+      {/* Visual Feature Grid */}
+      <div className="grid grid-cols-2 gap-4 w-full mt-16 max-w-md">
+        <FeatureIcon icon={<Sparkles className="text-primary" />} text="ذكاء اصطناعي" />
+        <FeatureIcon icon={<Gavel className="text-primary" />} text="خبراء بشريون" />
+        <FeatureIcon icon={<Video className="text-primary" />} text="جلسات فيديو" />
+        <FeatureIcon icon={<FileText className="text-primary" />} text="وثائق معتمدة" />
       </div>
 
-      {/* AI Sovereign Input Box */}
-      <div className="w-full mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 flex items-center gap-2 border border-border/50 focus-within:border-accent/40 transition-all">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="اكتب مشكلتك هنا..."
-          className="flex-1 bg-transparent outline-none text-sm text-right placeholder:text-muted-foreground/40 font-medium"
-        />
-        <button 
-          className="bg-gradient-to-r from-accent to-emerald-600 text-white px-4 py-2 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center justify-center"
-          title="إرسال"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Floating Features Visualizer */}
-      <div className="mt-14 w-full relative h-56 bg-secondary/20 rounded-[3.5rem] overflow-hidden border border-border/20 shadow-inner">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/60 dark:to-slate-900/60" />
-        <FloatingCard title="تحليل ذكي" delay={0} icon={<Zap className="h-3 w-3" />} />
-        <FloatingCard title="مجلس الخبراء" delay={0.8} icon={<Gavel className="h-3 w-3" />} />
-        <FloatingCard title="جلسات مباشرة" delay={1.5} icon={<Video className="h-3 w-3" />} />
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none text-primary">
-          <ShieldCheck className="h-48 w-48" />
+      {/* Primary Actions */}
+      <div className="w-full max-w-md mt-16 space-y-4 z-10">
+        {!user ? (
+          <Link href="/auth/signup">
+            <SovereignButton text="انضم الآن واحصل على ٥٠ EGP" icon={<ShieldCheck className="h-6 w-6" />} />
+          </Link>
+        ) : (
+          <Link href="/bot">
+            <SovereignButton text="دخول مركز القيادة" icon={<Crown className="h-6 w-6" />} />
+          </Link>
+        )}
+        
+        <div className="flex items-center gap-4 mt-8">
+          <Link href="/about" className="flex-1 py-4 glass-cosmic rounded-2xl text-center text-xs font-black uppercase tracking-widest text-white/60 hover:text-white transition-all">
+            عن المنصة
+          </Link>
+          <Link href="/pricing" className="flex-1 py-4 glass-cosmic rounded-2xl text-center text-xs font-black uppercase tracking-widest text-white/60 hover:text-white transition-all">
+            باقات الشحن
+          </Link>
         </div>
       </div>
 
-      <div className="w-full mt-12 mb-6">
-        <Link href="/auth/signup" className="block group">
-          <SovereignButton 
-            text="ابدأ أول استشارة الآن" 
-            icon={<Sparkles className="h-5 w-5 animate-pulse" />}
-          />
-        </Link>
-        <p className="text-[10px] text-center text-muted-foreground/40 mt-4 font-bold uppercase tracking-widest">
-          رصيد ترحيبي ٥٠ EGP بانتظارك
-        </p>
-      </div>
-
-      <div className="w-full space-y-4">
-        <FeatureDetail title="تحليل ذكي" desc="محرك AI يحلل معطيات حالتك فوراً ويحدد المخاطر." />
-        <FeatureDetail title="مستشارين متخصصين" desc="نخبة من الخبراء القانونيين في كافة التخصصات." />
-        <FeatureDetail title="جلسات مباشرة" desc="تواصل مباشر وآمن عبر الفيديو مع مستشارك الخاص." />
+      {/* Footer Disclaimer */}
+      <div className="mt-auto pt-20 text-center opacity-20 pointer-events-none">
+        <p className="text-[10px] font-black uppercase tracking-[0.5em]">Almustasharai AI Sovereign Protocol v4.5</p>
       </div>
     </div>
   );
 }
 
-function FeatureDetail({ title, desc }: { title: string; desc: string }) {
+function FeatureIcon({ icon, text }: { icon: React.ReactNode, text: string }) {
   return (
-    <div className="p-5 bg-secondary/30 rounded-[2rem] border border-border/40 text-right">
-      <h3 className="font-black text-primary text-sm mb-1">{title}</h3>
-      <p className="text-[11px] text-muted-foreground font-bold opacity-70">{desc}</p>
-    </div>
+    <motion.div 
+      whileHover={{ scale: 1.05 }}
+      className="p-6 glass-cosmic rounded-[2.5rem] flex flex-col items-center gap-3 border-white/5"
+    >
+      <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center shadow-inner">
+        {icon}
+      </div>
+      <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">{text}</span>
+    </motion.div>
   );
 }

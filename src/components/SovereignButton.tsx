@@ -11,10 +11,6 @@ interface SovereignButtonProps {
   icon?: React.ReactNode;
 }
 
-/**
- * الزر السيادي الموحد.
- * يتميز بتدرج لوني ذكي وتأثيرات حركية تضمن تجربة مستخدم فائقة.
- */
 export default function SovereignButton({ 
   text, 
   onClick, 
@@ -29,18 +25,22 @@ export default function SovereignButton({
       onClick={onClick}
       disabled={disabled}
       className={`
-        w-full py-4 rounded-2xl 
-        bg-gradient-to-r from-accent to-emerald-600 
-        text-white font-black text-lg
-        shadow-lg shadow-accent/20 
-        active:scale-[0.98] transition-all duration-200
+        w-full py-5 rounded-[1.8rem] 
+        bg-gradient-to-r from-primary via-amber-600 to-primary
+        text-primary-foreground font-black text-xl
+        shadow-2xl shadow-primary/20 
+        hover:scale-[1.02] active:scale-[0.98] transition-all duration-300
         disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed
-        flex items-center justify-center gap-3
+        flex items-center justify-center gap-4
+        relative overflow-hidden group
         ${className}
       `}
     >
-      {text}
-      {icon && <span className="shrink-0">{icon}</span>}
+      <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+      <span className="relative z-10 flex items-center gap-4">
+        {text}
+        {icon && <span className="shrink-0">{icon}</span>}
+      </span>
     </button>
   );
 }

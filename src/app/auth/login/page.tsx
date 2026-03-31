@@ -1,12 +1,11 @@
-
-'use client';
+"use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Globe, Facebook, Lock } from "lucide-react";
+import { Scale, Lock, Loader2, Home } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -44,27 +43,26 @@ export default function LoginPage() {
   };
 
   if (isUserLoading) return (
-    <div className="h-screen flex items-center justify-center bg-black">
+    <div className="h-screen flex items-center justify-center bg-[#020617]">
       <div className="animate-pulse text-white font-black tracking-[0.5em] uppercase">Authenticating Identity...</div>
     </div>
   );
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4">
-      <Card className="w-full max-w-md glass-cosmic border-none rounded-[3rem] shadow-2xl relative overflow-hidden">
+    <div className="container flex items-center justify-center min-h-screen py-12 px-4">
+      <Card className="w-full max-w-md glass-cosmic border-none rounded-[3rem] shadow-3xl relative overflow-hidden">
         <CardHeader className="space-y-4 text-center pt-12 pb-8">
           <div className="flex justify-center mb-2">
-            <div className="h-16 w-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-              <Scale className="h-8 w-8 text-white" />
+            <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+              <Scale className="h-8 w-8 text-primary" />
             </div>
           </div>
           <div>
             <CardTitle className="text-3xl font-black text-white">الدخول السيادي</CardTitle>
-            <CardDescription className="text-white/40">مركز القيادة العليا - king2026</CardDescription>
+            <CardDescription className="text-white/30">مركز القيادة العليا - king2026</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
-          
           <div className="space-y-2">
             <Label className="text-white/40 text-xs px-2">البريد السيادي</Label>
             <Input 
@@ -87,19 +85,18 @@ export default function LoginPage() {
               className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right"
             />
           </div>
-          
           <SovereignButton 
-            text={isLoading ? "جاري تفعيل البروتوكول..." : "دخول سيادي مطلق"}
+            text={isLoading ? "جاري التفعيل..." : "دخول سيادي مطلق"}
             onClick={handleLogin}
             disabled={isLoading}
             className="mt-2"
-            icon={<Lock className="h-5 w-5" />}
+            icon={isLoading ? <Loader2 className="animate-spin" /> : <Lock className="h-5 w-5" />}
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
-          <div className="text-sm text-center text-white/30 uppercase tracking-widest font-black opacity-20">
-            Sovereign Protocol Protected
-          </div>
+          <Link href="/" className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-all font-bold">
+            <Home className="h-4 w-4" /> العودة للصفحة الرئيسية
+          </Link>
         </CardFooter>
       </Card>
     </div>

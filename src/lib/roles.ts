@@ -1,10 +1,8 @@
-
 /**
  * ميثاق الرتب السيادية (Sovereign Role Constants).
- * يحدد الرتب الرقمية المعتمدة والصلاحيات الدقيقة لكل رتبة.
  */
 export const roles = {
-  ADMIN: "admin",       // المالك (king2026)
+  ADMIN: "admin",       // المالك الملكي (king2026)
   MODERATOR: "moderator", // مشرف
   VIP: "vip",           // عميل مميز
   CONSULTANT: "consultant", // مستشار
@@ -21,12 +19,9 @@ export interface RolePermissions {
   canChatAI: boolean;
   canGenerateDocs: boolean;
   canManageMoney: boolean;
-  consultationDiscount: number; // خصم خاص للـ VIP
+  consultationDiscount: number;
 }
 
-/**
- * بروتوكول استخراج الصلاحيات السيادية.
- */
 export const getPermissions = (role: UserRole | string): RolePermissions => {
   switch (role) {
     case roles.ADMIN:
@@ -60,18 +55,7 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
-        consultationDiscount: 0.5, // خصم 50% على الاستشارات
-      };
-    case roles.CONSULTANT:
-      return {
-        canManageUsers: false,
-        canPromoteRoles: false,
-        canManageSystem: false,
-        canConsult: true,
-        canChatAI: true,
-        canGenerateDocs: true,
-        canManageMoney: false,
-        consultationDiscount: 0,
+        consultationDiscount: 0.5,
       };
     default:
       return {
@@ -87,9 +71,6 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
   }
 };
 
-/**
- * بروتوكول فحص الملكية السيادية (The Sovereign Owner Protocol).
- */
 export const isOwner = (email: string | null | undefined) => {
   return email === "bishoysamy390@gmail.com";
 };
