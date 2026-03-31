@@ -1,14 +1,13 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Sovereign Access Helpers
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { return isSignedIn() && request.auth.token.email == 'bishoysamy390@gmail.com'; }
+    function isModerator() { return isSignedIn() && request.auth.token.email.matches('.*moderator.*'); }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     
     // بروتوكول التحقق من حالة المواطن (Resilient Banned Check)
-    // يسمح بالوصول في حال عدم وجود الوثيقة (للمواطنين الجدد) أو إذا لم يكن محظوراً
     function isNotBanned() { 
       let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
       return !exists(userPath) || get(userPath).data.get('isBanned', false) == false; 
@@ -16,37 +15,38 @@ service cloud.firestore {
 
     // User Profile Rules
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin() || isModerator();
       allow create: if isSignedIn();
       allow update: if (isOwner(userId) && isNotBanned()) || isAdmin();
     }
 
     // Wallets Protocol (Sovereign Financial Security)
     match /wallets/{userId} {
-      allow read, write: if (isOwner(userId) && isNotBanned()) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
       
-      // تأمين سجل المعاملات (Sub-collection Access)
       match /transactions/{transactionId} {
-        allow read, write: if (isOwner(userId) && isNotBanned()) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAdmin();
       }
     }
 
-    // Bookings Protocol (Signed-in access)
+    // Bookings Protocol
     match /bookings/{id} {
       allow create, read: if isSignedIn() && isNotBanned();
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || isModerator();
     }
 
-    // Consultants Registry (Public read, Admin write)
+    // Consultants Registry
     match /consultants/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Global Moderation System
+    // Global Moderation System (Moderators have full access here)
     match /system/moderation/forbiddenWords/{id} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isModerator();
     }
 
     // Live Consultations
@@ -60,7 +60,7 @@ service cloud.firestore {
     // Analytics Protocol
     match /analytics/{id} {
       allow create: if isSignedIn();
-      allow read: if isAdmin();
+      allow read: if isAdmin() || isModerator();
     }
   }
 }

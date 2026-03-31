@@ -5,8 +5,7 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-
-export type UserRole = "user" | "consultant" | "admin";
+import { roles, type UserRole } from '@/lib/roles';
 
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
@@ -27,7 +26,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   auth,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<UserRole>("user");
+  const [role, setRole] = useState<UserRole>(roles.USER);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
 
@@ -41,16 +40,18 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // 🔥 Role Detection Logic
+        // 🔥 Sovereign Role Detection Protocol
         if (firebaseUser.email === 'bishoysamy390@gmail.com') {
-          setRole("admin");
+          setRole(roles.ADMIN);
+        } else if (firebaseUser.email?.includes("moderator")) {
+          setRole(roles.MODERATOR);
         } else if (firebaseUser.email?.includes("consultant")) {
-          setRole("consultant");
+          setRole(roles.CONSULTANT);
         } else {
-          setRole("user");
+          setRole(roles.USER);
         }
       } else {
-        setRole("user");
+        setRole(roles.USER);
       }
 
       setIsUserLoading(false);
@@ -63,7 +64,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     };
   }, [auth]);
 
-  // Real-time profile sync
+  // Real-time profile sync with Sovereign Shield
   useEffect(() => {
     if (!firestore || !user) {
       setProfile(null);
@@ -104,7 +105,7 @@ export const useUser = () => {
   const context = useContext(FirebaseContext);
   return { 
     user: context?.user || null, 
-    role: context?.role || "user",
+    role: context?.role || roles.USER,
     isUserLoading: context?.isUserLoading ?? true,
     profile: context?.profile || null
   };
