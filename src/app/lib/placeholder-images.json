@@ -1,22 +1,29 @@
+
 {
   "placeholderImages": [
     {
-      "id": "char-1",
-      "description": "المحامي السيادي المتحرك",
-      "imageUrl": "https://picsum.photos/seed/sovereignlawyer/400/400",
-      "imageHint": "legal man"
+      "id": "sovereign-justice",
+      "description": "ميزان العدالة والمطرقة في المكتبة القانونية الملكية",
+      "imageUrl": "https://picsum.photos/seed/justice77/1920/1080",
+      "imageHint": "legal gavel"
     },
     {
-      "id": "char-2",
-      "description": "المستشار الذكي المتحرك",
-      "imageUrl": "https://picsum.photos/seed/smartconsultant/400/400",
-      "imageHint": "consultant woman"
+      "id": "legal-library-deep",
+      "description": "مكتبة قانونية سينمائية غامضة وعميقة",
+      "imageUrl": "https://picsum.photos/seed/library88/1920/1080",
+      "imageHint": "law books"
     },
     {
-      "id": "hero-bg",
-      "description": "خلفية كوكب العدالة المتقدمة",
-      "imageUrl": "https://picsum.photos/seed/advancedjustice/1200/600",
-      "imageHint": "technology legal"
+      "id": "court-majesty",
+      "description": "قاعة المحكمة السيادية الكبرى",
+      "imageUrl": "https://picsum.photos/seed/court99/1920/1080",
+      "imageHint": "courtroom majestic"
+    },
+    {
+      "id": "authority-desk",
+      "description": "مكتب السلطة والقرار القانوني",
+      "imageUrl": "https://picsum.photos/seed/desk11/1920/1080",
+      "imageHint": "lawyer desk"
     }
   ]
 }

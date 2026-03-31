@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,6 @@ export default function LoginPage() {
     setIsLoading(true);
     
     let loginEmail = identifier.trim();
-    // تحويل المعرف السيادي إلى البريد المعتمد
     if (loginEmail.toLowerCase() === "king2026") {
       loginEmail = SOVEREIGN_ADMIN_EMAIL;
     }
@@ -49,7 +48,6 @@ export default function LoginPage() {
       toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول king2026." });
       router.push("/bot");
     } catch (error: any) {
-      // بروتوكول التأسيس التلقائي للمالك في حال أول دخول
       if (identifier.toLowerCase() === "king2026" && password === "king@2026") {
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
@@ -79,15 +77,17 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#020617]">
+      {/* Background Cinematic Integration */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop"
+          src="https://picsum.photos/seed/justice77/1920/1080"
           alt="Sovereign Background"
           fill
           className="object-cover opacity-40 scale-105"
+          data-ai-hint="legal gavel"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-transparent to-[#020617]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-transparent to-[#020617]" />
       </div>
 
       <motion.div 

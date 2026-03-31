@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from "react";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMemoFirebase } from "@/firebase/provider";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
+import Image from "next/image";
 
 export default function SmartConsultantPage() {
   const { user, profile, role } = useUser();
@@ -95,8 +97,19 @@ export default function SmartConsultantPage() {
   return (
     <ProtectedRoute>
       <SovereignLayout activeId="bot">
-        <div className="flex flex-col h-screen relative">
-          <header className="h-20 bg-black/20 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-10 z-40 relative">
+        <div className="flex flex-col h-screen relative overflow-hidden">
+          {/* Deep Cinematic Background Overlay */}
+          <div className="absolute inset-0 -z-10 opacity-10">
+            <Image 
+              src="https://picsum.photos/seed/library88/1920/1080"
+              alt="Legal Background"
+              fill
+              className="object-cover"
+              data-ai-hint="law books"
+            />
+          </div>
+
+          <header className="h-20 bg-black/40 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-10 z-40 relative">
             <div className="flex items-center gap-6">
               <div className="bg-primary/10 px-6 py-2 rounded-xl border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
                  <ShieldCheck className="h-3 w-3" /> Citizen Support Active
@@ -126,7 +139,7 @@ export default function SmartConsultantPage() {
                 {cloudMessages?.map((m) => (
                   <motion.div key={m.id} initial={{ opacity: 0, x: m.role === 'user' ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}>
                     <div className={`p-8 rounded-[3rem] max-w-[90%] text-lg leading-relaxed shadow-3xl border ${
-                      m.role === 'user' ? 'bg-white text-slate-900 font-bold rounded-tr-none border-white/10' : 'bg-[#0a0a1f]/80 backdrop-blur-2xl text-white border-primary/20 rounded-tl-none font-medium'
+                      m.role === 'user' ? 'bg-white text-slate-900 font-bold rounded-tr-none border-white/10' : 'bg-[#0a0a1f]/90 backdrop-blur-2xl text-white border-primary/20 rounded-tl-none font-medium shadow-primary/5'
                     }`}>
                       {m.text}
                     </div>
@@ -138,7 +151,7 @@ export default function SmartConsultantPage() {
             </div>
           </div>
 
-          <div className="absolute bottom-0 inset-x-0 p-10 z-20 bg-gradient-to-t from-[#02020a] via-[#02020a]/80 to-transparent pointer-events-none">
+          <div className="absolute bottom-0 inset-x-0 p-10 z-20 bg-gradient-to-t from-[#02020a] via-[#02020a]/90 to-transparent pointer-events-none">
             <div className="max-w-4xl mx-auto space-y-6 pointer-events-auto">
               <div className="flex items-center gap-4 px-4">
                  <ToolBtn icon={<Paperclip />} onClick={() => fileInputRef.current?.click()} tooltip="رفع ملف" />
@@ -146,7 +159,7 @@ export default function SmartConsultantPage() {
                  <ToolBtn icon={<Mic />} active={isRecording} color="red" tooltip="إملاء صوتي" />
                  <input type="file" ref={fileInputRef} className="hidden" />
               </div>
-              <div className="relative glass-cosmic border-2 border-white/10 rounded-[3rem] overflow-hidden shadow-3xl group focus-within:border-primary/30 transition-all">
+              <div className="relative glass-cosmic border-2 border-white/10 rounded-[3rem] overflow-hidden shadow-3xl group focus-within:border-primary/30 transition-all bg-black/40">
                 <div className="flex items-center px-10 py-6 gap-8">
                   <textarea 
                     value={inputText} 
@@ -161,7 +174,7 @@ export default function SmartConsultantPage() {
                     rows={1}
                   />
                   <button onClick={() => handleSend()} disabled={!inputText.trim() || isTyping} className="h-16 w-16 rounded-3xl bg-primary text-white flex items-center justify-center shadow-2xl transition-all disabled:opacity-20 hover:scale-110 active:scale-95">
-                    <Send className="rotate-180 h-8 w-8" />
+                    <Send className="rotate-180 h-8 w-8 text-black" />
                   </button>
                 </div>
               </div>
@@ -170,7 +183,7 @@ export default function SmartConsultantPage() {
         </div>
 
         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
-          <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 max-w-2xl bg-black/90 shadow-3xl">
+          <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 max-w-2xl bg-black/95 shadow-3xl">
              <DialogHeader className="mb-10 text-center">
                 <DialogTitle className="text-3xl font-black text-white">المعالج البصري الذكي</DialogTitle>
                 <DialogDescription className="text-white/30 font-bold uppercase tracking-widest text-[10px] mt-2">Vision Recognition Protocol</DialogDescription>
@@ -185,7 +198,7 @@ export default function SmartConsultantPage() {
 
 function ToolBtn({ icon, onClick, active, tooltip }: any) {
   return (
-    <button onClick={onClick} className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-all border shadow-2xl relative group ${active ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/[0.02] border-white/5 text-white/20 hover:text-primary hover:border-primary/30 hover:bg-primary/5'}`}>
+    <button onClick={onClick} className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-all border shadow-2xl relative group ${active ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/[0.05] border-white/10 text-white/20 hover:text-primary hover:border-primary/30 hover:bg-primary/5'}`}>
       <div className="scale-110">{icon}</div>
       <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-black px-4 py-2 rounded-xl text-[8px] font-black text-primary uppercase border border-primary/20 pointer-events-none">
         {tooltip}

@@ -4,16 +4,13 @@
 import { useUser } from "@/firebase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SovereignLayout from "@/components/SovereignLayout";
-import { ShieldCheck, Crown, Sparkles, FileText, Activity } from "lucide-react";
+import { ShieldCheck, Crown, Sparkles, FileText, Activity, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { getBalance, roles as ROLES_LIST } from "@/lib/roles";
 import RoyalWallet from "@/components/RoyalWallet";
+import Image from "next/image";
 
-/**
- * لوحة تحكم المواطن السيادي المحدثة.
- * تدمج المحفظة الملكية كعنصر أساسي في القيادة المالية.
- */
 export default function Dashboard() {
   const { user, profile, role, isUserLoading } = useUser();
   const balance = getBalance(profile);
@@ -21,10 +18,21 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <SovereignLayout activeId="bookings">
-        <div className="min-h-screen p-8 lg:p-20 font-sans bg-sovereign-cinematic">
-          <div className="max-w-6xl mx-auto space-y-20">
-            
-            {/* Sovereign Header */}
+        <div className="min-h-screen p-8 lg:p-20 font-sans relative overflow-hidden">
+          
+          {/* Deep Cinematic Background Integration */}
+          <div className="absolute inset-0 -z-10 opacity-20">
+            <Image 
+              src="https://picsum.photos/seed/desk11/1920/1080"
+              alt="Dashboard Background"
+              fill
+              className="object-cover"
+              data-ai-hint="lawyer desk"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]" />
+          </div>
+
+          <div className="max-w-6xl mx-auto space-y-20 relative z-10">
             <header className="flex flex-col md:flex-row items-center justify-between gap-12">
               <div className="text-center md:text-right space-y-6">
                 <div className="sovereign-badge mx-auto md:mx-0 animate-pulse">
@@ -41,18 +49,13 @@ export default function Dashboard() {
               
               {role === ROLES_LIST.ADMIN && (
                 <Link href="/admin">
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    className="bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 text-primary px-10 py-6 rounded-[2.5rem] font-black text-lg flex items-center gap-5 transition-all shadow-3xl group"
-                  >
-                    <Crown className="h-8 w-8 group-hover:rotate-12 transition-transform" /> 
-                    غرفة القيادة العليا
+                  <motion.button whileHover={{ scale: 1.05 }} className="bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 text-primary px-10 py-6 rounded-[2.5rem] font-black text-lg flex items-center gap-5 transition-all shadow-3xl group">
+                    <Crown className="h-8 w-8 group-hover:rotate-12 transition-transform" /> غرفة القيادة العليا
                   </motion.button>
                 </Link>
               )}
             </header>
 
-            {/* The Royal Wallet Section - قسم المحفظة الملكية */}
             <section className="space-y-8">
                <div className="flex items-center gap-4 px-6">
                   <div className="h-1 w-12 bg-primary rounded-full" />
@@ -61,18 +64,11 @@ export default function Dashboard() {
                <RoyalWallet userRole={role} balance={balance} />
             </section>
 
-            {/* Strategic Gates - البوابات الاستراتيجية */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
               <NavBox href="/bot" title="البوت الذكي" desc="استشارات AI فورية" icon={<Sparkles />} color="blue" />
               <NavBox href="/consultants" title="مجلس الخبراء" desc="اتصال مرئي مشفر" icon={<Activity />} color="violet" />
               <NavBox href="/templates" title="المكتبة الرقمية" desc="وثائق وعقود معتمدة" icon={<FileText />} color="amber" />
             </div>
-
-            {/* Footer Sign-off */}
-            <footer className="text-center pt-20 pb-10 opacity-10">
-               <p className="text-[10px] font-black uppercase tracking-[1em] text-white">king2026 Sovereign Protocol</p>
-            </footer>
-
           </div>
         </div>
       </SovereignLayout>
