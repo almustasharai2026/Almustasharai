@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Send, Loader2, Sparkles, Plus } from "lucide-react";
+import { Mic, Send, Loader2, Sparkles, Plus, Paperclip, Image as ImageIcon, FileText, Zap } from "lucide-react";
 import SovereignLayout from "@/components/SovereignLayout";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 
 /**
- * واجهة الدردشة الجرمية (Device Chat Node).
- * تركز على الهدوء البصري والتفاعل الصوتي.
+ * واجهة الدردشة الجرمية المحدثة (The Sovereign AI Node).
+ * تدمج درج المرفقات وشريط الإدخال المتطور.
  */
 export default function SmartConsultantPage() {
   const { user, profile } = useUser();
@@ -19,6 +19,7 @@ export default function SmartConsultantPage() {
   
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const chatQuery = useMemoFirebase(() => {
@@ -39,6 +40,7 @@ export default function SmartConsultantPage() {
     
     setInputText("");
     setIsTyping(true);
+    setShowAttachments(false);
 
     try {
       await addDoc(collection(db, "users", user.uid, "chatHistory"), {
@@ -89,10 +91,10 @@ export default function SmartConsultantPage() {
                 key={m.id} 
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-start'}`}
+                className={`flex flex-col items-start`}
               >
                 <div className={`p-6 rounded-[2.5rem] max-w-full text-sm leading-relaxed ${
-                  m.role === 'user' ? 'bg-[#252525] text-white italic border border-white/5' : 'bg-transparent text-zinc-300 font-medium'
+                  m.role === 'user' ? 'bg-[#252525] text-white italic border border-white/5 shadow-inner' : 'bg-transparent text-zinc-300 font-medium'
                 }`}>
                   {m.text}
                 </div>
@@ -109,32 +111,62 @@ export default function SmartConsultantPage() {
           )}
         </div>
 
-        {/* شريط الإدخال الجرمي المدمج */}
-        <div className="mt-auto pt-6">
+        {/* محرك الإدخال المتكامل (Integrated Input) */}
+        <div className="mt-auto space-y-4">
+          
+          {/* درج المرفقات (The Attachment Dock) */}
+          <AnimatePresence>
+            {showAttachments && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="flex gap-3 mb-2"
+              >
+                <AttachmentButton icon={<ImageIcon size={18}/>} label="صورة" color="#3b82f6" />
+                <AttachmentButton icon={<FileText size={18}/>} label="PDF" color="#ef4444" />
+                <AttachmentButton icon={<Zap size={18}/>} label="تحليل ذكي" color="#ff5722" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* شريط الإدخال الرئيسي */}
           <div className="bg-[#252525] rounded-[3rem] p-2 flex items-center justify-between border border-white/5 shadow-2xl relative">
-            <button className="w-16 h-16 bg-[#ff5722] rounded-full flex items-center justify-center text-black shadow-xl shadow-[#ff5722]/20 active:scale-90 transition-all">
-              <Mic size={28} fill="currentColor" />
+            <button 
+              onClick={() => setShowAttachments(!showAttachments)}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${showAttachments ? 'bg-zinc-700 text-white rotate-45' : 'text-zinc-500 hover:text-white'}`}
+            >
+              <Paperclip size={24} />
             </button>
             
             <input 
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="اكتب رسالتك.." 
-              className="flex-1 bg-transparent border-none outline-none px-6 text-base font-bold text-white placeholder:text-zinc-600"
+              placeholder="تحدث أو ارفع وثيقتك هنا.." 
+              className="flex-1 bg-transparent border-none outline-none px-4 text-base font-bold text-white placeholder:text-zinc-600"
             />
 
             <button 
               onClick={handleSend}
               disabled={!inputText.trim() || isTyping}
-              className="w-14 h-14 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-all disabled:opacity-20"
+              className="w-16 h-16 bg-[#ff5722] rounded-full flex items-center justify-center text-black shadow-xl shadow-[#ff5722]/20 active:scale-90 transition-all disabled:opacity-20 disabled:grayscale"
             >
-              {isTyping ? <Loader2 className="animate-spin" size={20}/> : <Send size={20} className="rotate-180" />}
+              {isTyping ? <Loader2 className="animate-spin" size={24}/> : <Mic size={28} fill="currentColor" />}
             </button>
           </div>
         </div>
 
       </div>
     </SovereignLayout>
+  );
+}
+
+function AttachmentButton({ icon, label, color }: any) {
+  return (
+    <button className="flex-1 bg-[#252525] py-4 rounded-[2rem] border border-white/5 flex flex-col items-center gap-2 hover:border-white/10 transition-all group shadow-xl">
+      <span style={{ color }} className="group-hover:scale-110 transition-transform">{icon}</span>
+      <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">{label}</span>
+    </button>
   );
 }
