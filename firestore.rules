@@ -6,16 +6,17 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     
     // وظيفة التحقق من الرتبة السيادية (Admin)
+    // يتم التحقق من البريد الإلكتروني المعتمد أو رتبة admin في التوكن
     function isAdmin() { 
       return isSignedIn() && (
         request.auth.token.email == 'bishoysamy390@gmail.com' || 
-        request.auth.token.role == "admin"
+        (request.auth.token.keys().contains('role') && request.auth.token.role == "admin")
       ); 
     }
     
     function isModerator() { 
       return isSignedIn() && (
-        request.auth.token.role == "moderator" || 
+        (request.auth.token.keys().contains('role') && request.auth.token.role == "moderator") || 
         request.auth.token.email.matches('.*moderator.*')
       ); 
     }
@@ -58,20 +59,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Global Moderation System
-    match /system/moderation/forbiddenWords/{id} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin() || isModerator();
-    }
-    
-    // System Core Settings
-    match /system/settings {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    // تصحيح مسار باقات العروض السيادية
-    match /system/config/offers/{offerId} {
+    // Sovereign System Hierarchy (Recursive Access)
+    // استخدام الرموز الارتدادية {document=**} يضمن منح صلاحيات القراءة والقائمة لكافة المسارات الفرعية مثل الباقات والكلمات المحظورة
+    match /system/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
