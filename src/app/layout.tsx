@@ -3,6 +3,7 @@ import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from 'next-themes';
 import { ShieldCheck } from 'lucide-react';
 
@@ -25,17 +26,19 @@ export default function RootLayout({
       </head>
       <body className="antialiased selection:bg-primary/30 bg-black">
         <FirebaseClientProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
-            <div className="bg-indigo-600/10 border-b border-white/5 py-2 px-4 text-center text-[9px] text-indigo-400 font-black flex items-center justify-center gap-3 relative z-[150] backdrop-blur-3xl">
-              <ShieldCheck className="h-3 w-3" />
-              SOVEREIGN ENCRYPTION ACTIVE
-            </div>
-            <Navbar />
-            <div className="pt-20 min-h-screen">
-              {children}
-            </div>
-            <Footer />
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
+              <div className="bg-indigo-600/10 border-b border-white/5 py-2 px-4 text-center text-[9px] text-indigo-400 font-black flex items-center justify-center gap-3 relative z-[150] backdrop-blur-3xl">
+                <ShieldCheck className="h-3 w-3" />
+                SOVEREIGN ENCRYPTION ACTIVE
+              </div>
+              <Navbar />
+              <div className="pt-20 min-h-screen">
+                {children}
+              </div>
+              <Footer />
+            </ThemeProvider>
+          </AuthProvider>
         </FirebaseClientProvider>
       </body>
     </html>
