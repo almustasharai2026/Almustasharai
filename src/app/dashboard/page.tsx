@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser } from "@/firebase";
@@ -10,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { calculateSovereignTrust } from "@/lib/sovereign-trust";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
+/**
+ * لوحة التحكم المركزية (Dashboard).
+ * تم تغليفها بدرع الحماية لضمان خصوصية وسيادة بيانات المواطن.
+ */
 export default function SovereignEcosystemHub() {
   const { user, profile, isUserLoading } = useUser();
 
@@ -24,106 +30,108 @@ export default function SovereignEcosystemHub() {
   };
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans overflow-hidden" dir="rtl">
-      
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-600/5 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-[#02040a] text-white p-6 lg:p-12 font-sans overflow-hidden" dir="rtl">
         
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div className="flex items-center gap-6">
-            <div className="h-20 w-20 rounded-[2rem] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.3)] border border-white/10">
-              <Fingerprint className="h-10 w-10 text-white" />
-            </div>
-            <div>
-              <div className="sovereign-badge mb-2">Sovereign Identity Protocol v4.5</div>
-              <h1 className="text-5xl font-black tracking-tighter text-white">المركز <span className="text-primary">السيادي</span></h1>
-              <p className="text-white/30 text-sm font-bold tracking-[0.3em] mt-1">{displayProfile.digitalId}</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-4">
-            {isUserLoading && <div className="flex items-center gap-2 text-xs text-white/20 animate-pulse"><Activity className="h-3 w-3" /> Syncing...</div>}
-            {profile?.role === 'admin' && (
-              <Link href="/admin">
-                <Button variant="outline" className="h-14 px-8 rounded-2xl border-primary/20 bg-primary/5 text-primary font-black gap-3 hover:bg-primary/10">
-                  <Terminal className="h-5 w-5" /> غرفة القيادة
-                </Button>
-              </Link>
-            )}
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <StatCard label="الرصيد السيادي" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
-          <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} />
-          <StatCard label="حالة الامتثال" value={profile?.isBanned ? "محظور" : "آمن"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} />
-          <StatCard label="المستشارين" value="١٢ خبير" icon={<Gavel className="text-purple-400" />} />
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-600/5 blur-[150px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full" />
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 space-y-10">
-            <h2 className="text-3xl font-black flex items-center gap-4"><Sparkles className="text-primary" /> البوابات النشطة</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              <PortalCard 
-                href="/bot" 
-                title="محرك القرار" 
-                desc="تحليل استراتيجي فوري باستخدام الذكاء الاصطناعي التنبؤي." 
-                icon={<Zap className="h-8 w-8" />} 
-                color="from-amber-500 to-orange-600"
-              />
-              <PortalCard 
-                href="/templates" 
-                title="مكتبة العقود" 
-                desc="توليد وثائق قانونية معتمدة وموثقة سيادياً." 
-                icon={<FileCheck className="h-8 w-8" />} 
-                color="from-blue-500 to-indigo-600"
-              />
-              <PortalCard 
-                href="/consultants" 
-                title="مجلس الخبراء" 
-                desc="اتصال فيديو مباشر ومشفر مع كبار المستشارين." 
-                icon={<Gavel className="h-8 w-8" />} 
-                color="from-purple-500 to-pink-600"
-              />
-              <PortalCard 
-                href="/pricing" 
-                title="شحن الرصيد" 
-                desc="إدارة باقات الوقت والوحدات المالية." 
-                icon={<Wallet className="h-8 w-8" />} 
-                color="from-emerald-500 to-teal-600"
-              />
+        <div className="max-w-7xl mx-auto relative z-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div className="flex items-center gap-6">
+              <div className="h-20 w-20 rounded-[2rem] bg-indigo-600 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.3)] border border-white/10">
+                <Fingerprint className="h-10 w-10 text-white" />
+              </div>
+              <div>
+                <div className="sovereign-badge mb-2">Sovereign Identity Protocol v4.5</div>
+                <h1 className="text-5xl font-black tracking-tighter text-white">المركز <span className="text-primary">السيادي</span></h1>
+                <p className="text-white/30 text-sm font-bold tracking-[0.3em] mt-1">{displayProfile.digitalId}</p>
+              </div>
             </div>
+            
+            <div className="flex gap-4">
+              {isUserLoading && <div className="flex items-center gap-2 text-xs text-white/20 animate-pulse"><Activity className="h-3 w-3" /> Syncing...</div>}
+              {profile?.role === 'admin' && (
+                <Link href="/admin">
+                  <Button variant="outline" className="h-14 px-8 rounded-2xl border-primary/20 bg-primary/5 text-primary font-black gap-3 hover:bg-primary/10">
+                    <Terminal className="h-5 w-5" /> غرفة القيادة
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <StatCard label="الرصيد السيادي" value={`${displayProfile.balance} EGP`} icon={<Wallet className="text-emerald-400" />} />
+            <StatCard label="معدل الموثوقية" value={`${displayProfile.trustScore}%`} icon={<Shield className="text-indigo-400" />} progress={displayProfile.trustScore} />
+            <StatCard label="حالة الامتثال" value={profile?.isBanned ? "محظور" : "آمن"} icon={<Lock className={profile?.isBanned ? "text-red-400" : "text-amber-400"} />} />
+            <StatCard label="المستشارين" value="١٢ خبير" icon={<Gavel className="text-purple-400" />} />
           </div>
 
-          <div className="lg:col-span-4 space-y-8">
-            <Card className="glass-cosmic border-none rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-10 opacity-5"><Activity className="h-32 w-32" /></div>
-               <h3 className="text-2xl font-black mb-8 border-b border-white/5 pb-4">حالة النظام</h3>
-               <div className="space-y-6">
-                  <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.05] transition-all">
-                     <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:text-primary"><Activity className="h-5 w-5" /></div>
-                     <div>
-                        <p className="text-sm font-bold text-white/80">Firebase Connectivity</p>
-                        <p className="text-[10px] text-emerald-400 font-black uppercase mt-1">Sovereign Stable</p>
-                     </div>
-                  </div>
-                  <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.05] transition-all">
-                     <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:text-primary"><Shield className="h-5 w-5" /></div>
-                     <div>
-                        <p className="text-sm font-bold text-white/80">Sovereign Shield</p>
-                        <p className="text-[10px] text-emerald-400 font-black uppercase mt-1">Active & Protected</p>
-                     </div>
-                  </div>
-               </div>
-            </Card>
+          <div className="grid lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-8 space-y-10">
+              <h2 className="text-3xl font-black flex items-center gap-4"><Sparkles className="text-primary" /> البوابات النشطة</h2>
+              <div className="grid md:grid-cols-2 gap-8">
+                <PortalCard 
+                  href="/bot" 
+                  title="محرك القرار" 
+                  desc="تحليل استراتيجي فوري باستخدام الذكاء الاصطناعي التنبؤي." 
+                  icon={<Zap className="h-8 w-8" />} 
+                  color="from-amber-500 to-orange-600"
+                />
+                <PortalCard 
+                  href="/templates" 
+                  title="مكتبة العقود" 
+                  desc="توليد وثائق قانونية معتمدة وموثقة سيادياً." 
+                  icon={<FileCheck className="h-8 w-8" />} 
+                  color="from-blue-500 to-indigo-600"
+                />
+                <PortalCard 
+                  href="/consultants" 
+                  title="مجلس الخبراء" 
+                  desc="اتصال فيديو مباشر ومشفر مع كبار المستشارين." 
+                  icon={<Gavel className="h-8 w-8" />} 
+                  color="from-purple-500 to-pink-600"
+                />
+                <PortalCard 
+                  href="/pricing" 
+                  title="شحن الرصيد" 
+                  desc="إدارة باقات الوقت والوحدات المالية." 
+                  icon={<Wallet className="h-8 w-8" />} 
+                  color="from-emerald-500 to-teal-600"
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 space-y-8">
+              <Card className="glass-cosmic border-none rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden">
+                 <div className="absolute top-0 right-0 p-10 opacity-5"><Activity className="h-32 w-32" /></div>
+                 <h3 className="text-2xl font-black mb-8 border-b border-white/5 pb-4">حالة النظام</h3>
+                 <div className="space-y-6">
+                    <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.05] transition-all">
+                       <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:text-primary"><Activity className="h-5 w-5" /></div>
+                       <div>
+                          <p className="text-sm font-bold text-white/80">Firebase Connectivity</p>
+                          <p className="text-[10px] text-emerald-400 font-black uppercase mt-1">Sovereign Stable</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.05] transition-all">
+                       <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:text-primary"><Shield className="h-5 w-5" /></div>
+                       <div>
+                          <p className="text-sm font-bold text-white/80">Sovereign Shield</p>
+                          <p className="text-[10px] text-emerald-400 font-black uppercase mt-1">Active & Protected</p>
+                       </div>
+                    </div>
+                 </div>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
 
