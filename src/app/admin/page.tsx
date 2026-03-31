@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  Users, Gavel, ShieldAlert, Trash2, Terminal, Wallet, X, CreditCard, Lock, Plus, Activity, TrendingUp, DollarSign, Loader2, ShieldCheck, UserMinus, UserPlus, Settings
+  Users, Gavel, ShieldAlert, Trash2, Terminal, Wallet, X, CreditCard, Lock, Plus, Activity, Loader2, ShieldCheck
 } from "lucide-react";
 import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -15,12 +14,13 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import SovereignButton from "@/components/SovereignButton";
+import { banSovereignUser } from "@/lib/sovereign-moderation";
 
 type AdminTab = "users" | "finance" | "moderation" | "consultants";
 
 /**
  * غرفة القيادة العليا (The Supreme Command Center).
- * مركز الإدارة والرقابة المطلقة لمالك النظام.
+ * مركز الإدارة والرقابة المطلقة لمالك النظام king2026.
  */
 export default function MasterCommandPanel() {
   const { user, role } = useUser();
@@ -38,13 +38,10 @@ export default function MasterCommandPanel() {
   const consultantsQuery = useMemoFirebase(() => db ? collection(db, "consultants") : null, [db]);
   const { data: allConsultants, isLoading: consultantsLoading } = useCollection(consultantsQuery);
 
-  const payReqQuery = useMemoFirebase(() => db ? query(collection(db, "paymentRequests"), orderBy("createdAt", "desc")) : null, [db]);
-  const { data: paymentRequests, isLoading: requestsLoading } = useCollection(payReqQuery);
-
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
-  // حماية الحدود السيادية: لا يفتح إلا للمالك
+  // حماية الحدود السيادية: لا يفتح إلا للمالك king2026
   if (user?.email !== "bishoysamy390@gmail.com") {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-950 text-red-500 font-black gap-8">
@@ -55,9 +52,9 @@ export default function MasterCommandPanel() {
   }
 
   const handleAddBalance = async (userId: string) => {
-    if (chargeAmount <= 0) return;
+    if (chargeAmount <= 0 || !db) return;
     try {
-      await updateDoc(doc(db!, "users", userId), { 
+      await updateDoc(doc(db, "users", userId), { 
         balance: increment(chargeAmount) 
       });
       toast({ title: "تم تحديث الرصيد", description: `تمت إضافة ${chargeAmount} EGP للمواطن.` });
@@ -68,19 +65,17 @@ export default function MasterCommandPanel() {
     }
   };
 
-  const handleBanUser = async (userId: string, currentStatus: boolean) => {
-    try {
-      await updateDoc(doc(db!, "users", userId), { isBanned: !currentStatus });
-      toast({ title: currentStatus ? "تم فك الحظر" : "تم الحظر السيادي بنجاح" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ في الصلاحيات" });
-    }
+  const handleBanToggle = (userId: string, currentStatus: boolean) => {
+    if (!db) return;
+    // استدعاء بروتوكول الحظر السيادي الموحد
+    banSovereignUser(db, userId, !currentStatus);
+    toast({ title: currentStatus ? "تم فك الحظر" : "تم الحظر السيادي بنجاح" });
   };
 
   const handleAddForbiddenWord = async () => {
-    if (!newWord.trim()) return;
+    if (!newWord.trim() || !db) return;
     try {
-      await addDoc(collection(db!, "system", "moderation", "forbiddenWords"), {
+      await addDoc(collection(db, "system", "moderation", "forbiddenWords"), {
         word: newWord.trim(),
         addedAt: new Date().toISOString()
       });
@@ -102,14 +97,14 @@ export default function MasterCommandPanel() {
            </div>
            <div>
               <h1 className="text-3xl font-black text-primary tracking-tighter">غرفة القيادة <span className="text-accent">العليا</span></h1>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Supreme Leadership Console v4.5</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Supreme Leadership Console v4.5 | Admin: king2026</p>
            </div>
         </div>
         
         <div className="flex flex-wrap gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-border/50 shadow-sm">
           <TabBtn active={activeTab === "users"} onClick={() => setActiveTab("users")} icon={<Users className="h-4 w-4" />} label="المواطنون" />
           <TabBtn active={activeTab === "finance"} onClick={() => setActiveTab("finance")} icon={<Wallet className="h-4 w-4" />} label="إضافة رصيد" />
-          <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert className="h-4 w-4" />} label="تعديل المحتوى" />
+          <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert className="h-4 w-4" />} label="جهاز الرقابة" />
           <TabBtn active={activeTab === "consultants"} onClick={() => setActiveTab("consultants")} icon={<Gavel className="h-4 w-4" />} label="الخبراء" />
         </div>
       </header>
@@ -117,7 +112,6 @@ export default function MasterCommandPanel() {
       <main className="max-w-5xl mx-auto space-y-10">
         
         <AnimatePresence mode="wait">
-          {/* User Management Tab */}
           {activeTab === "users" && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
@@ -150,7 +144,7 @@ export default function MasterCommandPanel() {
                               <Button 
                                 variant={u.isBanned ? "destructive" : "outline"} 
                                 size="sm"
-                                onClick={() => handleBanUser(u.id, u.isBanned)}
+                                onClick={() => handleBanToggle(u.id, u.isBanned)}
                                 className="rounded-xl h-10 px-4 text-[10px] font-black uppercase"
                               >
                                 {u.isBanned ? "فك الحظر" : "حظر سيادي"}
@@ -164,7 +158,6 @@ export default function MasterCommandPanel() {
             </motion.div>
           )}
 
-          {/* Finance / Add Credit Tab */}
           {activeTab === "finance" && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
@@ -209,15 +202,14 @@ export default function MasterCommandPanel() {
             </motion.div>
           )}
 
-          {/* Moderation / Content Edit Tab */}
           {activeTab === "moderation" && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
                   <CardHeader className="bg-slate-900 text-white p-8">
                      <CardTitle className="text-xl font-black flex items-center gap-3">
-                       <ShieldAlert className="h-6 w-6 text-accent" /> تعديل محتوى الرقابة
+                       <ShieldAlert className="h-6 w-6 text-accent" /> جهاز الرقابة اللحظي
                      </CardTitle>
-                     <CardDescription className="text-white/40">تحديث الكلمات المحظورة التي يراقبها الدرع الواقي اللحظي.</CardDescription>
+                     <CardDescription className="text-white/40">تحديث الكلمات المحظورة التي يراقبها الدرع الواقي اللحظي في المحادثات المباشرة.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-8 space-y-8">
                     <div className="flex gap-2">
@@ -236,7 +228,7 @@ export default function MasterCommandPanel() {
                         {forbiddenWords?.map(fw => (
                           <Badge key={fw.id} className="bg-white dark:bg-slate-800 text-primary border border-border px-3 py-1.5 rounded-lg flex items-center gap-2 group transition-all">
                             {fw.word}
-                            <button onClick={() => deleteDoc(doc(db!, "system/moderation/forbiddenWords", fw.id))} className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => deleteDoc(doc(db!, "system", "moderation", "forbiddenWords", fw.id))} className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                               <X className="h-3 w-3" />
                             </button>
                           </Badge>
@@ -249,7 +241,6 @@ export default function MasterCommandPanel() {
             </motion.div>
           )}
 
-          {/* Consultants Tab */}
           {activeTab === "consultants" && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
