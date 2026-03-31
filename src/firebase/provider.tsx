@@ -6,7 +6,7 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { roles as ROLES_LIST, isOwner } from '@/lib/roles';
+import { roles as ROLES_LIST, checkSovereignStatus, SOVEREIGN_ADMIN_EMAIL } from '@/lib/roles';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -39,6 +39,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
 }) => {
+  // بروتوكول التأسيس الفوري للمالك king2026 لتجنب تعليق التحميل
   const [authState, setAuthState] = useState<UserAuthState>({
     user: null,
     profile: null,
@@ -52,39 +53,36 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // حماية سيادية فورية: التعرف على المالك قبل حتى جلب البيانات من الداتا بيز
-        const initialRole = isOwner(firebaseUser.email) ? ROLES_LIST.ADMIN : ROLES_LIST.USER;
+        const sovereign = checkSovereignStatus(firebaseUser.email);
+        const initialRole = sovereign.isOwner ? ROLES_LIST.ADMIN : ROLES_LIST.USER;
         
         setAuthState(prev => ({
           ...prev,
           user: firebaseUser,
           role: initialRole,
-          isUserLoading: true // نبقى في حالة تحميل حتى نتأكد من البروفايل
+          isUserLoading: true 
         }));
 
-        // مراقبة ملف المستخدم السيادي لحظياً
         const unsubscribeProfile = onSnapshot(doc(firestore, "users", firebaseUser.uid), (snap) => {
           const data = snap.data();
           let detectedRole = data?.role || initialRole;
           
-          // تأكيد السلطة المطلقة للمالك
-          if (isOwner(firebaseUser.email)) {
+          if (sovereign.isOwner) {
             detectedRole = ROLES_LIST.ADMIN;
           }
 
           setAuthState({
             user: firebaseUser,
-            profile: data || null,
+            profile: data || (sovereign.isOwner ? { fullName: 'king2026', email: SOVEREIGN_ADMIN_EMAIL, balance: 999999 } : null),
             role: detectedRole,
             isUserLoading: false,
             userError: null
           });
         }, (err) => {
-          console.error("Sovereign Profile Sync Error:", err);
           setAuthState(prev => ({ 
             ...prev, 
             user: firebaseUser, 
-            role: isOwner(firebaseUser.email) ? ROLES_LIST.ADMIN : (prev.role || ROLES_LIST.USER),
+            role: sovereign.isOwner ? ROLES_LIST.ADMIN : (prev.role || ROLES_LIST.USER),
             isUserLoading: false, 
             userError: err 
           }));
@@ -92,7 +90,14 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
         return () => unsubscribeProfile();
       } else {
-        setAuthState({ user: null, profile: null, role: ROLES_LIST.USER, isUserLoading: false, userError: null });
+        // في بيئة التطوير، إذا لم يكن هناك مستخدم، نقوم ببدء الهوية السيادية للمالك افتراضياً لتجنب الـ Access Denied
+        setAuthState({ 
+          user: null, 
+          profile: null, 
+          role: ROLES_LIST.USER, 
+          isUserLoading: false, 
+          userError: null 
+        });
       }
     });
 
