@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser } from "@/firebase";
@@ -10,14 +9,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
+import { calculateSovereignTrust } from "@/lib/sovereign-trust";
 
 export default function SovereignEcosystemHub() {
   const { user, profile, isUserLoading } = useUser();
 
-  // بيانات افتراضية لضمان عمل الواجهة حتى في وضع الأمان أو التحميل
-  const displayProfile = profile || { 
-    balance: user ? "..." : 0, 
-    trustScore: 100, 
+  // حساب معدل الموثوقية ديناميكياً باستخدام البروتوكول السيادي
+  const trustScore = profile ? calculateSovereignTrust(profile) : 100;
+
+  const displayProfile = {
+    balance: profile?.balance ?? (user ? "..." : 0),
+    trustScore: trustScore,
     digitalId: user ? `SOV-${user.uid.substring(0,8).toUpperCase()}` : "GUEST-ID" 
   };
 
@@ -127,13 +129,13 @@ export default function SovereignEcosystemHub() {
 
 function StatCard({ label, value, icon, progress }: any) {
   return (
-    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8 group hover:scale-[1.05] transition-all duration-500">
+    <Card className="glass-cosmic border-none rounded-[2.5rem] p-8 group hover:scale-[1.05] transition-all duration-500 shadow-xl">
       <div className="flex justify-between items-start mb-6">
         <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center shadow-inner group-hover:bg-white/10 transition-colors border border-white/5">{icon}</div>
       </div>
       <p className="text-[10px] text-white/30 font-black uppercase mb-1 tracking-widest">{label}</p>
       <h4 className="text-3xl font-black text-white tabular-nums tracking-tighter">{value}</h4>
-      {progress !== undefined && <Progress value={progress} className="h-1.5 mt-6 bg-white/5" />}
+      {progress !== undefined && <Progress value={progress} className="h-1.5 mt-6 bg-white/5 shadow-inner" />}
     </Card>
   );
 }

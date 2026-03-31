@@ -10,6 +10,9 @@
         "fullName": { "type": "string" },
         "role": { "type": "string", "enum": ["user", "consultant", "admin"] },
         "balance": { "type": "number", "default": 50 },
+        "trustScore": { "type": "number", "default": 50 },
+        "completedSessions": { "type": "number", "default": 0 },
+        "reports": { "type": "number", "default": 0 },
         "isBanned": { "type": "boolean", "default": false },
         "createdAt": { "type": "string", "format": "date-time" }
       },
