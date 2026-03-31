@@ -33,6 +33,11 @@ service cloud.firestore {
       // المالك فقط يمكنه تعديل الرصيد والرتبة وحالة الحظر
       allow update: if isAdmin() || (isOwner(userId) && isNotBanned() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
       allow delete: if isAdmin();
+
+      // 🔥 بروتوكول سجل المحادثات السيادي
+      match /chatHistory/{msgId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
     }
 
     // Consultants Registry
