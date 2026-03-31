@@ -4,27 +4,50 @@
 
 @layer base {
   :root {
-    /* Sovereign Luxury Palette */
+    /* Professional Light Mode - Clean Legal Look */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221.2 83.2% 53.3%; /* Professional Blue */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 43 74% 49%; /* Sovereign Gold */
+    --accent-foreground: 222 47% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    /* Sovereign Dark Mode - Deep Professional Hub */
     --background: 222 47% 4%;
     --foreground: 210 40% 98%;
     --card: 222 47% 6%;
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 4%;
     --popover-foreground: 210 40% 98%;
-    --primary: 43 74% 49%; /* Royal Gold */
-    --primary-foreground: 222 47% 4%;
-    --secondary: 222 30% 12%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222 47% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 215 16% 47%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
     --accent: 43 74% 49%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 222 30% 15%;
-    --input: 222 30% 15%;
-    --ring: 43 74% 49%;
-    --radius: 1.25rem;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -33,9 +56,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Cairo', sans-serif;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(235,67%,15%,0.15) 0, transparent 50%), 
-      radial-gradient(at 100% 100%, hsla(43,74%,49%,0.05) 0, transparent 50%);
   }
 }
 
@@ -44,16 +64,9 @@
     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-amber-200 to-primary;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary;
   }
   .btn-primary {
-    @apply bg-gradient-to-r from-primary to-amber-600 text-primary-foreground font-black shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all;
-  }
-  .float-sovereign {
-    animation: float 4s ease-in-out infinite;
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(2deg); }
+    @apply bg-gradient-to-r from-primary to-blue-700 text-white font-black shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all;
   }
 }
