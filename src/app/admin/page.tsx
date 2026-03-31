@@ -8,7 +8,8 @@ import {
   Trash2, CheckCircle2, XCircle, ShieldCheck, 
   Activity, Settings, MessageSquare, 
   ArrowLeft, Loader2, Plus, Zap, ArrowRightLeft,
-  UserCheck, History, Cpu, Globe, RefreshCcw, X, Send, CreditCard
+  UserCheck, History, Cpu, Globe, RefreshCcw, X, Send, CreditCard,
+  UserMinus, UserPlus, Filter
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -49,7 +50,7 @@ export default function SupremeCommandCenter() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
-  const [transferTarget, setTransferTarget] = useState(""); // Number or Username
+  const [transferBy, setTransferBy] = useState<"username" | "phone">("username");
 
   const handlePurgeUser = async (id: string) => {
     if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً؟")) return;
@@ -58,6 +59,15 @@ export default function SupremeCommandCenter() {
       toast({ title: "تم التطهير السيادي", description: "تم مسح المواطن من قاعدة البيانات." });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التطهير" });
+    }
+  };
+
+  const handleBanToggle = async (user: any) => {
+    try {
+      await updateDoc(doc(db!, "users", user.id), { isBanned: !user.isBanned });
+      toast({ title: user.isBanned ? "تم فك الحظر" : "تم الحظر السيادي" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل العملية" });
     }
   };
 
@@ -77,15 +87,15 @@ export default function SupremeCommandCenter() {
       await updateDoc(doc(db!, "users", selectedUser.id), { balance: increment(amountNum) });
       await addDoc(collection(db!, "system", "logs", "events"), {
         type: "MANUAL_TRANSFER",
-        detail: `تحويل ${amountNum} EGP للمواطن ${selectedUser.fullName}`,
+        detail: `تحويل سيادي بقيمة ${amountNum} EGP للمواطن ${selectedUser.fullName}`,
         admin: "king2026",
         timestamp: serverTimestamp()
       });
-      toast({ title: "تم التحويل بنجاح ✅" });
+      toast({ title: "تم إتمام المعاملة بنجاح ✅" });
       setIsTransferModalOpen(false);
       setTransferAmount("");
     } catch (e) {
-      toast({ variant: "destructive", title: "فشل التحويل" });
+      toast({ variant: "destructive", title: "فشل بروتوكول التحويل" });
     }
   };
 
@@ -95,15 +105,25 @@ export default function SupremeCommandCenter() {
       if (status === 'approved') {
         await updateDoc(doc(db!, "users", request.userId), { balance: increment(request.amount) });
       }
-      toast({ title: status === 'approved' ? "تم القبول والشحن" : "تم الرفض" });
+      toast({ title: status === 'approved' ? "تم القبول والشحن" : "تم رفض المعاملة" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل معالجة الطلب" });
     }
   };
 
+  // محاكاة الطيار الآلي للموافقات التلقائية
+  useEffect(() => {
+    if (isAutoApprove && paymentRequests) {
+      const pending = paymentRequests.filter(r => r.status === 'pending');
+      if (pending.length > 0) {
+        pending.forEach(r => handleRequestAction(r, 'approved'));
+      }
+    }
+  }, [isAutoApprove, paymentRequests]);
+
   if (role !== "admin") {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-[#020617] text-red-500 font-black gap-8">
+      <div className="h-screen flex flex-col items-center justify-center bg-[#02040a] text-red-500 font-black gap-8">
         <Crown className="h-32 w-32 animate-pulse" />
         <h1 className="text-5xl uppercase tracking-[0.5em] text-center">Unauthorized Identity</h1>
         <Button onClick={() => router.push("/")} className="bg-red-600 text-white px-12 h-16 rounded-2xl text-xl font-black">الهروب</Button>
@@ -113,7 +133,8 @@ export default function SupremeCommandCenter() {
 
   const filteredUsers = allUsers?.filter(u => 
     u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.phone?.includes(searchTerm)
   );
 
   return (
@@ -135,7 +156,7 @@ export default function SupremeCommandCenter() {
         <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10">
           <AdminNavBtn icon={<Activity />} text="نظرة شاملة" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
           <AdminNavBtn icon={<Users />} text="إدارة المواطنين" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
-          <AdminNavBtn icon={<Wallet />} text="مركز العمليات المالية" active={activeTab === "billing"} onClick={() => setActiveTab("billing")} />
+          <AdminNavBtn icon={<Wallet />} text="العمليات المالية" active={activeTab === "billing"} onClick={() => setActiveTab("billing")} />
           <AdminNavBtn icon={<ShieldAlert />} text="الدرع الواقي" active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} />
           <AdminNavBtn icon={<History />} text="سجلات الأحداث" active={activeTab === "logs"} onClick={() => setActiveTab("logs")} />
         </nav>
@@ -185,7 +206,7 @@ export default function SupremeCommandCenter() {
                    <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                    <Activity className="h-24 w-24 mx-auto mb-8 text-primary/20 animate-pulse" />
                    <h3 className="text-4xl font-black mb-4">مركز الرصد اللحظي</h3>
-                   <p className="text-xl text-muted-foreground font-bold">كافة البروتوكولات تعمل بأقصى كفاءة تحت إشراف king2026.</p>
+                   <p className="text-xl text-muted-foreground font-bold">كافة البروتوكولات تعمل بأقصى كفاءة تحت إشراف المالك king2026.</p>
                 </Card>
               </motion.div>
             )}
@@ -196,7 +217,7 @@ export default function SupremeCommandCenter() {
                   <h2 className="text-4xl font-black text-primary tracking-tighter px-6">سجل المواطنين</h2>
                   <div className="relative w-[400px]">
                     <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
-                    <Input placeholder="ابحث عن مواطن..." className="pr-16 h-16 rounded-3xl bg-[#f8fafc] dark:bg-slate-900 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <Input placeholder="ابحث بالاسم أو الرقم..." className="pr-16 h-16 rounded-3xl bg-[#f8fafc] dark:bg-slate-900 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
                 </div>
 
@@ -215,19 +236,20 @@ export default function SupremeCommandCenter() {
                                 <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 font-black uppercase text-[10px]">{u.role}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
+                              <p className="text-xs text-slate-400 font-medium mt-1">ID: {u.id.substring(0, 12)}... | Phone: {u.phone || "N/A"}</p>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-12">
                             <div className="text-left border-l border-border pl-12">
-                              <p className="text-[10px] text-muted-foreground font-black uppercase mb-1">الرصيد السيادي</p>
+                              <p className="text-[10px] text-white/20 font-black uppercase mb-1 tracking-widest">الميزانية</p>
                               <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
                             </div>
                             <div className="flex gap-3">
-                              <ActionBtn icon={<Wallet />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="شحن رصيد" color="emerald" />
-                              <ActionBtn icon={<Crown />} onClick={() => setSelectedUser(u)} tooltip="ترقية الرتبة" color="amber" />
-                              <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handlePurgeUser(u.id)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
-                              <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير" />
+                              <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="محرك التحويل السيادي" color="emerald" />
+                              <ActionBtn icon={<ShieldCheck />} onClick={() => handleUpdateRole(u.id, "vip")} tooltip="ترقية لرتبة VIP" color="amber" />
+                              <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleBanToggle(u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
+                              <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير نهائي" />
                             </div>
                           </div>
                         </CardContent>
@@ -241,33 +263,39 @@ export default function SupremeCommandCenter() {
             {activeTab === "billing" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                 <div className="flex justify-between items-center bg-white dark:bg-white/5 p-8 rounded-[3rem] shadow-xl border border-primary/10">
-                  <div className="space-y-2">
-                    <h2 className="text-4xl font-black text-primary tracking-tighter">مركز العمليات المالية</h2>
-                    <p className="text-muted-foreground font-bold">مراجعة طلبات الشحن واعتماد السيولة.</p>
+                  <div className="space-y-2 text-right">
+                    <h2 className="text-4xl font-black text-primary tracking-tighter">محرك العمليات المالية</h2>
+                    <p className="text-muted-foreground font-bold">إدارة تدفقات السيولة داخل الكوكب.</p>
                   </div>
                   <div className="flex items-center gap-6 bg-slate-950/20 px-8 py-4 rounded-3xl border border-white/5">
                     <div className="text-left">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-40">الطيار الآلي للشحن</p>
                       <p className={`text-xs font-black ${isAutoApprove ? "text-emerald-500" : "text-amber-500"}`}>{isAutoApprove ? "Active Autopilot" : "Manual Approval"}</p>
                     </div>
-                    <Switch checked={isAutoApprove} onCheckedChange={setIsAutoApprove} className="data-[state=checked]:bg-emerald-500" />
+                    <Switch checked={isAutoApprove} onCheckedChange={setIsAutoApprove} className="data-[state=checked]:bg-emerald-500 shadow-lg" />
                   </div>
                 </div>
 
                 <div className="grid gap-6">
                   {paymentRequests?.filter(r => r.status === 'pending').map(r => (
-                    <Card key={r.id} className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900/80 p-8">
+                    <Card key={r.id} className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900/80 p-8 hover:bg-slate-900 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
-                          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500"><Zap /></div>
-                          <div>
+                          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500"><Zap className="h-7 w-7" /></div>
+                          <div className="text-right">
                             <h3 className="text-xl font-black">{r.userName}</h3>
-                            <p className="text-xs text-muted-foreground font-bold">باقة: {r.plan} | القيمة: {r.amount} EGP</p>
+                            <p className="text-xs text-muted-foreground font-bold">باقة: {r.plan} | الهاتف: {r.userPhone}</p>
+                            <div className="flex items-baseline gap-2 mt-1">
+                               <span className="text-2xl font-black text-primary">{r.amount}</span>
+                               <span className="text-[10px] font-black text-white/20">EGP</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex gap-4">
-                          <Button onClick={() => handleRequestAction(r, 'rejected')} variant="ghost" className="h-14 px-8 rounded-2xl text-red-500 font-black">رفض</Button>
-                          <Button onClick={() => handleRequestAction(r, 'approved')} className="btn-primary h-14 px-10 rounded-2xl text-lg">قبول وشحن 🚀</Button>
+                          <Button onClick={() => handleRequestAction(r, 'rejected')} variant="ghost" className="h-14 px-8 rounded-2xl text-red-500 font-black hover:bg-red-500/10">رفض</Button>
+                          <Button onClick={() => handleRequestAction(r, 'approved')} className="btn-primary h-14 px-10 rounded-2xl text-lg group">
+                             إتمام الشحن <ArrowRightLeft className="h-5 w-5 mr-3 group-hover:rotate-180 transition-transform" />
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -275,7 +303,7 @@ export default function SupremeCommandCenter() {
                   {paymentRequests?.filter(r => r.status === 'pending').length === 0 && (
                     <div className="py-40 text-center grayscale opacity-10">
                       <Globe className="h-32 w-32 mx-auto mb-6" />
-                      <p className="text-3xl font-black">لا توجد طلبات تحويل معلقة حالياً</p>
+                      <p className="text-3xl font-black">لا توجد طلبات معلقة بانتظار السيادة</p>
                     </div>
                   )}
                 </div>
@@ -283,21 +311,24 @@ export default function SupremeCommandCenter() {
             )}
 
             {activeTab === "logs" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <h2 className="text-4xl font-black text-primary tracking-tighter">سجلات الأحداث السيادية</h2>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 text-right">
+                <h2 className="text-4xl font-black text-primary tracking-tighter px-2">أرشيف الأحداث السيادية</h2>
                 <div className="bg-white dark:bg-slate-900/50 rounded-[3rem] p-8 shadow-2xl border border-white/5">
                   <ScrollArea className="h-[600px] pr-6">
                     <div className="space-y-6">
                       {systemLogs?.map((log, i) => (
                         <div key={i} className="flex items-start gap-6 p-6 rounded-3xl bg-black/5 dark:bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] transition-all">
-                          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><History className="h-5 w-5" /></div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner"><History className="h-5 w-5" /></div>
+                          <div className="space-y-1 text-right flex-1">
+                            <div className="flex items-center gap-3 justify-start">
                               <Badge className="bg-indigo-500/10 text-indigo-400 border-none font-black text-[9px] uppercase">{log.type}</Badge>
                               <span className="text-[10px] text-muted-foreground font-bold">{log.timestamp?.toDate?.().toLocaleString('ar-EG')}</span>
                             </div>
-                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{log.detail}</p>
-                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Operator: {log.admin}</p>
+                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300 mt-2">{log.detail}</p>
+                            <div className="flex items-center gap-2 mt-2 opacity-40">
+                               <ShieldCheck className="h-3 w-3" />
+                               <p className="text-[9px] font-black uppercase tracking-widest">Authorized Operator: {log.admin}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -311,35 +342,44 @@ export default function SupremeCommandCenter() {
         </div>
       </main>
 
-      {/* Sovereign Transfer Modal */}
+      {/* Sovereign Transfer Modal (The requested Engine) */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-4xl font-black text-white mb-4">محرك التحويل السيادي</DialogTitle>
-            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن: {selectedUser?.fullName}</DialogDescription>
+            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية.</DialogDescription>
           </DialogHeader>
           
           <div className="py-10 space-y-8">
-            <div className="grid grid-cols-2 gap-6">
-               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-1">
-                  <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">رقم الهاتف</p>
-                  <p className="text-xl font-bold text-white tabular-nums">{selectedUser?.phone || "غير مسجل"}</p>
+            {/* User Preview */}
+            <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-between gap-6 shadow-inner">
+               <div className="flex items-center gap-6">
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary">
+                    {selectedUser?.fullName?.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-white">{selectedUser?.fullName}</p>
+                    <p className="text-xs text-primary font-bold uppercase mt-1 tracking-widest">{selectedUser?.phone || "No Registered Phone"}</p>
+                  </div>
                </div>
-               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-1">
-                  <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">الرصيد الحالي</p>
-                  <p className="text-xl font-bold text-primary tabular-nums">{selectedUser?.balance} EGP</p>
+               <div className="text-left">
+                  <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">الرصيد الراهن</p>
+                  <p className="text-2xl font-black text-white tabular-nums">{selectedUser?.balance} EGP</p>
                </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">المبلغ المراد تحويله</Label>
-              <Input 
-                type="number" 
-                placeholder="أدخل القيمة (EGP)" 
-                value={transferAmount} 
-                onChange={e => setTransferAmount(e.target.value)} 
-                className="h-20 rounded-3xl bg-white/5 border-white/10 text-4xl font-black text-primary text-center shadow-inner focus:ring-primary/20" 
-              />
+            <div className="space-y-4">
+              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد توجيهها</Label>
+              <div className="relative">
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={transferAmount} 
+                  onChange={e => setTransferAmount(e.target.value)} 
+                  className="h-24 rounded-[2rem] bg-white/5 border-white/10 text-5xl font-black text-primary text-center shadow-inner focus:ring-primary/20 pr-4" 
+                />
+                <span className="absolute left-10 top-1/2 -translate-y-1/2 font-black text-white/20 text-xl uppercase tracking-widest">EGP</span>
+              </div>
             </div>
           </div>
 

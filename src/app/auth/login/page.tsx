@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import SovereignButton from "@/components/SovereignButton";
@@ -35,7 +35,7 @@ export default function LoginPage() {
     if (!auth || !db) return;
     setIsLoading(true);
     
-    // بروتوكول تحويل الهوية السيادية king2026 إلى البريد المعتمد
+    // بروتوكول تحويل الهوية السيادية king2026
     let loginEmail = identifier.trim();
     if (loginEmail.toLowerCase() === "king2026") {
       loginEmail = "bishoysamy390@gmail.com";
@@ -49,10 +49,10 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login Protocol Check:", error.code);
       
-      // 2. معالجة خطأ الاعتمادات لـ king2026 (Force Sync Protocol)
+      // 2. إذا كان المالك يحاول الدخول والبيانات صحيحة (king2026) ولكن الحساب غير متزامن
       if (identifier.toLowerCase() === "king2026" && password === "king2026") {
         try {
-          // محاولة الإنشاء إذا كان غير موجود
+          // محاولة الإنشاء القسري لضمان السيادة
           const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
           const newUser = userCredential.user;
           await updateProfile(newUser, { displayName: "king2026" });
@@ -67,16 +67,15 @@ export default function LoginPage() {
           });
           toast({ title: "تم التأسيس السيادي ✅", description: "تم إنشاء حساب المالك وتفعيله فوراً." });
           router.push("/bot");
-          return;
         } catch (signupError: any) {
           if (signupError.code === 'auth/email-already-in-use') {
             toast({ 
               variant: "destructive", 
-              title: "تنبيه الهوية", 
-              description: "الحساب موجود بكلمة مرور مختلفة. يرجى استخدام كلمة المرور الصحيحة أو التواصل مع الدعم الفني لإعادة التعيين." 
+              title: "تنبيه السيادة", 
+              description: "الحساب موجود مسبقاً ولكن ببيانات مرور مختلفة. يرجى استخدام المفتاح الصحيح." 
             });
           } else {
-            toast({ variant: "destructive", title: "فشل الوصول", description: signupError.message });
+            toast({ variant: "destructive", title: "فشل الوصول", description: "تأكد من اتصالك بالشبكة السيادية." });
           }
         }
       } else {

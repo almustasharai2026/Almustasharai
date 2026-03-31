@@ -36,7 +36,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // التحقق الفوري من الهوية السيادية king2026
+        // التحقق الفوري والسيادي من الهوية king2026
         if (isOwner(firebaseUser.email)) {
           setRole(roles.ADMIN);
         } else {
@@ -53,7 +53,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     return () => unsubscribeAuth();
   }, [auth]);
 
-  // مزامنة الملف الشخصي اللحظية من السحابة
+  // مزامنة الملف الشخصي اللحظية من السحابة لضمان دقة الموافقات والأرصدة
   useEffect(() => {
     if (!firestore || !user) return;
     
@@ -61,7 +61,8 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       if (snap.exists()) {
         const data = snap.data();
         setProfile(data);
-        // تحديث الرتبة بناءً على بيانات السحابة أو الهوية الملكية
+        
+        // تحديث الرتبة السيادية بناءً على بيانات السحابة أو الهوية الملكية
         if (isOwner(user.email) || data.role === roles.ADMIN) {
           setRole(roles.ADMIN);
         } else {
