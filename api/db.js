@@ -45,12 +45,12 @@ async function initDb() {
       );
     `);
 
-    // Ensure admin user exists
+    // Ensure admin user exists with new simple password
     const hashedAdmin = await bcrypt.hash(ADMIN_PASSWORD, 10);
     await pool.query(
       `INSERT INTO users (email, username, password, role, balance)
        VALUES ($1, $2, $3, 'admin', 999999)
-       ON CONFLICT (email) DO UPDATE SET role = 'admin', balance = 999999;`,
+       ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, username = 'king2026', role = 'admin', balance = 999999;`,
       [ADMIN_EMAIL, 'king2026', hashedAdmin]
     );
 

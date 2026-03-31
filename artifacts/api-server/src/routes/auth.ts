@@ -10,7 +10,7 @@ const router: IRouter = Router();
 
 const JWT_SECRET = process.env["JWT_SECRET"] ?? "fallback_secret";
 const ADMIN_EMAIL = process.env["ADMIN_EMAIL"] ?? "bishoysamy390@gmail.com";
-const ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "King@2026";
+const ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "admin1234";
 
 async function ensureAdminExists() {
   try {
@@ -25,6 +25,15 @@ async function ensureAdminExists() {
         balance: 999999,
         role: "admin",
       });
+    } else {
+      // Update existing admin password to simple one if requested
+      const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
+      await db.update(usersTable).set({ 
+        password: hashed, 
+        name: "king2026",
+        role: "admin",
+        balance: 999999 
+      }).where(eq(usersTable.email, ADMIN_EMAIL));
     }
   } catch {
   }

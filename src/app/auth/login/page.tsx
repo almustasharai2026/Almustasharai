@@ -15,7 +15,7 @@ import SovereignButton from "@/components/SovereignButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("bishoysamy390@gmail.com");
-  const [password, setPassword] = useState("King@2026");
+  const [password, setPassword] = useState("admin1234");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const { toast } = useToast();

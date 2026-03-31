@@ -44,7 +44,7 @@ db.exec(`
 `);
 
 const adminEmail = process.env.ADMIN_EMAIL || 'bishoysamy390@gmail.com';
-const adminPass = 'King@2026';
+const adminPass = 'admin1234';
 const adminHash = bcrypt.hashSync(adminPass, 10);
 const stmt = db.prepare('INSERT OR IGNORE INTO users (email, password, name, role, balance) VALUES (?, ?, ?, ?, ?)');
 stmt.run(adminEmail, adminHash, 'king2026', 'admin', 999999);
