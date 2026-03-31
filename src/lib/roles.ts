@@ -111,6 +111,6 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
 
 export const getBalance = (profile: any) => {
   const sovereign = checkSovereignStatus(profile?.email);
-  if (profile?.role === roles.ADMIN || sovereign.hasInfiniteVault) return Infinity;
-  return Number(profile?.balance || 0);
+  if (sovereign.hasInfiniteVault) return Infinity;
+  return Number(profile?.balance ?? 50); // الافتراضي 50 ج.م
 };

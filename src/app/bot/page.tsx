@@ -4,8 +4,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Mic, Send, Loader2, Sparkles, Plus, Paperclip, 
-  Camera, Zap, Volume2
+  Send, Loader2, Sparkles, Plus, 
+  Camera, FileText, Zap, Mic
 } from "lucide-react";
 import SovereignLayout from "@/components/SovereignLayout";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
@@ -19,7 +19,6 @@ export default function BotPage() {
   
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,15 +72,15 @@ export default function BotPage() {
     <SovereignLayout activeId="bot">
       <div className="flex flex-col h-full relative">
         
-        {/* Chat History */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-8 pb-32 pt-4 scrollbar-none">
+        {/* Messages */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-8 pb-48 pt-4 scrollbar-none">
           <AnimatePresence mode="popLayout">
             {cloudMessages?.length === 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 space-y-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-[2rem] mx-auto flex items-center justify-center border border-primary/20">
+                <div className="w-20 h-20 bg-primary/10 rounded-[2.5rem] mx-auto flex items-center justify-center border border-primary/20">
                    <Sparkles size={40} className="text-primary" />
                 </div>
-                <p className="text-2xl font-black text-white">كيف أساعدك اليوم؟</p>
+                <p className="text-2xl font-black text-white italic">جاهز لخدمتك سيادياً..</p>
               </motion.div>
             )}
             
@@ -90,7 +89,7 @@ export default function BotPage() {
                 key={m.id} 
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                className={`p-6 rounded-[2.5rem] max-w-[90%] text-sm ${
+                className={`p-6 rounded-[2.2rem] max-w-[95%] text-sm ${
                   m.role === 'user' ? 'bg-[#252525] text-white self-end mr-auto rounded-tr-none' : 'bg-transparent text-zinc-300 self-start border border-white/5'
                 }`}
               >
@@ -108,36 +107,44 @@ export default function BotPage() {
           )}
         </div>
 
-        {/* Simplified Input Area */}
-        <div className="absolute bottom-32 inset-x-0 z-40">
-          <div className="bg-[#252525] rounded-[3.5rem] p-3 flex items-center gap-2 border border-white/5 shadow-3xl">
-            <input type="file" ref={fileInputRef} className="hidden" />
+        {/* Enlarged Sovereign Command Bar */}
+        <div className="absolute bottom-20 inset-x-0 z-40 px-2">
+          <div className="bg-[#252525] rounded-[3.5rem] p-4 flex flex-col gap-4 border border-white/5 shadow-3xl">
             
-            {/* Floating Scan Lens Trigger */}
-            <button 
-              onClick={() => toast({title: "جاري تفعيل العدسة.."})}
-              className="w-12 h-12 rounded-2xl bg-black/40 flex items-center justify-center text-primary hover:bg-black/60 transition-all shadow-inner"
-            >
-              <Camera size={20} />
-            </button>
+            {/* Quick Multi-Action Tools */}
+            <div className="flex gap-2">
+               <button className="flex-1 h-14 bg-black/40 rounded-2xl flex items-center justify-center gap-3 text-zinc-500 hover:text-primary transition-all border border-white/5 group">
+                  <Camera size={20} />
+                  <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Scan Doc</span>
+               </button>
+               <button className="flex-1 h-14 bg-black/40 rounded-2xl flex items-center justify-center gap-3 text-zinc-500 hover:text-emerald-500 transition-all border border-white/5">
+                  <FileText size={20} />
+                  <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Vault</span>
+               </button>
+               <button className="w-14 h-14 bg-black/40 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-red-500 transition-all border border-white/5">
+                  <Mic size={20} />
+               </button>
+            </div>
 
-            <input 
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="اكتب استفسارك.." 
-              className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-bold text-white placeholder:text-zinc-700"
-            />
-
-            <button 
-              onClick={handleSend}
-              disabled={!inputText.trim() || isTyping}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
-                inputText.trim() ? 'bg-primary text-black' : 'bg-zinc-800 text-zinc-600'
-              }`}
-            >
-              <Send size={20} className="rotate-180" />
-            </button>
+            {/* Main Spacious Input */}
+            <div className="relative flex items-center gap-2">
+              <input 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="اطلب استشارة سيادية.." 
+                className="flex-1 h-16 bg-black/20 rounded-[2rem] px-6 text-base font-bold text-white placeholder:text-zinc-700 outline-none border border-transparent focus:border-primary/20"
+              />
+              <button 
+                onClick={handleSend}
+                disabled={!inputText.trim() || isTyping}
+                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                  inputText.trim() ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'bg-zinc-800 text-zinc-600'
+                }`}
+              >
+                {isTyping ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} className="rotate-180" />}
+              </button>
+            </div>
           </div>
         </div>
 
