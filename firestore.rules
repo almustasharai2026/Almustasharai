@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -69,7 +70,8 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    match /system/offers/{offerId} {
+    // تصحيح مسار باقات العروض السيادية
+    match /system/config/offers/{offerId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -86,6 +88,12 @@ service cloud.firestore {
     match /analytics/{id} {
       allow create: if isSignedIn();
       allow read: if isAdmin() || isModerator();
+    }
+    
+    // مسار طلبات الدفع
+    match /paymentRequests/{id} {
+      allow create: if isSignedIn() && isNotBanned();
+      allow read, update: if isAdmin();
     }
   }
 }

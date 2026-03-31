@@ -81,9 +81,9 @@
       "schema": "SystemSettings",
       "description": "إعدادات المنصة المركزية"
     },
-    "/system/offers/{offerId}": {
+    "/system/config/offers/{offerId}": {
       "schema": "PricingOffer",
-      "description": "باقات الأسعار السيادية"
+      "description": "باقات الأسعار السيادية المحدثة"
     },
     "/consultants/{id}": {
       "schema": "Consultant",

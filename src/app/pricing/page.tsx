@@ -4,7 +4,6 @@
 import { Check, Zap, Shield, Crown, Sparkles, Star, Clock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { createSovereignCheckout } from "@/lib/sovereign-checkout";
 import { useState } from "react";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -18,7 +17,8 @@ export default function PricingPage() {
   const { user } = useUser();
   const router = useRouter();
 
-  const offersQuery = useMemoFirebase(() => db ? collection(db, "system", "offers") : null, [db]);
+  // تصحيح المسار: الانتقال من system/offers إلى system/config/offers لضمان عدد قطاعات فردي للمجموعة
+  const offersQuery = useMemoFirebase(() => db ? collection(db, "system", "config", "offers") : null, [db]);
   const { data: remoteOffers, isLoading: isOffersLoading } = useCollection(offersQuery);
 
   const DEFAULT_OFFERS = [
@@ -61,7 +61,6 @@ export default function PricingPage() {
     }
     setLoadingId(offer.id);
     
-    // إنشاء طلب دفع سيادي (Payment Request) فعلي في Firestore
     try {
       await addDoc(collection(db, "paymentRequests"), {
         userId: user.uid,
@@ -72,7 +71,6 @@ export default function PricingPage() {
         createdAt: serverTimestamp()
       });
       
-      // التوجيه لصفحة تأكيد الدفع اليدوي (WhatsApp/Vodafone)
       router.push(`/checkout?plan=${offer.id}`);
     } catch (e) {
       console.error(e);
@@ -98,7 +96,7 @@ export default function PricingPage() {
             <Card key={offer.id} className={`glass-cosmic relative overflow-hidden flex flex-col border-2 group transition-all duration-500 rounded-[3.5rem] ${offer.isPopular ? 'border-amber-500/40' : 'border-white/5'}`}>
               <CardHeader className="pt-12 p-10 space-y-6">
                 <div className="h-20 w-20 rounded-3xl bg-primary/5 flex items-center justify-center border border-white/5">
-                  {offer.icon || <Zap className="h-8 w-8 text-blue-400" />}
+                  <Zap className="h-8 w-8 text-blue-400" />
                 </div>
                 <div>
                   <CardTitle className="text-3xl font-black text-white">{offer.name}</CardTitle>
