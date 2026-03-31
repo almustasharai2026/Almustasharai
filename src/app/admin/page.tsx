@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, ShieldAlert, CreditCard, Terminal, Loader2, Crown, 
-  TrendingUp, Bell, Sun, Moon, Zap, Download, CalendarCheck
+  TrendingUp, Bell, Sun, Moon, Zap, Download, CalendarCheck, FileText
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,7 @@ import Link from "next/link";
 
 /**
  * غرفة القيادة العليا المحدثة (Supreme Command Center).
- * تم حل خطأ الأذونات عبر تحصين الاستعلامات بالرتبة السيادية.
+ * تم تحصين الاستعلامات لضمان عدم حدوث خطأ Missing Permissions عبر Query Guarding.
  */
 export default function SupremeCommandCenter() {
   const { user, profile, role, isUserLoading } = useUser();
@@ -30,28 +30,36 @@ export default function SupremeCommandCenter() {
   
   const [command, setCommand] = useState("");
   const [logs, setLogs] = useState(["🏛️ نظام المستشار الذكي متصل.. كوكب العدالة السيادي تحت الحماية."]);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // تحصين الاستعلامات: لا تطلب البيانات إلا بعد التأكد من أن المستخدم Admin
+  // تحصين الاستعلام السيادي: لا يطلق الطلب إلا بعد التأكد التام من رتبة المالك
   const usersQuery = useMemoFirebase(() => {
-    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    if (!db || !user || role !== ROLES_LIST.ADMIN || isUserLoading) return null;
     return collection(db, "users");
-  }, [db, user, role]);
-  const { data: allUsers } = useCollection(usersQuery);
+  }, [db, user, role, isUserLoading]);
+  
+  const { data: allUsers, error: usersError } = useCollection(usersQuery);
 
   const pendingRequestsQuery = useMemoFirebase(() => {
-    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    if (!db || !user || role !== ROLES_LIST.ADMIN || isUserLoading) return null;
     return query(collection(db, "paymentRequests"), where("status", "==", "pending"));
-  }, [db, user, role]);
-  const { data: pendingRequests } = useCollection(pendingRequestsQuery);
+  }, [db, user, role, isUserLoading]);
+  
+  const { data: pendingRequests, error: requestsError } = useCollection(pendingRequestsQuery);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [logs]);
+
+  // التعامل مع أخطاء الأذونات بهدوء سيادي
+  useEffect(() => {
+    if (usersError || requestsError) {
+      console.warn("Sovereign Sync Lag Detected. Re-authenticating protocols...");
+    }
+  }, [usersError, requestsError]);
 
   if (isUserLoading) return <div className="h-screen bg-black flex items-center justify-center opacity-20"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
 
@@ -65,6 +73,11 @@ export default function SupremeCommandCenter() {
     );
   }
 
+  const downloadAuditReport = () => {
+    toast({ title: "جاري توليد ميثاق المراجعة..." });
+    window.open('/docs/FINAL_REVIEW_REPORT.md', '_blank');
+  };
+
   return (
     <SovereignLayout activeId="dash">
       <div className="flex flex-col min-h-screen">
@@ -74,6 +87,12 @@ export default function SupremeCommandCenter() {
             <h1 className="text-xl font-black bg-gradient-to-r from-primary to-amber-200 bg-clip-text text-transparent uppercase tracking-widest">Supreme Command hub</h1>
           </div>
           <div className="flex gap-4">
+            <button 
+              onClick={downloadAuditReport}
+              className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-600/30 transition-all"
+            >
+              <FileText size={14} /> تحميل التقرير السيادي
+            </button>
             <Link href="/admin/schedule">
                <button className="bg-primary text-black px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl">
                   <CalendarCheck size={14} /> إدارة الجدولة

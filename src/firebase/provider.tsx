@@ -28,6 +28,7 @@ export interface FirebaseContextState extends UserAuthState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  signOut: () => Promise<void>;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -51,12 +52,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        // حماية سيادية فورية: التعرف على المالك قبل حتى جلب البيانات من الداتا بيز
+        const initialRole = isOwner(firebaseUser.email) ? ROLES_LIST.ADMIN : ROLES_LIST.USER;
+        
+        setAuthState(prev => ({
+          ...prev,
+          user: firebaseUser,
+          role: initialRole,
+          isUserLoading: true // نبقى في حالة تحميل حتى نتأكد من البروفايل
+        }));
+
         // مراقبة ملف المستخدم السيادي لحظياً
         const unsubscribeProfile = onSnapshot(doc(firestore, "users", firebaseUser.uid), (snap) => {
           const data = snap.data();
-          let detectedRole = data?.role || ROLES_LIST.USER;
+          let detectedRole = data?.role || initialRole;
           
-          // حماية سيادية: المالك king2026 يحصل على دور Admin دائماً برمجياً
+          // تأكيد السلطة المطلقة للمالك
           if (isOwner(firebaseUser.email)) {
             detectedRole = ROLES_LIST.ADMIN;
           }
@@ -69,7 +80,14 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             userError: null
           });
         }, (err) => {
-          setAuthState(prev => ({ ...prev, user: firebaseUser, isUserLoading: false, userError: err }));
+          console.error("Sovereign Profile Sync Error:", err);
+          setAuthState(prev => ({ 
+            ...prev, 
+            user: firebaseUser, 
+            role: isOwner(firebaseUser.email) ? ROLES_LIST.ADMIN : (prev.role || ROLES_LIST.USER),
+            isUserLoading: false, 
+            userError: err 
+          }));
         });
 
         return () => unsubscribeProfile();
