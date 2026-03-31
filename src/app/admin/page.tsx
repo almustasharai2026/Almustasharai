@@ -9,17 +9,17 @@ import {
   DollarSign, ShieldAlert, Activity
 } from "lucide-react";
 import SovereignLayout from "@/components/SovereignLayout";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, where, doc, updateDoc, getDocs, increment, serverTimestamp, addDoc } from "firebase/firestore";
-import { roles as ROLES_LIST, SOVEREIGN_ADMIN_EMAIL } from "@/lib/roles";
+import { roles as ROLES_LIST, checkSovereignStatus } from "@/lib/roles";
 
 /**
  * غرفة القيادة العليا (Supreme God Mode Hub).
  * تصميم يحاكي أجهزة التحكم العسكرية الفاخرة للسيطرة على الكوكب.
  */
 export default function SupremeCommandCenter() {
-  const { user, role, isUserLoading } = useUser();
+  const { user, profile, role, isUserLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   
@@ -27,18 +27,19 @@ export default function SupremeCommandCenter() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [stats, setStats] = useState({ users: 0, revenue: 0, violations: 0 });
 
-  const isOwner = user?.email === SOVEREIGN_ADMIN_EMAIL;
+  // التحقق من بروتوكول الهوية المحدث
+  const sovereign = checkSovereignStatus(user?.email);
 
   useEffect(() => {
-    if (isOwner && db) {
+    if (sovereign.isOwner && db) {
       // محاكاة جلب الإحصائيات السيادية
       setStats({ users: 1240, revenue: 85400, violations: 0 });
     }
-  }, [isOwner, db]);
+  }, [sovereign.isOwner, db]);
 
   if (isUserLoading) return <div className="h-screen flex items-center justify-center bg-[#0f0f0f]"><Loader2 className="animate-spin text-[#ff5722]" /></div>;
 
-  if (!isOwner) return (
+  if (!sovereign.isOwner) return (
     <div className="h-screen bg-black flex flex-col items-center justify-center text-red-500 gap-6">
       <ShieldAlert size={80} strokeWidth={3} className="animate-pulse" />
       <h1 className="text-4xl font-black uppercase tracking-[0.5em]">Authority Denied</h1>
@@ -93,7 +94,7 @@ export default function SupremeCommandCenter() {
         
         <header className="space-y-2 border-b border-white/5 pb-6">
            <h2 className="text-3xl font-black italic text-white tracking-tighter">مركز <span className="text-[#ff5722]">السيطرة العليا</span></h2>
-           <p className="text-[9px] text-zinc-500 uppercase font-black tracking-[0.4em]">Supreme Command Executive Mode</p>
+           <p className="text-[9px] text-zinc-500 uppercase font-black tracking-[0.4em]">Sovereign Command Executive Mode</p>
         </header>
 
         {/* Global Statistics Cards */}
@@ -113,7 +114,7 @@ export default function SupremeCommandCenter() {
                   value={targetEmail}
                   onChange={(e) => setTargetUserEmail(e.target.value)}
                   placeholder="name@domain.com"
-                  className="w-full bg-black/40 border border-white/5 p-5 rounded-2xl text-white font-bold outline-none focus:border-[#ff5722] focus:ring-4 focus:ring-[#ff5722]/5 transition-all text-right shadow-inner"
+                  className="w-full h-16 bg-black/40 border border-white/5 p-5 rounded-2xl text-white font-bold outline-none focus:border-[#ff5722] focus:ring-4 focus:ring-[#ff5722]/5 transition-all text-right shadow-inner"
                 />
                 <Terminal size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-700" />
               </div>
@@ -126,18 +127,6 @@ export default function SupremeCommandCenter() {
                 <TacticalBtn onClick={() => handleAction('vip')} icon={<Star size={16}/>} label="ترقية لرتبة VIP" color="amber" />
                 <TacticalBtn onClick={() => handleAction('recharge')} icon={<Zap size={16}/>} label="شحن 500 EGP فورياً" color="emerald" />
               </div>
-           </div>
-        </div>
-
-        {/* Global Pricing Controls */}
-        <div className="bg-zinc-900/30 p-8 rounded-[3.5rem] border border-white/5 space-y-6">
-           <h3 className="text-sm font-black text-white italic flex items-center gap-3">
-             <Settings size={16} className="text-zinc-500" /> موازنة الكوكب
-           </h3>
-           <div className="space-y-4">
-              <PricingRow label="هدية التسجيل" value="50 EGP" />
-              <PricingRow label="تكلفة الـ AI" value="1 EGP" />
-              <PricingRow label="فتح جلسة خبير" value="30 EGP" />
            </div>
         </div>
 

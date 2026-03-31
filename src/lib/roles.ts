@@ -29,15 +29,33 @@ export interface RolePermissions {
 }
 
 /**
+ * تصحيح منطق الهوية السيادية (Sovereign Identity Check).
+ * هذا البروتوكول يمنح المالك bishoysamy390@gmail.com صلاحيات الـ GOD_MODE.
+ */
+export const checkSovereignStatus = (email: string | null | undefined) => {
+  const KING_EMAIL = SOVEREIGN_ADMIN_EMAIL;
+  const normalizedEmail = email?.toLowerCase();
+  const isKing = normalizedEmail === KING_EMAIL;
+  
+  return {
+    isOwner: isKing,
+    hasInfiniteVault: isKing,
+    permissions: isKing ? 'GOD_MODE' : 'CITIZEN'
+  };
+};
+
+/**
  * التحقق من الهوية الملكية للمالك king2026.
  */
 export const isOwner = (email: string | null | undefined) => {
-  return email?.toLowerCase() === SOVEREIGN_ADMIN_EMAIL;
+  return checkSovereignStatus(email).isOwner;
 };
 
 export const getPermissions = (role: UserRole | string | null | undefined, email?: string | null): RolePermissions => {
-  // المالك king2026 يمتلك كافة مفاتيح الكوكب (Sovereign God Mode)
-  if (role === roles.ADMIN || isOwner(email)) {
+  const sovereign = checkSovereignStatus(email);
+  
+  // المالك king2026 يمتلك كافة مفاتيح الكوكب (GOD_MODE)
+  if (role === roles.ADMIN || sovereign.isOwner) {
     return {
       canManageUsers: true,
       canPromoteRoles: true,
@@ -99,7 +117,9 @@ export const getPermissions = (role: UserRole | string | null | undefined, email
 };
 
 export const getBalance = (profile: any) => {
-  // المالك دائماً لديه رصيد لا نهائي سيادياً ولا يتأثر بعمليات الخصم
-  if (profile?.role === roles.ADMIN || isOwner(profile?.email)) return Infinity;
+  const sovereign = checkSovereignStatus(profile?.email);
+  
+  // المالك دائماً لديه رصيد لا نهائي سيادياً ولا يتأثر بعمليات الخصم (hasInfiniteVault)
+  if (profile?.role === roles.ADMIN || sovereign.hasInfiniteVault) return Infinity;
   return Number(profile?.balance || 0);
 };
