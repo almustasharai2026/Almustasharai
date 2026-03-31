@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Send, Scale, LogOut, LayoutDashboard, Gavel, Tag, Activity,
+  Send, Scale, LogOut, LayoutDashboard, Gavel, FileText, 
   Menu, X, Plus, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
-  ArrowLeft, Mic, Paperclip, Camera, Sparkles, MessageCircle, ChevronLeft, Loader2
+  ArrowLeft, Mic, Paperclip, Camera, Sparkles, MessageCircle, ChevronLeft, Loader2, Cpu
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -20,16 +20,9 @@ import { useMemoFirebase } from "@/firebase/provider";
 import Link from "next/link";
 import Image from "next/image";
 
-interface Message {
-  role: "user" | "ai";
-  text: string;
-  id: string;
-  timestamp: any;
-}
-
 /**
- * مركز قيادة البوت السيادي (Elite AI Command Hub).
- * واجهة فائقة الاحترافية تعتمد نظام Glassmorphism لتعزيز تجربة الاستشارة القانونية.
+ * مركز قيادة البوت السيادي (Sovereign AI Command Node).
+ * واجهة مبتكرة تحاكي مراكز العمليات المستقبلية.
  */
 export default function SovereignBotPage() {
   const { user, profile, signOut, role } = useUser();
@@ -45,7 +38,6 @@ export default function SovereignBotPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // مزامنة سجل المحادثات من السحابة السيادية
   const chatQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, "users", user.uid, "chatHistory"), orderBy("timestamp", "asc"), limit(50));
@@ -71,26 +63,23 @@ export default function SovereignBotPage() {
     setIsTyping(true);
 
     try {
-      // 1. توثيق رسالة المواطن
       await addDoc(collection(db, "users", user.uid, "chatHistory"), {
         role: "user",
         text,
         timestamp: serverTimestamp()
       });
 
-      // 2. تحديث الرصيد
       if (role !== ROLES_LIST.ADMIN) {
         await updateDoc(doc(db, "users", user.uid), { balance: increment(-1) });
       }
 
-      // 3. طلب الرد السيادي من المحرك (API Integration)
       const res = await fetch('/api/chat', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: text, persona: "مستشار قانوني سيادي" })
       });
       const data = await res.json();
 
-      // 4. توثيق رد المستشار
       await addDoc(collection(db, "users", user.uid, "chatHistory"), {
         role: "ai",
         text: data.response,
@@ -104,181 +93,162 @@ export default function SovereignBotPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    router.push("/auth/login");
-  };
-
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#0a0a1f]/95 dark:bg-[#02020a]/95 backdrop-blur-3xl border-l border-white/5 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-      
-      <div className="p-10 border-b border-white/5 flex items-center gap-5 bg-black/20 relative z-10">
-        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-3xl border border-white/20">
-          <Scale className="h-8 w-8 text-white" />
+    <div className="flex flex-col h-full bg-[#050510] border-l border-white/5 relative">
+      <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-black/40">
+        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center shadow-xl">
+          <Cpu className="h-6 w-6 text-white animate-pulse" />
         </div>
         <div>
-          <h2 className="text-2xl font-black tracking-tighter text-white">المستشار <span className="text-primary">AI</span></h2>
-          <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Sovereign Elite</p>
+          <h2 className="text-xl font-black text-white tracking-tight">Node <span className="text-primary">Alpha</span></h2>
+          <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Sovereign Intel Core</p>
         </div>
       </div>
 
-      <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10 scrollbar-thin">
-        <p className="text-[10px] text-white/20 font-black uppercase tracking-widest px-4 mb-2">القائمة السيادية</p>
-        <SideBtn icon={<MessageCircle />} text="الدردشة الذكية" active={true} />
-        <SideBtn icon={<Gavel />} text="مجلس الخبراء" onClick={() => router.push("/consultants")} />
-        <SideBtn icon={<Tag />} text="المكتبة القانونية" onClick={() => router.push("/templates")} />
-        <SideBtn icon={<Wallet />} text="باقات الشحن" onClick={() => router.push("/pricing")} />
-        
-        {perms.canManageUsers && (
-          <>
-            <p className="text-[10px] text-white/20 font-black uppercase tracking-widest pt-10 px-4 mb-2">غرفة القيادة</p>
-            <SideBtn icon={<LayoutDashboard />} text="لوحة التحكم" onClick={() => router.push("/admin")} />
-            <SideBtn icon={<ShieldAlert />} text="الدرع الواقي" onClick={() => router.push("/admin")} />
-          </>
-        )}
-      </nav>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <SideAction icon={<Plus />} text="مبادرة محادثة جديدة" onClick={() => {}} primary />
+        <div className="pt-6 pb-2 px-4">
+          <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">سجل التوثيق</p>
+        </div>
+        {/* Chat History Mockup */}
+        <div className="space-y-1">
+          <SideHistoryItem text="استشارة عقد إيجار موحد" active />
+          <SideHistoryItem text="تحليل مخاطر تجارية" />
+          <SideHistoryItem text="مذكرة دفاع جنائية" />
+        </div>
+      </div>
 
-      <div className="p-8 border-t border-white/5 bg-black/30 relative z-10">
-        <button onClick={handleLogout} className="w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-white/40 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
-          <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
-        </button>
+      <div className="p-6 bg-black/40 border-t border-white/5">
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 mb-4">
+           <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center font-black text-primary">K</div>
+           <div className="flex-1 min-w-0">
+              <p className="text-xs font-black text-white truncate">{profile?.fullName || "king2026"}</p>
+              <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">{role}</p>
+           </div>
+           <button onClick={() => signOut()} className="text-white/20 hover:text-red-500 transition-colors">
+              <LogOut className="h-4 w-4" />
+           </button>
+        </div>
+        <SideAction icon={<LayoutDashboard />} text="العودة للمركز" onClick={() => router.push("/dashboard")} />
       </div>
     </div>
   );
 
-  if (role === ROLES_LIST.PENDING_EXPERT) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center bg-sovereign-cinematic text-center p-10">
-         <div className="glass-cosmic p-16 rounded-[4rem] border-primary/20 space-y-8 max-w-2xl">
-            <Loader2 className="h-20 w-20 text-primary animate-spin mx-auto" />
-            <h1 className="text-4xl font-black text-white tracking-tighter">بانتظار الموافقة السيادية</h1>
-            <p className="text-xl text-white/40 font-bold leading-relaxed">سيادة المستشار، تم استلام وثائقك بنجاح. جاري مراجعة ملفك من قبل <span className="text-primary">king2026</span> لتفعيل صلاحيات مجلس الخبراء لك.</p>
-            <Button onClick={handleLogout} variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white/40 hover:text-white">خروج مؤقت</Button>
-         </div>
-      </div>
-    );
-  }
-
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-[#f8f9fc] dark:bg-[#020617] overflow-hidden font-sans" dir="rtl">
+      <div className="flex h-screen bg-[#02020a] overflow-hidden font-sans" dir="rtl">
         
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {isSidebarOpen && (
             <motion.aside 
-              initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-80 h-full text-white flex flex-col z-50 shadow-3xl flex-shrink-0 relative overflow-hidden"
+              initial={{ width: 0, opacity: 0 }} animate={{ width: 320, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+              className="hidden lg:flex flex-col flex-shrink-0 z-50 overflow-hidden"
             >
               <SidebarContent />
             </motion.aside>
           )}
         </AnimatePresence>
 
-        <div className="flex-1 flex flex-col relative overflow-hidden">
-          
-          <header className="h-24 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-3xl border-b border-border flex items-center justify-between px-10 z-40">
-            <div className="flex items-center gap-8">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-4 bg-primary/5 rounded-2xl hover:bg-primary/10 transition-all border border-primary/10 shadow-inner">
-                {isSidebarOpen ? <ChevronLeft className="h-6 w-6 text-primary" /> : <Menu className="h-6 w-6 text-primary" />}
+        <div className="flex-1 flex flex-col relative">
+          {/* Top Control Bar */}
+          <header className="h-20 bg-black/40 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-8 z-40">
+            <div className="flex items-center gap-6">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-xl text-primary hover:bg-white/10 transition-all shadow-inner">
+                {isSidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
               <div className="flex flex-col">
-                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Sovereign Chat Node Active</h1>
-                <div className="flex items-center gap-3 mt-1">
-                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Encrypted Connection Active</span>
-                </div>
+                <h1 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  Sovereign AI <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                </h1>
+                <p className="text-[10px] text-white/30 font-bold">Encrypted End-to-End Node</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4 bg-slate-100 dark:bg-white/5 px-6 py-3 rounded-2xl border border-border dark:border-white/5 shadow-inner group cursor-pointer" onClick={() => router.push("/pricing")}>
-                <Wallet className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                <span className="text-lg font-black tabular-nums text-slate-900 dark:text-white">{role === ROLES_LIST.ADMIN ? '∞' : (profile?.balance || 0)} <span className="text-[10px] opacity-40">EGP</span></span>
-                <Plus className="h-4 w-4 text-primary opacity-40 group-hover:opacity-100" />
+            <div className="flex items-center gap-4">
+              <div className="bg-white/5 border border-white/5 px-5 py-2 rounded-xl flex items-center gap-3">
+                <Wallet className="h-4 w-4 text-primary" />
+                <span className="text-sm font-black text-white tabular-nums">{profile?.balance || 0} <span className="text-[9px] opacity-40">EGP</span></span>
               </div>
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-border dark:border-white/5 hover:bg-primary/5 transition-all text-primary shadow-sm">
-                {theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 bg-white/5 rounded-xl text-primary border border-white/5">
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
             </div>
           </header>
 
-          <main className="flex-1 relative flex flex-col bg-slate-50 dark:bg-[#020617] overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
-               <Image src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop" fill className="object-cover" alt="bg" />
-            </div>
-
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12 relative z-10">
-              <div className="max-w-4xl mx-auto space-y-12 pb-20">
-                {cloudMessages?.map((m) => (
-                  <motion.div 
-                    key={m.id} 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className={`flex flex-col ${m.role === "user" ? "items-start" : "items-end"}`}
-                  >
-                    <div className="flex items-center gap-3 mb-3 px-6">
-                       <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                         {m.role === "user" ? profile?.fullName || "المواطن" : "المستشار السيادي"}
-                       </span>
+          {/* Main Chat Stream */}
+          <main className="flex-1 flex flex-col relative overflow-hidden bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-thin">
+              <div className="max-w-4xl mx-auto space-y-10 pb-32">
+                {cloudMessages?.length === 0 && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-20 text-center space-y-8">
+                    <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] mx-auto flex items-center justify-center border border-primary/20 shadow-3xl float-sovereign">
+                      <Sparkles className="h-12 w-12 text-primary" />
                     </div>
-                    <div className={`p-8 rounded-[3rem] text-sm max-w-[90%] shadow-2xl border leading-relaxed ${
-                      m.role === "user" 
-                        ? "bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-800 rounded-tr-none" 
-                        : "bg-primary/5 dark:bg-primary/10 text-primary dark:text-white border-primary/20 dark:border-primary/20 rounded-tl-none font-medium backdrop-blur-xl"
+                    <div className="space-y-2">
+                      <h2 className="text-3xl font-black text-white">كيف يمكن للمستشار السيادي خدمتك؟</h2>
+                      <p className="text-sm text-white/30 font-bold max-w-sm mx-auto">اطرح استفسارك القانوني الآن برصانة، وسيقوم المحرك بتحليل كافة الأبعاد القانونية للحالة.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto px-4">
+                       <QuickAction text="تحليل عقد إيجار سكني" onClick={() => setInputText("أحتاج تحليل قانوني لعقد إيجار سكني وكيفية حماية حقوقي كطرف أول.")} />
+                       <QuickAction text="استشارة في قانون العمل" onClick={() => setInputText("ما هي الإجراءات القانونية المتبعة في حال إنهاء العقد من طرف صاحب العمل؟")} />
+                    </div>
+                  </motion.div>
+                )}
+
+                {cloudMessages?.map((m) => (
+                  <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}>
+                    <div className={`p-6 rounded-[2.5rem] max-w-[85%] text-lg leading-relaxed border shadow-2xl relative group ${
+                      m.role === 'user' 
+                        ? 'bg-white text-slate-900 border-white/10 rounded-tr-none font-bold' 
+                        : 'bg-primary/10 backdrop-blur-xl text-white border-primary/20 rounded-tl-none font-medium'
                     }`}>
-                      <p className="text-xl leading-loose font-bold">{m.text}</p>
-                      <div className="flex items-center gap-2 mt-6 pt-5 border-t border-black/5 dark:border-white/5">
-                         <button onClick={() => { navigator.clipboard.writeText(m.text); toast({ title: "تم النسخ السيادي" }); }} className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl text-slate-400 transition-all hover:text-primary"><Copy className="h-4 w-4" /></button>
-                         <span className="mr-auto text-[9px] font-black opacity-20 tabular-nums uppercase tracking-widest">{m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString("ar-EG") : "الآن"}</span>
+                      {m.text}
+                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-black/5 opacity-40">
+                         <button className="p-1 hover:text-primary transition-colors"><Copy className="h-3 w-3" /></button>
+                         <span className="mr-auto text-[8px] font-black uppercase tracking-widest">{m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString("ar-EG") : "الآن"}</span>
                       </div>
                     </div>
                   </motion.div>
                 ))}
-                
+
                 {isTyping && (
-                  <div className="flex items-center gap-3 p-6 glass rounded-full w-fit animate-pulse border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <div className="w-2 h-2 bg-primary rounded-full delay-100" />
-                    <div className="w-2 h-2 bg-primary rounded-full delay-200" />
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest mr-2">Sovereign Intel Processing</span>
+                  <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/10 rounded-full w-fit animate-pulse">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full delay-100" />
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full delay-200" />
+                    <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] mr-2">Processing Sovereign Query</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="p-10 bg-gradient-to-t from-slate-50 dark:from-[#020617] via-slate-50 dark:via-[#020617] to-transparent z-20">
+            {/* Futuristic Input Area */}
+            <div className="absolute bottom-0 inset-x-0 p-8 z-20">
               <div className="max-w-4xl mx-auto">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
-                  
-                  <div className="relative bg-white dark:bg-slate-900 border-2 border-border dark:border-white/5 rounded-[2.5rem] shadow-3xl flex flex-col overflow-hidden focus-within:border-primary/40 transition-all">
-                    <div className="flex items-center gap-2 px-6 py-4 border-b border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                       <ToolBtn icon={<Paperclip />} tooltip="إرفاق ملفات" />
-                       <ToolBtn icon={<Camera />} tooltip="التقاط وثيقة" />
-                       <ToolBtn icon={<Mic />} tooltip="إملاء صوتي" />
-                       <div className="h-6 w-px bg-black/5 dark:bg-white/5 mx-2" />
-                       <ToolBtn icon={<Sparkles />} tooltip="تحسين الصياغة السيادية" />
-                    </div>
-
-                    <div className="flex items-center px-8 py-4 gap-6">
-                      <textarea 
-                        value={inputText} 
-                        onChange={(e) => setInputText(e.target.value)} 
-                        onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()} 
-                        placeholder="اطرح استفسارك القانوني بأسلوب رصين..." 
-                        rows={1}
-                        className="flex-1 bg-transparent border-none outline-none text-xl font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/10 resize-none py-4 max-h-48"
-                      />
-                      <button 
-                        onClick={handleSend} 
-                        disabled={!inputText.trim() || isTyping} 
-                        className="h-16 w-16 bg-gradient-to-br from-primary to-indigo-700 text-white rounded-3xl flex items-center justify-center shadow-2xl hover:scale-110 active:scale-90 transition-all disabled:opacity-30 disabled:grayscale"
-                      >
-                        {isTyping ? <Loader2 className="h-8 w-8 animate-spin" /> : <Send className="h-8 w-8 rotate-180" />}
-                      </button>
-                    </div>
+                <div className="relative glass-cosmic border-2 border-white/5 rounded-[2.5rem] overflow-hidden shadow-3xl focus-within:border-primary/40 transition-all duration-500">
+                  <div className="flex items-center gap-2 px-6 py-3 bg-white/[0.02] border-b border-white/5">
+                     <InputTool icon={<Paperclip />} />
+                     <InputTool icon={<Camera />} />
+                     <InputTool icon={<Mic />} />
+                     <div className="h-4 w-px bg-white/10 mx-2" />
+                     <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">Sovereign Input Mode Active</span>
+                  </div>
+                  <div className="flex items-center px-8 py-4 gap-6">
+                    <textarea 
+                      value={inputText} 
+                      onChange={(e) => setInputText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      placeholder="اطرح استفسارك هنا..."
+                      className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-white placeholder:text-white/10 resize-none py-2 max-h-40"
+                      rows={1}
+                    />
+                    <button 
+                      onClick={handleSend}
+                      disabled={!inputText.trim() || isTyping}
+                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-indigo-700 text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all disabled:opacity-20 disabled:grayscale"
+                    >
+                      {isTyping ? <Loader2 className="animate-spin" /> : <Send className="rotate-180 h-6 w-6" />}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -290,27 +260,45 @@ export default function SovereignBotPage() {
   );
 }
 
-function SideBtn({ icon, text, active, onClick }: any) {
+function SideAction({ icon, text, onClick, primary = false }: any) {
   return (
     <button 
-      onClick={onClick} 
-      className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${
-        active 
-          ? "bg-white/20 text-white shadow-3xl scale-[1.05]" 
-          : "text-white/20 hover:text-white hover:bg-white/5"
+      onClick={onClick}
+      className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-black text-xs uppercase tracking-tight group ${
+        primary 
+          ? "bg-primary text-white shadow-lg shadow-primary/20 hover:scale-[1.02]" 
+          : "text-white/40 hover:text-white hover:bg-white/5"
       }`}
     >
-      {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
-      <span className={`shrink-0 transition-transform duration-500 ${active ? "scale-125" : "group-hover:scale-110"}`}>{icon}</span>
-      <span className="tracking-tight text-lg">{text}</span>
+      <span className={`${primary ? "" : "group-hover:text-primary"} transition-colors`}>{icon}</span>
+      <span>{text}</span>
     </button>
   );
 }
 
-function ToolBtn({ icon, tooltip }: any) {
+function SideHistoryItem({ text, active = false }: any) {
   return (
-    <button className="p-3 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-all group relative" title={tooltip}>
-      <span className="scale-110 inline-block group-hover:rotate-12 transition-transform">{icon}</span>
+    <button className={`w-full text-right px-6 py-3.5 rounded-xl text-[11px] font-bold transition-all border ${active ? 'bg-primary/10 border-primary/20 text-primary' : 'border-transparent text-white/30 hover:bg-white/[0.02] hover:text-white/60'}`}>
+      {text}
+    </button>
+  );
+}
+
+function QuickAction({ text, onClick }: any) {
+  return (
+    <button onClick={onClick} className="p-5 glass rounded-[1.8rem] border-white/5 text-right hover:border-primary/40 hover:bg-primary/5 transition-all group">
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-bold text-white/60 group-hover:text-white transition-colors">{text}</span>
+        <ChevronLeft className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </button>
+  );
+}
+
+function InputTool({ icon }: any) {
+  return (
+    <button className="p-2.5 rounded-xl text-white/20 hover:text-primary hover:bg-primary/10 transition-all">
+      {icon}
     </button>
   );
 }

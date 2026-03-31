@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* Sovereign Luxury Palette - Light Mode (Professional & Sharp) */
     --background: 210 20% 98%;
     --foreground: 224 71% 4%;
     --card: 0 0% 100%;
@@ -17,7 +16,7 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 43 74% 49%; /* Royal Sovereign Gold */
+    --accent: 43 74% 49%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -28,7 +27,6 @@
   }
 
   .dark {
-    /* Deep Sovereign Palette - Dark Mode (The "king2026" Premium Look) */
     --background: 224 71% 4%;
     --foreground: 210 40% 98%;
     --card: 224 71% 6%;
@@ -41,7 +39,7 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 43 74% 49%; /* Royal Sovereign Gold */
+    --accent: 43 74% 49%;
     --accent-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
@@ -55,7 +53,6 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -98,4 +95,15 @@
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient 8s ease infinite;
+}
+
+/* Custom Scrollbar for Sovereign Feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
 }
