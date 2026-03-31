@@ -15,15 +15,14 @@ import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import SovereignButton from "@/components/SovereignButton";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
 import { verifyLegalIdentity } from "@/ai/flows/verify-id-flow";
 
 /**
- * صفحة التسجيل السيادية المحدثة.
- * تضمن بروتوكول التحقق الصارم للسادة المحامين والمستشارين.
+ * صفحة التسجيل السيادية المحدثة (king2026 Sovereign Protocol).
+ * تضمن بروتوكول التحقق الصارم للسادة المحامين والمستشارين مع إصلاح عيوب التبديل.
  */
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -53,12 +52,13 @@ export default function SignupPage() {
     if (!auth || !db) return;
 
     if (!email || !password || !fullName || !phone) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول الأساسية بما فيها رقم الهاتف." });
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى تعبئة كافة الحقول الأساسية للمتابعة." });
       return;
     }
 
-    // 🔥 بروتوكول الانتقال لتصوير الوثائق
+    // 🔥 بروتوكول التوجيه القسري لتصوير الوثائق للمحامين
     if (isProfessional && !idDocs) {
+      console.log("[Sovereign Signup] Redirecting to Capture Wizard...");
       setIsCapturing(true);
       return;
     }
@@ -90,7 +90,7 @@ export default function SignupPage() {
           status: 'pending'
         };
 
-        // محاولة التحقق الذكي عبر محرك الذكاء الاصطناعي
+        // محاولة التحقق الذكي (AI Check)
         try {
           const aiResult = await verifyLegalIdentity({
             frontIdUri: idDocs.syndicateFront,
@@ -99,7 +99,7 @@ export default function SignupPage() {
           });
           userData.verificationRequest.aiPreCheck = aiResult;
         } catch (aiErr) {
-          console.warn("Sovereign AI Pre-check skipped due to technical limit.");
+          console.warn("AI Pre-check skipped:", aiErr);
         }
       }
       
@@ -108,7 +108,7 @@ export default function SignupPage() {
       toast({ 
         title: isProfessional ? "تم التوثيق وبانتظار المراجعة ✅" : "مرحباً بك في الكوكب", 
         description: isProfessional 
-          ? "سيتم مراجعة وثائقك من قبل المالك لتفعيل حسابك كخبير." 
+          ? "سيتم مراجعة وثائقك من قبل المالك king2026 لتفعيل حسابك." 
           : "حصلت على ٥٠ EGP رصيد ترحيبي." 
       });
       router.push("/bot");
@@ -154,11 +154,11 @@ export default function SignupPage() {
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">الاسم الكامل</Label>
                     <div className="relative group">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary" />
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <input 
                         value={fullName}
                         onChange={e => setFullName(e.target.value)}
-                        placeholder="أدخل اسمك رباعي"
+                        placeholder="أدخل اسمك رباعي كما في الهوية"
                         className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 pl-12 text-lg font-bold focus:ring-2 focus:ring-primary/20 transition-all text-right"
                       />
                     </div>
@@ -168,7 +168,7 @@ export default function SignupPage() {
                     <div className="space-y-2">
                       <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">البريد الإلكتروني</Label>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <input 
                           type="email"
                           value={email}
@@ -179,9 +179,9 @@ export default function SignupPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">رقم الجوال</Label>
+                      <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">رقم الجوال الشخصي</Label>
                       <div className="relative group">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <input 
                           value={phone}
                           onChange={e => setPhone(e.target.value)}
@@ -195,7 +195,7 @@ export default function SignupPage() {
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">كلمة المرور</Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <input 
                         type="password"
                         value={password}
@@ -211,12 +211,12 @@ export default function SignupPage() {
                   className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${isProfessional ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-white/5 hover:border-primary/20'}`}
                   onClick={() => setIsProfessional(!isProfessional)}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-4">
-                      <Checkbox checked={isProfessional} onCheckedChange={(v) => setIsProfessional(!!v)} className="h-6 w-6 rounded-lg" />
+                      <Checkbox checked={isProfessional} className="h-6 w-6 rounded-lg pointer-events-auto" />
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary">أنا محامي أو مستشار قانوني</p>
-                        <p className="text-[10px] text-muted-foreground font-bold">يتطلب هذا الخيار رفع وثائق المهنة للمصادقة.</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">أنا محامي أو مستشار قانوني</p>
+                        <p className="text-[10px] text-muted-foreground font-bold">يتطلب هذا الخيار رفع وثائق المهنة للمصادقة السيادية.</p>
                       </div>
                     </div>
                     <Gavel className={`h-6 w-6 transition-all ${isProfessional ? 'text-primary' : 'opacity-20'}`} />
@@ -225,23 +225,23 @@ export default function SignupPage() {
 
                 <AnimatePresence>
                   {isProfessional && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden pt-2">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">هاتف العمل</Label>
+                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">هاتف العمل (اختياري)</Label>
                           <input 
                             value={workPhone}
                             onChange={e => setWorkPhone(e.target.value)}
-                            placeholder="رقم المكتب"
+                            placeholder="رقم المكتب أو هو نفسه الجوال"
                             className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 text-right"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">عنوان المكتب</Label>
+                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">عنوان المكتب (اختياري)</Label>
                           <input 
                             value={workAddress}
                             onChange={e => setWorkAddress(e.target.value)}
-                            placeholder="المحافظة، الشارع..."
+                            placeholder="المحافظة، المنطقة..."
                             className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 text-right"
                           />
                         </div>
@@ -251,9 +251,9 @@ export default function SignupPage() {
                         <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex items-center justify-between">
                            <div className="flex items-center gap-3">
                               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                              <span className="text-[10px] text-emerald-500 font-black uppercase">Identity Secured</span>
+                              <span className="text-[10px] text-emerald-500 font-black uppercase">Identity Assets Secured</span>
                            </div>
-                           <button onClick={() => setIsCapturing(true)} className="text-[10px] text-emerald-500 underline font-black">تعديل</button>
+                           <button onClick={() => setIsCapturing(true)} className="text-[10px] text-emerald-500 underline font-black">تعديل الوثائق</button>
                         </div>
                       ) : (
                         <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 flex items-center gap-3">
@@ -283,10 +283,10 @@ export default function SignupPage() {
                 <IdCaptureWizard onComplete={(docs) => {
                   setIdDocs(docs);
                   setIsCapturing(false);
-                  toast({ title: "تم التوثيق المبدئي ✅", description: "وثائقك جاهزة الآن للتسجيل النهائي." });
+                  toast({ title: "تم التوثيق المبدئي بنجاح ✅", description: "البيانات جاهزة الآن للمراجعة النهائية." });
                 }} />
-                <button onClick={() => setIsCapturing(false)} className="w-full text-xs font-black text-muted-foreground hover:text-slate-900 dark:hover:text-white transition-colors">
-                  إلغاء والعودة للبيانات
+                <button onClick={() => setIsCapturing(false)} className="w-full text-xs font-black text-muted-foreground hover:text-slate-900 dark:hover:text-white transition-colors py-2 uppercase tracking-widest">
+                  إلغاء والعودة للبيانات الأساسية
                 </button>
               </motion.div>
             )}
@@ -295,8 +295,8 @@ export default function SignupPage() {
 
         <CardFooter className="flex flex-col space-y-6 border-t border-slate-100 dark:border-white/5 pt-8 pb-10">
           <div className="text-sm text-center text-muted-foreground font-bold">
-            لديك حساب سيادي؟{" "}
-            <Link href="/auth/login" className="text-primary hover:underline">سجل دخولك</Link>
+            لديك هوية سيادية مسبقة؟{" "}
+            <Link href="/auth/login" className="text-primary hover:underline">سجل دخولك الآن</Link>
           </div>
           <Link href="/" className="flex items-center gap-2 text-xs font-black text-muted-foreground hover:text-primary transition-all">
             <Home className="h-4 w-4" /> العودة للصفحة الرئيسية
