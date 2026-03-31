@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Cpu, ShieldCheck, Sparkles, Copy, Trash2, Reply, 
   Settings, Users, Gavel, ShieldAlert, Tag, Activity, 
-  Bell, Moon, Sun, Search, X, Plus, Menu, Home, LogOut
+  Bell, Moon, Sun, Search, X, Plus, Menu, Home, LogOut,
+  Scale
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Image from "next/image";
-import { useUser, useFirestore } from "@/firebase";
+import { useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,7 @@ interface Message {
   id: string;
 }
 
-export default function AdvancedFinalDashboard() {
+export default function SovereignFinalDashboard() {
   const { profile, signOut } = useUser();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -52,10 +53,11 @@ export default function AdvancedFinalDashboard() {
     setInputText("");
     setIsTyping(true);
 
+    // محاكاة الرد السيادي
     setTimeout(() => {
       const aiMsg: Message = { 
         role: "ai", 
-        text: "تم استلام رسالتك وتحليلها سيادياً. نوصي بمراجعة بروتوكولات الامتثال المحدثة في المكتبة.", 
+        text: "تم استلام رسالتك وتحليلها سيادياً. نوصي بمراجعة بروتوكولات الامتثال المحدثة في المكتبة القانونية.", 
         id: (Date.now() + 1).toString() 
       };
       setMessages(prev => [...prev, aiMsg]);
@@ -75,7 +77,7 @@ export default function AdvancedFinalDashboard() {
   };
 
   const handleQuickReply = (text: string) => {
-    setInputText(`بخصوص استفساري السابق: ${text.substring(0, 20)}...`);
+    setInputText(`بخصوص استفساري السابق: ${text.substring(0, 30)}...`);
     setCurrentPage("home");
   };
 
@@ -83,20 +85,21 @@ export default function AdvancedFinalDashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-background overflow-hidden font-sans" dir="rtl">
+      <div className="flex h-screen bg-[#f0f2f5] dark:bg-[#0f172a] overflow-hidden font-sans transition-colors duration-300" dir="rtl">
         
-        {/* Sovereign Sidebar */}
+        {/* The Sovereign Sidebar (Fixed & Graded) */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <motion.aside 
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              className="sidebar-gradient h-full text-white flex flex-col z-50 shadow-2xl relative"
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-64 h-full bg-gradient-to-b from-[#4e54c8] to-[#8f94fb] text-white flex flex-col z-50 shadow-2xl relative flex-shrink-0"
             >
               <div className="p-6 border-b border-white/10 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg border border-white/10">
-                  <Sparkles className="h-6 w-6 text-white" />
+                <div className="h-10 w-10 rounded-2xl bg-white/20 flex items-center justify-center shadow-lg border border-white/10">
+                  <Scale className="h-6 w-6 text-white" />
                 </div>
                 <h2 className="text-xl font-black tracking-tighter">المستشار AI</h2>
               </div>
@@ -104,22 +107,18 @@ export default function AdvancedFinalDashboard() {
               <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-none">
                 <SideBtn icon={<Home />} text="الرئيسية" active={currentPage === "home"} onClick={() => setCurrentPage("home")} />
                 
-                {isAdmin && (
-                  <>
-                    <p className="text-[10px] text-white/30 font-black uppercase tracking-widest pt-4 pb-2 px-4">لوحة القيادة</p>
-                    <SideBtn icon={<Users />} text="المستخدمون" active={currentPage === "users"} onClick={() => setCurrentPage("users")} />
-                    <SideBtn icon={<Gavel />} text="المستشارون" active={currentPage === "advisors"} onClick={() => setCurrentPage("advisors")} />
-                    <SideBtn icon={<ShieldAlert />} text="الكلمات المحظورة" active={currentPage === "banned"} onClick={() => setCurrentPage("banned")} />
-                    <SideBtn icon={<Tag />} text="العروض" active={currentPage === "offers"} onClick={() => setCurrentPage("offers")} />
-                    <SideBtn icon={<Activity />} text="سجل الأحداث" active={currentPage === "logs"} onClick={() => setCurrentPage("logs")} />
-                  </>
-                )}
+                <p className="text-[10px] text-white/30 font-black uppercase tracking-widest pt-4 pb-2 px-4">لوحة القيادة</p>
+                <SideBtn icon={<Users />} text="المستخدمون" active={currentPage === "users"} onClick={() => setCurrentPage("users")} />
+                <SideBtn icon={<Gavel />} text="المستشارون" active={currentPage === "advisors"} onClick={() => setCurrentPage("advisors")} />
+                <SideBtn icon={<ShieldAlert />} text="الكلمات المحظورة" active={currentPage === "banned"} onClick={() => setCurrentPage("banned")} />
+                <SideBtn icon={<Tag />} text="العروض" active={currentPage === "offers"} onClick={() => setCurrentPage("offers")} />
+                <SideBtn icon={<Activity />} text="سجل الأحداث" active={currentPage === "logs"} onClick={() => setCurrentPage("logs")} />
               </nav>
 
               <div className="p-4 border-t border-white/10">
                 <button 
                   onClick={() => signOut()}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all font-bold text-sm"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-bold text-sm"
                 >
                   <LogOut className="h-5 w-5" /> تسجيل الخروج
                 </button>
@@ -131,8 +130,8 @@ export default function AdvancedFinalDashboard() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
           
-          {/* Sovereign Top Bar */}
-          <header className="top-bar h-16 flex items-center justify-between px-6 z-40 top-bar-gradient text-white shadow-xl">
+          {/* Sovereign Top Bar (Modern Graded) */}
+          <header className="h-16 bg-gradient-to-r from-[#43cea2] to-[#185a9d] text-white flex items-center justify-between px-6 z-40 shadow-xl">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -140,12 +139,12 @@ export default function AdvancedFinalDashboard() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <h1 className="text-lg font-black tracking-tighter hidden sm:block">بوابة كوكب المستشار</h1>
+              <h1 className="text-lg font-black tracking-tighter">بوابة المستشار السيادية</h1>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+              <div className="hidden md:flex relative group">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 group-focus-within:text-white transition-colors" />
                 <input 
                   type="text" 
                   placeholder="بحث سيادي..." 
@@ -155,7 +154,7 @@ export default function AdvancedFinalDashboard() {
               <button className="relative p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
                 <Bell className="h-5 w-5" />
                 {notifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 border-2 border-[#4e54c8] rounded-full text-[9px] flex items-center justify-center font-black animate-in zoom-in">
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 border-2 border-[#43cea2] rounded-full text-[9px] flex items-center justify-center font-black animate-in zoom-in">
                     {notifCount}
                   </span>
                 )}
@@ -169,12 +168,12 @@ export default function AdvancedFinalDashboard() {
             </div>
           </header>
 
-          {/* Dynamic Sections */}
+          {/* Dynamic Content Switching */}
           <main className="flex-1 relative overflow-hidden flex flex-col">
             
             {currentPage === "home" && (
               <>
-                {/* Sovereign Spirits */}
+                {/* Sovereign Spirits (The Three Floating Pillars) */}
                 <div className="absolute inset-x-0 top-10 flex justify-center gap-12 pointer-events-none z-0 opacity-20 dark:opacity-10">
                    {[1, 2, 3].map(i => (
                      <motion.div 
@@ -185,49 +184,52 @@ export default function AdvancedFinalDashboard() {
                      >
                        <Image 
                          src={`https://picsum.photos/seed/spirit${i}/400/400`} 
-                         width={100} height={100} 
-                         className="rounded-[2.5rem] border-2 border-primary shadow-2xl" 
+                         width={80} height={80} 
+                         className="rounded-[2rem] border-2 border-[#185a9d] shadow-2xl" 
                          alt={`Spirit ${i}`} 
-                         data-ai-hint="legal character" 
+                         data-ai-hint="legal expert" 
                        />
                      </motion.div>
                    ))}
                 </div>
 
-                {/* Chat Messages */}
+                {/* Chat Messages Area */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10 scrollbar-thin">
-                  {messages.map((m) => (
-                    <motion.div
-                      key={m.id}
-                      initial={{ opacity: 0, x: m.role === "user" ? -20 : 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`flex flex-col ${m.role === "user" ? "items-start" : "items-end"}`}
-                    >
-                      <div className={`p-5 rounded-[2rem] text-sm max-w-[85%] relative group shadow-xl border ${
-                        m.role === "user"
-                          ? "bg-green-100 dark:bg-green-950/30 text-slate-900 dark:text-white border-green-500/10 rounded-tr-none"
-                          : "bg-blue-100 dark:bg-blue-950/30 text-slate-900 dark:text-white border-blue-500/10 rounded-tl-none"
-                      }`}>
-                        <p className="leading-relaxed font-medium">{m.text}</p>
-                        
-                        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-black/5 dark:border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <button onClick={() => handleQuickReply(m.text)} className="flex items-center gap-1 bg-white/40 dark:bg-white/5 hover:bg-white/60 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Reply className="h-3 w-3" /> رد سريع</button>
-                           <button onClick={() => copyMessage(m.text)} className="flex items-center gap-1 bg-white/40 dark:bg-white/5 hover:bg-white/60 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Copy className="h-3 w-3" /> نسخ</button>
-                           <button onClick={() => deleteMessage(m.id)} className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Trash2 className="h-3 w-3" /> حذف</button>
+                  <div className="max-w-4xl mx-auto space-y-8">
+                    {messages.map((m) => (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`flex flex-col ${m.role === "user" ? "items-start" : "items-end"}`}
+                      >
+                        <div className={`p-5 rounded-[2.5rem] text-sm max-w-[85%] relative group shadow-xl border ${
+                          m.role === "user"
+                            ? "bg-[#d4edda] text-[#155724] border-[#c3e6cb] rounded-tr-none"
+                            : "bg-[#d1ecf1] text-[#0c5460] border-[#bee5eb] rounded-tl-none"
+                        }`}>
+                          <p className="leading-relaxed font-medium">{m.text}</p>
+                          
+                          {/* Quick Actions (Sovereign Order) */}
+                          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-black/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onClick={() => handleQuickReply(m.text)} className="flex items-center gap-1 bg-white/40 hover:bg-white/80 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Reply className="h-3 w-3" /> رد سريع</button>
+                             <button onClick={() => copyMessage(m.text)} className="flex items-center gap-1 bg-white/40 hover:bg-white/80 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Copy className="h-3 w-3" /> نسخ</button>
+                             <button onClick={() => deleteMessage(m.id)} className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-600 text-[10px] font-black px-3 py-1.5 rounded-lg transition-all"><Trash2 className="h-3 w-3" /> حذف</button>
+                          </div>
                         </div>
+                      </motion.div>
+                    ))}
+                    {isTyping && (
+                      <div className="flex gap-2 p-4 opacity-40">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200" />
                       </div>
-                    </motion.div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex gap-2 p-2 opacity-40">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100" />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200" />
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Chat Input */}
+                {/* Sovereign Input Hub */}
                 <div className="p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-border z-20">
                   <div className="max-w-4xl mx-auto flex gap-4">
                     <div className="relative flex-1">
@@ -235,17 +237,17 @@ export default function AdvancedFinalDashboard() {
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="اكتب استفسارك القانوني السيادي هنا..."
-                        className="w-full bg-secondary/40 rounded-2xl px-6 py-4 text-sm outline-none border border-transparent focus:border-primary/20 transition-all font-medium shadow-inner"
+                        placeholder="اكتب رسالتك السيادية هنا..."
+                        className="w-full bg-[#f8f9fa] dark:bg-slate-800 rounded-2xl px-6 py-4 text-sm outline-none border border-transparent focus:border-[#43cea2]/20 transition-all font-medium shadow-inner"
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                         <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                         <Sparkles className="h-4 w-4 text-[#43cea2] animate-pulse" />
                       </div>
                     </div>
                     <button
                       onClick={() => handleSend()}
                       disabled={!inputText.trim() || isTyping}
-                      className="btn-green-gradient text-white px-10 rounded-2xl font-black text-sm hover:scale-105 transition-transform shadow-xl shadow-green-500/20 active:scale-95 flex items-center gap-2"
+                      className="bg-gradient-to-r from-[#43cea2] to-[#185a9d] text-white px-10 rounded-2xl font-black text-sm hover:scale-105 transition-transform shadow-xl active:scale-95 flex items-center gap-2"
                     >
                       {isTyping ? <Cpu className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rotate-180" />}
                       إرسال
@@ -255,21 +257,21 @@ export default function AdvancedFinalDashboard() {
               </>
             )}
 
-            {/* Admin Sections */}
+            {/* Admin Dedicated Sections */}
             <AnimatePresence>
               {currentPage !== "home" && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="flex-1 p-8 space-y-10 overflow-y-auto"
+                  className="flex-1 p-8 space-y-10 overflow-y-auto bg-white dark:bg-slate-900"
                 >
                   <div className="flex items-center justify-between border-b border-border pb-6">
                     <div>
-                      <h2 className="text-4xl font-black tracking-tighter text-primary">{getSectionTitle(currentPage)}</h2>
+                      <h2 className="text-4xl font-black tracking-tighter text-[#185a9d]">{getSectionTitle(currentPage)}</h2>
                       <p className="text-sm text-muted-foreground mt-2 font-medium">إدارة قطاع {getSectionTitle(currentPage)} في المنظومة السيادية.</p>
                     </div>
-                    <div className="h-16 w-16 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <div className="h-16 w-16 rounded-[2rem] bg-[#43cea2]/10 flex items-center justify-center text-[#43cea2] shadow-inner">
                       {getSectionIcon(currentPage)}
                     </div>
                   </div>
@@ -277,35 +279,35 @@ export default function AdvancedFinalDashboard() {
                   <div className="grid gap-6">
                     {currentPage === "users" && (
                       <div className="flex flex-wrap gap-4">
-                        <AdminActionBtn icon={<Plus />} text="إضافة مستخدم جديد" />
-                        <AdminActionBtn icon={<Trash2 />} text="حذف مواطن" />
-                        <AdminActionBtn icon={<ShieldCheck />} text="حظر / فك حظر سيادي" color="red" />
+                        <AdminActionBtn text="إضافة مستخدم جديد" />
+                        <AdminActionBtn text="حذف مواطن" />
+                        <AdminActionBtn text="حظر / فك حظر سيادي" color="red" />
                       </div>
                     )}
                     {currentPage === "advisors" && (
                       <div className="flex flex-wrap gap-4">
-                        <AdminActionBtn icon={<Plus />} text="اعتماد مستشار جديد" />
-                        <AdminActionBtn icon={<Settings />} text="تعديل صلاحيات الهيئة" />
+                        <AdminActionBtn text="اعتماد مستشار جديد" />
+                        <AdminActionBtn text="تعديل صلاحيات الهيئة" />
                       </div>
                     )}
                     {currentPage === "banned" && (
                       <div className="flex flex-wrap gap-4">
-                        <AdminActionBtn icon={<Plus />} text="إضافة كلمة محظورة" />
-                        <AdminActionBtn icon={<X />} text="تطهير القائمة السوداء" />
+                        <AdminActionBtn text="إضافة كلمة محظورة" />
+                        <AdminActionBtn text="تطهير القائمة السوداء" />
                       </div>
                     )}
                     {currentPage === "offers" && (
                       <div className="flex flex-wrap gap-4">
-                        <AdminActionBtn icon={<Plus />} text="إضافة عرض مالي" />
-                        <AdminActionBtn icon={<Tag />} text="تعديل باقات الشحن" />
+                        <AdminActionBtn text="إضافة عرض مالي" />
+                        <AdminActionBtn text="تعديل باقات الشحن" />
                       </div>
                     )}
                     {currentPage === "logs" && (
-                      <div className="log-box bg-secondary/30 rounded-[2rem] p-6 border border-border/50 max-h-[500px] overflow-y-auto font-mono text-xs">
+                      <div className="bg-[#f8f9fa] dark:bg-black/20 rounded-[2rem] p-6 border border-border/50 max-h-[500px] overflow-y-auto font-mono text-xs">
                         <div className="space-y-3 opacity-60">
-                          <div className="p-3 bg-background rounded-xl border border-border">[{new Date().toLocaleTimeString()}] تم رصد دخول سيادي ناجح من king2026.</div>
-                          <div className="p-3 bg-background rounded-xl border border-border">[{new Date().toLocaleTimeString()}] محرك الرقابة (Smart Shield) في حالة نشطة.</div>
-                          <div className="p-3 bg-background rounded-xl border border-border">[{new Date().toLocaleTimeString()}] تم تحديث باقات الأسعار السيادية.</div>
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-border">[{new Date().toLocaleTimeString()}] تم رصد دخول سيادي ناجح من king2026.</div>
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-border">[{new Date().toLocaleTimeString()}] محرك الرقابة اللحظي في حالة ترقب نشطة.</div>
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-border">[{new Date().toLocaleTimeString()}] تم تحديث باقات العروض السيادية بنجاح.</div>
                         </div>
                       </div>
                     )}
@@ -327,8 +329,8 @@ function SideBtn({ icon, text, active, onClick }: { icon: any, text: string, act
       onClick={onClick}
       className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-bold text-sm ${
         active 
-          ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
-          : "text-white/40 hover:text-white hover:bg-white/5"
+          ? "bg-white/20 text-white shadow-xl scale-105" 
+          : "text-white/60 hover:text-white hover:bg-white/10"
       }`}
     >
       <span className="shrink-0">{icon}</span>
@@ -337,11 +339,11 @@ function SideBtn({ icon, text, active, onClick }: { icon: any, text: string, act
   );
 }
 
-function AdminActionBtn({ icon, text, color = "cyan" }: { icon: any, text: string, color?: string }) {
-  const gradient = color === "red" ? "from-red-500 to-red-700 shadow-red-500/20" : "from-cyan-500 to-cyan-700 shadow-cyan-500/20";
+function AdminActionBtn({ text, color = "green" }: { text: string, color?: string }) {
+  const gradient = color === "red" ? "from-red-500 to-red-700" : "from-[#43cea2] to-[#185a9d]";
   return (
-    <button className={`flex items-center gap-3 px-8 py-4 rounded-[1.8rem] bg-gradient-to-r ${gradient} text-white text-sm font-black shadow-2xl hover:scale-105 transition-all active:scale-95`}>
-      {icon} {text}
+    <button className={`px-8 py-4 rounded-[1.8rem] bg-gradient-to-r ${gradient} text-white text-sm font-black shadow-2xl hover:scale-105 transition-all active:scale-95`}>
+      {text}
     </button>
   );
 }
