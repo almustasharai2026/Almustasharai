@@ -19,12 +19,23 @@ import { roles as ROLES_LIST } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter, 
+  DialogDescription 
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useMemoFirebase } from "@/firebase/provider";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
+import Link from "next/link";
 
 /**
  * المستشار الذكي (The Smart Consultant)
  * رفيق المواطنين السيادي، مجهز بكافة وسائل الراحة والتحليل.
+ * تم إصلاح استيراد Dialog لضمان عمل محرك الكاميرا.
  */
 export default function SmartConsultantPage() {
   const { user, profile, signOut, role } = useUser();
@@ -54,28 +65,31 @@ export default function SmartConsultantPage() {
     }
   }, [cloudMessages, isTyping]);
 
-  // بروتوكول الإملاء الصوتي
+  // بروتوكول الإملاء الصوتي السيادي
   const toggleRecording = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      toast({ variant: "destructive", title: "تنبيه", description: "متصفحك لا يدعم التعرف على الصوت." });
-      return;
-    }
-    const SpeechRecognition = (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    
-    if (!isRecording) {
-      recognition.start();
-      setIsRecording(true);
-      recognition.onresult = (event: any) => {
-        const text = event.results[0][0].transcript;
-        setInputText(prev => prev + " " + text);
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      if (!SpeechRecognition) {
+        toast({ variant: "destructive", title: "تنبيه", description: "متصفحك لا يدعم التعرف على الصوت." });
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ar-SA';
+      
+      if (!isRecording) {
+        recognition.start();
+        setIsRecording(true);
+        recognition.onresult = (event: any) => {
+          const text = event.results[0][0].transcript;
+          setInputText(prev => prev + " " + text);
+          setIsRecording(false);
+        };
+        recognition.onerror = () => setIsRecording(false);
+        recognition.onend = () => setIsRecording(false);
+      } else {
+        recognition.stop();
         setIsRecording(false);
-      };
-      recognition.onerror = () => setIsRecording(false);
-    } else {
-      recognition.stop();
-      setIsRecording(false);
+      }
     }
   };
 
@@ -83,6 +97,7 @@ export default function SmartConsultantPage() {
     const text = customText || inputText.trim();
     if (!text || isTyping || !db || !user) return;
 
+    // حماية الرصيد للمواطنين
     if (role === ROLES_LIST.USER && (profile?.balance || 0) < 1) {
       toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن محفظتك للمتابعة." });
       return;
@@ -223,7 +238,7 @@ export default function SmartConsultantPage() {
                    <ToolBtn icon={<Paperclip />} onClick={() => fileInputRef.current?.click()} tooltip="إرفاق ملف" />
                    <ToolBtn icon={<Camera />} onClick={() => setIsCameraOpen(true)} tooltip="التقاط صورة" />
                    <ToolBtn icon={<Mic />} onClick={toggleRecording} active={isRecording} color="red" tooltip="إملاء صوتي" />
-                   <input type="file" ref={fileInputRef} className="hidden" multiple onChange={(e) => toast({ title: "تم إرفاق الملفات ✅" })} />
+                   <input type="file" ref={fileInputRef} className="hidden" multiple onChange={() => toast({ title: "تم إرفاق الملفات ✅" })} />
                 </div>
                 <div className="relative glass-cosmic border-2 border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl focus-within:border-primary/40 transition-all duration-500">
                   <div className="flex items-center px-8 py-5 gap-6">
@@ -246,8 +261,13 @@ export default function SmartConsultantPage() {
         </div>
       </div>
 
+      {/* معالج تصوير الوثائق السيادي */}
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 max-w-2xl bg-black shadow-3xl">
+           <DialogHeader className="mb-6">
+              <DialogTitle className="text-2xl font-black text-white text-right">محرك الالتقاط السيادي</DialogTitle>
+              <DialogDescription className="text-right text-white/40 font-bold">يرجى توثيق الوثيقة المطلوبة لتعزيز التحليل القانوني.</DialogDescription>
+           </DialogHeader>
            <IdCaptureWizard onComplete={() => { setIsCameraOpen(false); toast({ title: "تم التقاط الوثيقة السيادية ✅" }); }} />
         </DialogContent>
       </Dialog>
@@ -270,12 +290,9 @@ function CommandBtn({ icon, text, onClick, color }: any) {
 }
 
 function ToolBtn({ icon, onClick, active, color, tooltip }: any) {
-  const isRed = color === "red";
   return (
     <button onClick={onClick} title={tooltip} className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all border shadow-lg ${active ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/5 border-white/5 text-white/40 hover:text-primary hover:border-primary/20'}`}>
       {icon}
     </button>
   );
 }
-
-import Link from "next/link";
