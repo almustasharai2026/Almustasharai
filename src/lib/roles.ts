@@ -1,4 +1,3 @@
-
 /**
  * ميثاق الرتب السيادية (Sovereign Role Constants).
  * الإصدار النهائي المعتمد للمالك king2026.
@@ -6,7 +5,8 @@
 export const roles = {
   ADMIN: "admin",       // المالك الملكي (king2026)
   MODERATOR: "moderator", // مشرف
-  CONSULTANT: "consultant", // مستشار
+  CONSULTANT: "consultant", // مستشار معتمد
+  PENDING_EXPERT: "pending_expert", // خبير قيد المراجعة (لا يظهر في القوائم)
   VIP: "vip",           // عميل مميز
   USER: "user",         // مواطن عادي
 } as const;
@@ -35,7 +35,7 @@ export const isOwner = (email: string | null | undefined) => {
 };
 
 export const getPermissions = (role: UserRole | string | null | undefined): RolePermissions => {
-  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً بغض النظر عن المدخلات
+  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً
   if (role === roles.ADMIN) {
     return {
       canManageUsers: true,
@@ -78,6 +78,17 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
         canPromoteRoles: false,
         canManageSystem: false,
         canConsult: true,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+        consultationDiscount: 0,
+      };
+    case roles.PENDING_EXPERT:
+      return {
+        canManageUsers: false,
+        canPromoteRoles: false,
+        canManageSystem: false,
+        canConsult: false, // لا يمكنه تقديم استشارات حتى يتم اعتماده
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,

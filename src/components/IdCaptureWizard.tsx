@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface IdCaptureWizardProps {
@@ -28,13 +27,21 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [capturedImages, setCapturedImages] = useState<Record<string, string>>({});
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setCapturedImages(prev => ({ ...prev, [STEPS[currentStep].id]: imageSrc }));
-      setIsCameraActive(false);
+    try {
+      const imageSrc = webcamRef.current?.getScreenshot();
+      if (imageSrc) {
+        setCapturedImages(prev => ({ ...prev, [STEPS[currentStep].id]: imageSrc }));
+        setIsCameraActive(false);
+        setError(null);
+      } else {
+        setError("فشل التقاط الصورة، يرجى المحاولة ثانية.");
+      }
+    } catch (e) {
+      setError("تعذر الوصول للكاميرا.");
     }
   }, [webcamRef, currentStep]);
 
@@ -77,7 +84,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-slate-900 dark:text-white">{STEPS[currentStep].title}</h3>
-                  <p className="text-xs text-muted-foreground font-bold">يرجى وضع الوثيقة بوضوح أمام الكاميرا</p>
+                  <p className="text-xs text-muted-foreground font-bold">يرجى تثبيت الوثيقة والتقاط صورة واضحة.</p>
                 </div>
               </div>
 
@@ -102,17 +109,22 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
                     )}
                   </div>
                 )}
+                {error && (
+                  <div className="absolute top-4 inset-x-4 bg-red-600 text-white p-3 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" /> {error}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
                 {isCameraActive ? (
-                  <Button onClick={capture} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg">التقاط الآن</Button>
+                  <Button onClick={capture} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl">التقاط الآن</Button>
                 ) : (
                   <>
                     <Button 
                       variant="outline" 
                       onClick={() => setIsCameraActive(true)} 
-                      className="flex-1 h-14 rounded-2xl border-primary/20 text-primary font-black gap-2"
+                      className="flex-1 h-14 rounded-2xl border-primary/20 text-primary font-black gap-2 hover:bg-primary/5"
                     >
                       {capturedImages[STEPS[currentStep].id] ? <RefreshCw className="h-5 w-5" /> : <Camera className="h-5 w-5" />}
                       {capturedImages[STEPS[currentStep].id] ? 'إعادة الالتقاط' : 'فتح الكاميرا'}
