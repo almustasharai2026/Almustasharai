@@ -1,97 +1,371 @@
-
 {
   "entities": {
     "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
-      "description": "الملف السيادي للمواطن الرقمي، يضم الهوية الرقمية ومستوى الثقة وحالة الامتثال.",
       "type": "object",
+      "description": "Represents a registered user of the Almustasharai platform, containing their personal information and contact details.",
       "properties": {
-        "id": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "fullName": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "consultant", "moderator", "admin"] },
-        "balance": { "type": "number", "default": 50 },
-        "trustScore": { "type": "number", "default": 50 },
-        "completedSessions": { "type": "number", "default": 0 },
-        "reports": { "type": "number", "default": 0 },
-        "isBanned": { "type": "boolean", "default": false },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for communication.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
+        },
+        "dateCreated": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "email", "fullName", "role"]
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "dateCreated",
+        "lastUpdated"
+      ]
     },
-    "SystemSettings": {
-      "title": "SystemSettings",
-      "description": "إعدادات الواجهة والنصوص العامة للمنصة.",
+    "ConsultantProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConsultantProfile",
       "type": "object",
+      "description": "Represents a legal consultant available on the Almustasharai platform, detailing their professional background and services.",
       "properties": {
-        "homeTitle": { "type": "string" },
-        "homeSubtitle": { "type": "string" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "PricingOffer": {
-      "title": "PricingOffer",
-      "description": "باقة شحن رصيد سيادية.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "price": { "type": "number" },
-        "minutes": { "type": "number" },
-        "description": { "type": "string" },
-        "features": { "type": "array", "items": { "type": "string" } },
-        "isPopular": { "type": "boolean" },
-        "icon": { "type": "string" }
-      }
-    },
-    "Consultant": {
-      "title": "Consultant",
-      "description": "ملف الخبير المعتمد في هيئة الاستشارات.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "specialization": { "type": "string" },
-        "rating": { "type": "number", "default": 5.0 },
-        "reviews": { "type": "number", "default": 0 },
-        "isApproved": { "type": "boolean", "default": true }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ConsultantProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the associated UserProfile for this consultant. (Relationship: UserProfile 1:1 ConsultantProfile)"
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography or professional summary of the consultant."
+        },
+        "yearsOfExperience": {
+          "type": "number",
+          "description": "The number of years the consultant has been practicing."
+        },
+        "hourlyRate": {
+          "type": "number",
+          "description": "The consultant's hourly rate for consultations."
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The average rating received by the consultant from past clients."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL to the consultant's profile picture.",
+          "format": "uri"
+        },
+        "expertiseAreaIds": {
+          "type": "array",
+          "description": "References to ExpertiseArea entities that the consultant specializes in. (Relationship: ConsultantProfile N:N ExpertiseArea)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "qualifications": {
+          "type": "array",
+          "description": "A list of strings detailing the consultant's academic and professional qualifications.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languagesSpoken": {
+          "type": "array",
+          "description": "A list of languages the consultant can conduct consultations in.",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["name", "specialization"]
+      "required": [
+        "id",
+        "userId",
+        "bio",
+        "yearsOfExperience",
+        "hourlyRate",
+        "expertiseAreaIds"
+      ]
     },
-    "ModerationWord": {
-      "title": "ModerationWord",
-      "description": "كلمة محظورة يراقبها الدرع الواقي السيادي.",
+    "ExpertiseArea": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExpertiseArea",
       "type": "object",
+      "description": "Defines a specific legal area of expertise, allowing for categorization of consultants and consultations.",
       "properties": {
-        "word": { "type": "string" },
-        "severity": { "type": "string", "enum": ["low", "medium", "high"] },
-        "addedAt": { "type": "string", "format": "date-time" }
-      }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ExpertiseArea entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the legal expertise area (e.g., 'Family Law', 'Corporate Law')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of what this expertise area covers."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "Consultation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Consultation",
+      "type": "object",
+      "description": "Represents a scheduled or completed legal consultation between a user and a consultant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Consultation entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who booked the consultation. (Relationship: UserProfile 1:N Consultation)"
+        },
+        "consultantId": {
+          "type": "string",
+          "description": "Reference to the ConsultantProfile conducting the consultation. (Relationship: ConsultantProfile 1:N Consultation)"
+        },
+        "expertiseAreaId": {
+          "type": "string",
+          "description": "Reference to the primary ExpertiseArea for this consultation. (Relationship: ExpertiseArea 1:N Consultation)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The scheduled start time of the consultation.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The scheduled end time of the consultation.",
+          "format": "date-time"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The planned duration of the consultation in minutes."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the consultation (e.g., 'Pending', 'Confirmed', 'Completed', 'Cancelled')."
+        },
+        "bookingTime": {
+          "type": "string",
+          "description": "Timestamp when the consultation was booked.",
+          "format": "date-time"
+        },
+        "userRequestDetails": {
+          "type": "string",
+          "description": "Detailed description of the user's legal inquiry or needs for the consultation."
+        },
+        "consultationLink": {
+          "type": "string",
+          "description": "URL for the online meeting room where the consultation will take place.",
+          "format": "uri"
+        },
+        "userRating": {
+          "type": "number",
+          "description": "The rating given by the user to the consultant after the consultation (1-5 stars)."
+        },
+        "userFeedback": {
+          "type": "string",
+          "description": "Text feedback provided by the user about the consultation."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "consultantId",
+        "expertiseAreaId",
+        "startTime",
+        "endTime",
+        "durationMinutes",
+        "status",
+        "bookingTime",
+        "userRequestDetails",
+        "consultationLink"
+      ]
+    },
+    "AvailabilitySlot": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AvailabilitySlot",
+      "type": "object",
+      "description": "Represents a specific time slot when a consultant is available for a consultation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AvailabilitySlot entity."
+        },
+        "consultantId": {
+          "type": "string",
+          "description": "Reference to the ConsultantProfile who owns this availability slot. (Relationship: ConsultantProfile 1:N AvailabilitySlot)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The start time of the availability slot.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The end time of the availability slot.",
+          "format": "date-time"
+        },
+        "isBooked": {
+          "type": "boolean",
+          "description": "Indicates whether this slot has been booked by a user."
+        },
+        "consultationId": {
+          "type": "string",
+          "description": "Reference to the Consultation entity that booked this slot, if applicable. (Relationship: AvailabilitySlot 1:1 Consultation)"
+        }
+      },
+      "required": [
+        "id",
+        "consultantId",
+        "startTime",
+        "endTime",
+        "isBooked"
+      ]
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "UserProfile",
-      "description": "بيانات الهوية السيادية"
-    },
-    "/system/settings": {
-      "schema": "SystemSettings",
-      "description": "إعدادات المنصة المركزية"
-    },
-    "/system/config/offers/{offerId}": {
-      "schema": "PricingOffer",
-      "description": "باقات الأسعار السيادية المحدثة"
-    },
-    "/consultants/{id}": {
-      "schema": "Consultant",
-      "description": "هيئة الخبراء المعتمدين"
-    },
-    "/system/moderation/forbiddenWords/{id}": {
-      "schema": "ModerationWord",
-      "description": "قاعدة بيانات الكلمات المحظورة"
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "userProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores private user profile information, directly owned by the authenticated user. Accessible only by the owning user (request.auth.uid == userId).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/consultants/{consultantId}",
+        "definition": {
+          "entityName": "consultantProfile",
+          "schema": {
+            "$ref": "#/backend/entities/ConsultantProfile"
+          },
+          "description": "Stores professional details of legal consultants. This collection is publicly readable for browsing and search. Write access is restricted to the owning consultant (request.auth.uid == consultantId).",
+          "params": [
+            {
+              "name": "consultantId",
+              "description": "The unique ID of the consultant, matching their Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/expertiseAreas/{expertiseAreaId}",
+        "definition": {
+          "entityName": "expertiseArea",
+          "schema": {
+            "$ref": "#/backend/entities/ExpertiseArea"
+          },
+          "description": "Stores global, static definitions of legal expertise areas. Publicly readable by all users. Writable only by administrators (DBAC via /roles_admin).",
+          "params": [
+            {
+              "name": "expertiseAreaId",
+              "description": "The unique ID for a specific legal expertise area."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/consultations/{consultationId}",
+        "definition": {
+          "entityName": "consultation",
+          "schema": {
+            "$ref": "#/backend/entities/Consultation"
+          },
+          "description": "Stores details of a scheduled or completed legal consultation. Includes denormalized 'userId' and 'consultantId' for authorization independence, allowing secure list operations and read/write access for both parties without 'get()' calls.",
+          "params": [
+            {
+              "name": "consultationId",
+              "description": "The unique ID for a specific consultation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/consultants/{consultantId}/availabilitySlots/{availabilitySlotId}",
+        "definition": {
+          "entityName": "availabilitySlot",
+          "schema": {
+            "$ref": "#/backend/entities/AvailabilitySlot"
+          },
+          "description": "Stores time slots when a consultant is available. Owned by the consultant (consultantId is in path and document for rules). Publicly readable for users to browse and book. Writable only by the owning consultant.",
+          "params": [
+            {
+              "name": "consultantId",
+              "description": "The unique ID of the consultant who owns this availability slot."
+            },
+            {
+              "name": "availabilitySlotId",
+              "description": "The unique ID for a specific availability slot."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "A collection used for Database Access Control (DBAC) to designate administrators. The mere existence of a document at this path for a given userId grants administrative privileges. Read/Write access restricted to other administrators or system processes.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of a user designated as an administrator."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for Almustasharai prioritizes security, scalability, and debuggability by adhering to the core design principles. \n\n**Authorization Independence (CRITICAL):**\n1.  **Consultations:** For the `/consultations/{consultationId}` collection, both `userId` (the booking user) and `consultantId` (the assigned consultant) are explicitly stored within each `Consultation` document. This denormalizes the authorization context, eliminating the need for `get()` calls in security rules to determine if a user or consultant has access. Rules can directly check `request.auth.uid == resource.data.userId` or `request.auth.uid == resource.data.consultantId`, making authorization atomic, robust, and easy to debug.\n2.  **Availability Slots:** For `/consultants/{consultantId}/availabilitySlots/{availabilitySlotId}`, the `consultantId` is inherently part of the path and is also stored in the document. This allows rules to verify `request.auth.uid == resource.data.consultantId` for write operations without relying on a `get()` call to the parent `ConsultantProfile` document.\n\n**Querying As Permissions (QAPs):**\n1.  **User Profiles:** `/users/{userId}` is strictly path-based, meaning a user can only access their own profile. List operations for other users' profiles are not applicable.\n2.  **Consultant Profiles:** The `/consultants` collection is designed for public readability, allowing any user to list and search for consultants. This supports the 'Consultant Profiles & Search' feature directly by enabling queries across the collection (e.g., filtering by expertise).\n3.  **Expertise Areas:** The `/expertiseAreas` collection is a global, publicly readable resource, allowing all users to list available legal expertise categories for filtering or information.\n4.  **Consultations:** With `userId` and `consultantId` denormalized into each `Consultation` document, both users and consultants can securely and efficiently retrieve their *own* associated consultations using equality queries (e.g., `.where('userId', '==', request.auth.uid)` or `.where('consultantId', '==', request.auth.uid)`). This ensures that `list` operations return only authorized results without requiring client-side filtering or inefficient security rules.\n5.  **Availability Slots:** Users can `list` availability slots for a *specific consultant* by querying `/consultants/{consultantId}/availabilitySlots`. The security rules ensure that only public (available) slots are shown or that only the consultant can modify their own slots.\n\n**Structural Segregation & Access Modeling:**\n*   **Private Data:** User profiles are secured under `/users/{userId}`, ensuring path-based ownership. \n*   **Collaborative Data:** Consultations, which involve two parties, are in a top-level collection `/consultations/{consultationId}` with denormalized `userId` and `consultantId` fields. This is consistent for collaboration. \n*   **Hierarchical & Nested Data:** Availability slots are nested under `/consultants/{consultantId}/availabilitySlots/{availabilitySlotId}` to clearly indicate their ownership by a specific consultant, simplifying rules for consultants managing their schedules.\n*   **Global Roles (DBAC):** An `/roles_admin/{userId}` collection is used for administrator assignment, enabling role-based access control through existence checks (`exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`) rather than custom claims.\n*   **Homogeneous Security Posture:** Each collection maintains a consistent security posture. For example, `ConsultantProfile` documents are publicly readable but only self-writable, avoiding mixed public/private data within a single document based on field-level rules.\n\nThis structure directly supports the core features by providing clear data ownership, enabling efficient and secure queries for listings and searches, and simplifying the implementation of robust Firestore security rules."
   }
 }
