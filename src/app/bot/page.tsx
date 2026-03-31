@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -9,9 +10,7 @@ import {
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Image from "next/image";
-import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection } from "firebase/firestore";
-import { useMemoFirebase } from "@/firebase/provider";
+import { useUser, useFirestore } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -27,7 +26,6 @@ export default function AdvancedFinalDashboard() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const router = useRouter();
-  const db = useFirestore();
   
   const [currentPage, setCurrentPage] = useState("home");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
