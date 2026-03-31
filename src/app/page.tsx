@@ -5,7 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Scale, FileText, Users, CreditCard, 
   Bot, Zap, ShieldCheck, ArrowLeft, LayoutDashboard,
-  Globe, Lock, Sparkles, LogOut, ChevronLeft, ArrowRight
+  Globe, Lock, Sparkles, LogOut, ChevronLeft, ArrowRight,
+  Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -98,7 +99,7 @@ export default function AlmustasharaiElite() {
           <Link href="/templates" className="hover:text-primary transition-colors">المكتبة</Link>
           {user && (
             <Link href={role === ROLES_LIST.ADMIN ? "/admin" : "/dashboard"} className="text-primary flex items-center gap-2">
-              {role === ROLES_LIST.ADMIN ? <Crown size={14} /> : <LayoutDashboard size={14} />}
+              <LayoutDashboard size={14} />
               لوحة التحكم
             </Link>
           )}
@@ -284,10 +285,4 @@ export default function AlmustasharaiElite() {
       </footer>
     </div>
   );
-}
-
-function Crown(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
-  )
 }
