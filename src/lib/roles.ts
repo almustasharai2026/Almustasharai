@@ -1,19 +1,20 @@
+
 /**
- * ميثاق الرتب السيادية (Sovereign Role Constants).
- * الإصدار النهائي المعتمد للمالك king2026.
+ * ميثاق الرتب السيادية (The Sovereign Hierarchy king2026).
+ * الإصدار النهائي المعتمد لإدارة كوكب المستشار AI.
  */
 export const roles = {
-  ADMIN: "admin",       // المالك الملكي (king2026)
-  MODERATOR: "moderator", // مشرف
-  CONSULTANT: "consultant", // مستشار معتمد
-  PENDING_EXPERT: "pending_expert", // خبير قيد المراجعة (لا يظهر في القوائم)
-  VIP: "vip",           // عميل مميز
-  USER: "user",         // مواطن عادي
+  ADMIN: "admin",       // المالك الملكي المطلق (king2026)
+  MODERATOR: "moderator", // جهاز الرقابة
+  CONSULTANT: "consultant", // هيئة الخبراء المعتمدين
+  PENDING_EXPERT: "pending_expert", // خبير قيد الفحص السيادي
+  VIP: "vip",           // مواطن من الفئة الممتازة
+  USER: "user",         // مواطن سيادي
 } as const;
 
 export type UserRole = (typeof roles)[keyof typeof roles];
 
-// البريد السيادي للمالك - المرجع النهائي للسلطة
+// المرجع النهائي للسلطة البرمجية
 export const SOVEREIGN_ADMIN_EMAIL = "bishoysamy390@gmail.com";
 
 export interface RolePermissions {
@@ -28,14 +29,14 @@ export interface RolePermissions {
 }
 
 /**
- * التحقق من الهوية الملكية للمالك king2026 عبر البريد المعتمد.
+ * التحقق من الهوية الملكية للمالك king2026.
  */
 export const isOwner = (email: string | null | undefined) => {
   return email?.toLowerCase() === SOVEREIGN_ADMIN_EMAIL;
 };
 
 export const getPermissions = (role: UserRole | string | null | undefined): RolePermissions => {
-  // المالك السيادي king2026 يمتلك كافة الصلاحيات دوماً
+  // المالك king2026 يمتلك كافة مفاتيح الكوكب
   if (role === roles.ADMIN) {
     return {
       canManageUsers: true,
@@ -70,7 +71,7 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
-        consultationDiscount: 0.5,
+        consultationDiscount: 0.5, // خصم ٥٠٪ على الخدمات
       };
     case roles.CONSULTANT:
       return {
@@ -88,7 +89,7 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
         canManageUsers: false,
         canPromoteRoles: false,
         canManageSystem: false,
-        canConsult: false, // لا يمكنه تقديم استشارات حتى يتم اعتماده
+        canConsult: false, // بانتظار الاعتماد السيادي
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,

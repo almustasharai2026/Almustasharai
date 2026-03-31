@@ -1,29 +1,31 @@
 
 'use server';
 /**
- * @fileOverview محرك اتخاذ القرار السيادي.
- * يقوم بتحليل المدخلات وتقديم نتائج هيكلية (مستوى المخاطر، التوصيات، اليقين).
+ * @fileOverview محرك اتخاذ القرار السيادي (Sovereign Decision Engine).
+ * يقوم بتحليل المدخلات القانونية المعقدة وتقديم مخرجات هيكلية (مستوى المخاطر، التوصيات، التنبؤ بالنتيجة).
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DecisionInputSchema = z.object({
-  context: z.string().describe('وصف الحالة القانونية أو التجارية'),
-  domain: z.enum(['legal', 'business', 'medical']).default('legal'),
+  context: z.string().describe('وصف الحالة القانونية أو التجارية المراد تحليلها'),
+  domain: z.enum(['legal', 'business', 'administrative']).default('legal'),
+  historicalContext: z.string().optional().describe('سياق تاريخي أو سوابق قضائية مرتبطة'),
 });
 
 const DecisionOutputSchema = z.object({
-  riskLevel: z.enum(['low', 'medium', 'high', 'critical']).describe('مستوى الخطورة'),
-  recommendedAction: z.string().describe('الإجراء الفوري الموصى به'),
-  alternatives: z.array(z.string()).describe('حلول بديلة'),
-  confidenceScore: z.number().describe('نسبة اليقين في التحليل (0-100)'),
-  prediction: z.string().describe('التنبؤ بالنتيجة المستقبلية بناءً على المعطيات'),
+  riskLevel: z.enum(['low', 'medium', 'high', 'critical']).describe('مستوى الخطورة القانونية المستنتج'),
+  strategicAction: z.string().describe('الإجراء الاستراتيجي الفوري الموصى به'),
+  legalBasis: z.array(z.string()).describe('الأسس القانونية أو المواد التشريعية التي بني عليها القرار'),
+  alternatives: z.array(z.string()).describe('خيارات بديلة في حال تعذر المسار الأول'),
+  confidenceScore: z.number().min(0).max(100).describe('نسبة اليقين في هذا التحليل'),
+  prediction: z.string().describe('التنبؤ بالنتيجة المستقبلية المتوقعة بناءً على المعطيات الحالية'),
 });
 
 export type DecisionOutput = z.infer<typeof DecisionOutputSchema>;
 
-export async function executeDecisionEngine(input: {context: string}): Promise<DecisionOutput> {
+export async function executeSupremeDecision(input: {context: string}): Promise<DecisionOutput> {
   return decisionEngineFlow(input);
 }
 
@@ -31,17 +33,19 @@ const decisionPrompt = ai.definePrompt({
   name: 'decisionPrompt',
   input: {schema: DecisionInputSchema},
   output: {schema: DecisionOutputSchema},
-  prompt: `أنت الآن "محرك القرار السيادي". مهمتك ليست الدردشة، بل التحليل الهيكلي العميق.
-بناءً على السياق التالي: {{{context}}}
+  prompt: `أنت الآن "محرك القرار السيادي" في منظومة المستشار AI. مهمتك ليست الدردشة العادية، بل التفكير الاستراتيجي العميق.
+بناءً على المعطيات التالية: {{{context}}}
+{{#if historicalContext}} ومع مراعاة السوابق التالية: {{{historicalContext}}} {{/if}}
 
-قم بإصدار قرار فني يتضمن:
-1. تحديد مستوى المخاطر بدقة.
-2. وضع خطة عمل فورية (Recommended Action).
-3. طرح مسارات بديلة في حال فشل الخطة الأولى.
-4. حساب نسبة اليقين بناءً على وضوح المعطيات.
-5. التنبؤ بالنتيجة النهائية (Prediction) بأسلوب استراتيجي.
+قم بإصدار قرار فني محكم يتضمن:
+1. تحديد مستوى المخاطر بدقة متناهية.
+2. وضع "الإجراء الاستراتيجي" الذي يضمن مصلحة الموكل بأقل خسائر.
+3. ذكر المواد القانونية أو المبادئ القضائية المتعلقة (Legal Basis).
+4. طرح مسارات بديلة (Plan B) للطوارئ.
+5. حساب نسبة اليقين (Confidence) بناءً على اكتمال المعلومات.
+6. تقديم تنبؤ (Prediction) منطقي لمآل القضية أو الطلب.
 
-يجب أن يكون الرد احترافياً جداً وباللغة العربية الرصينة.`,
+يجب أن تكون اللغة عربية رصينة، قانونية، ومباشرة جداً.`,
 });
 
 const decisionEngineFlow = ai.defineFlow(
