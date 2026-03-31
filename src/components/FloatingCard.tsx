@@ -13,19 +13,19 @@ interface FloatingCardProps {
 /**
  * مكون البطاقة العائمة السيادية.
  * يستخدم تأثيرات حركية لتعزيز الحيوية البصرية للمنصة.
- * يتضمن حماية من أخطاء الترطيب (Hydration Mismatch) عند استخدام القيم العشوائية.
+ * يتضمن حماية من أخطاء الترطيب عند استخدام القيم العشوائية.
  */
 export default function FloatingCard({ title, delay, icon }: FloatingCardProps) {
   const [position, setPosition] = useState({ left: "10%", top: "10%" });
-  const [mounted, setSetMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // توليد مواقع عشوائية سيادية بعد اكتمال الترطيب
+    // توليد مواقع عشوائية سيادية بعد اكتمال الترطيب لضمان استقرار Next.js
     setPosition({
       left: `${Math.floor(Math.random() * 60 + 5)}%`,
       top: `${Math.floor(Math.random() * 50 + 10)}%`,
     });
-    setSetMounted(true);
+    setMounted(true);
   }, []);
 
   if (!mounted) return null;
