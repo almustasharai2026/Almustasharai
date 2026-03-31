@@ -1,13 +1,12 @@
+'use client';
 
-"use client";
-
-import { Button } from "@/components/ui/button";
 import { Sparkles, Gavel, Video, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import SovereignButton from "@/components/SovereignButton";
 
 /**
- * الصفحة الرئيسية السيادية.
- * تم تصميمها بأسلوب Mobile-first لضمان السرعة والتركيز على الميزات الأساسية.
+ * الصفحة الرئيسية السيادية المحدثة.
+ * تستخدم مكون SovereignButton لضمان توحيد تجربة الانطلاق.
  */
 export default function Home() {
   return (
@@ -26,9 +25,10 @@ export default function Home() {
         </div>
 
         <Link href="/auth/signup" className="block w-full">
-          <Button className="w-full bg-accent hover:bg-accent/90 text-white h-14 rounded-2xl text-lg font-black shadow-lg shadow-accent/20 gap-3 group">
-            ابدأ الآن <ArrowRight className="h-5 w-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
-          </Button>
+          <SovereignButton 
+            text="ابدأ الآن" 
+            icon={<ArrowRight className="h-5 w-5 rotate-180" />} 
+          />
         </Link>
       </div>
 
@@ -66,9 +66,6 @@ export default function Home() {
   );
 }
 
-/**
- * مكون بطاقة الميزة السيادية.
- */
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="p-5 bg-secondary/50 rounded-[2rem] border border-border/50 flex gap-4 items-start group hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 shadow-sm hover:shadow-md">

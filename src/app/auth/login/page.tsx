@@ -1,17 +1,17 @@
-
-"use client";
+'use client';
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Globe, Facebook } from "lucide-react";
+import { Scale, Globe, Facebook, Lock } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import SovereignButton from "@/components/SovereignButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("bishoysamy390@gmail.com");
@@ -88,13 +88,14 @@ export default function LoginPage() {
               className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right"
             />
           </div>
-          <Button 
-            className="w-full btn-primary h-16 rounded-2xl text-xl font-black shadow-2xl"
+          
+          <SovereignButton 
+            text={isLoading ? "جاري الدخول..." : "دخول سيادي"}
             onClick={handleLogin}
             disabled={isLoading}
-          >
-            {isLoading ? "جاري الدخول..." : "دخول سيادي"}
-          </Button>
+            className="mt-2"
+            icon={<Lock className="h-5 w-5" />}
+          />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
           <div className="text-sm text-center text-white/30">
