@@ -13,6 +13,7 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import SovereignButton from "@/components/SovereignButton";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
 import { verifyLegalIdentity } from "@/ai/flows/verify-id-flow";
