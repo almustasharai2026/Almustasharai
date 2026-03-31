@@ -3,51 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { 
-  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket, Zap, Gavel, MessageSquare, Send
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
-import { useMemoFirebase } from "@/firebase/provider";
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Sparkles, Send, Zap, Gavel, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
 
-/**
- * الواجهة الرئيسية المحدثة لكوكب المستشار.
- * تدمج محرك الإدخال السيادي الجديد مع الهوية البصرية الكحلية #0A192F.
- */
 export default function SovereignLandingPage() {
-  const { user, isUserLoading } = useUser();
-  const db = useFirestore();
-  const [activeTab, setActiveTab] = useState("my-projects");
-  const [prompt, setInput] = useState("");
-
-  const sessionsQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return query(
-      collection(db, "users", user.uid, "chatSessions"), 
-      orderBy("lastMessageAt", "desc"),
-      limit(6)
-    );
-  }, [db, user]);
-  
-  const { data: recentSessions, isLoading: sessionsLoading } = useCollection(sessionsQuery);
+  const [prompt, setPrompt] = useState("");
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30 font-sans" dir="rtl">
-      {/* Sovereign Synchronization Bar */}
-      {isUserLoading && (
-        <div className="fixed top-0 left-0 w-full h-1 bg-primary/20 z-[200]">
-          <div className="h-full bg-primary animate-pulse" style={{ width: '30%' }} />
-        </div>
-      )}
-
-      {/* Cosmic Background Ambiance */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <div className="min-h-screen bg-[#02040a] text-white font-sans overflow-hidden" dir="rtl">
+      {/* Background Glows */}
+      <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-600/10 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-0 w-[400px] h-[400px] bg-amber-500/5 blur-[120px] rounded-full" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-40 pb-32">
@@ -56,7 +22,7 @@ export default function SovereignLandingPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-10 mb-32"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border-white/5 text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4">
+          <div className="sovereign-badge mb-4">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Sovereign Power v4.5
           </div>
           
@@ -69,19 +35,20 @@ export default function SovereignLandingPage() {
             </p>
           </div>
 
-          {/* محرك الإدخال السيادي المطور */}
+          {/* Sovereign Input Engine */}
           <div className="w-full max-w-3xl mx-auto mt-12 px-4">
-            <div className="glass-cosmic bg-[#0A192F]/80 p-2.5 rounded-[2.5rem] border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row items-center gap-3 transition-all focus-within:border-primary/40 focus-within:shadow-[0_0_50px_rgba(99,102,241,0.2)]">
+            <div className="glass-cosmic bg-[#0A192F]/80 p-2.5 rounded-[2.5rem] border-white/10 shadow-3xl flex flex-col sm:row items-center gap-3 focus-within:border-primary/40 transition-all">
               <input 
                 value={prompt}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => setPrompt(e.target.value)}
                 placeholder="اطرح سؤالك القانوني أو المالي هنا..."
-                className="w-full sm:flex-1 bg-transparent border-none focus:ring-0 text-lg md:text-xl font-medium p-5 placeholder:text-white/20 text-white text-right outline-none"
+                className="w-full sm:flex-1 bg-transparent border-none focus:ring-0 text-xl font-medium p-5 placeholder:text-white/20 text-white text-right outline-none"
               />
               <Link href={`/bot?q=${encodeURIComponent(prompt)}`} className="w-full sm:w-auto">
                 <Button 
                   disabled={!prompt.trim()}
-                  className="w-full sm:w-auto h-16 sm:h-14 px-10 rounded-[1.8rem] bg-gradient-to-r from-[#00C896] to-[#0A192F] text-white font-black text-lg border-none shadow-2xl transition-all hover:scale-105 active:scale-95 gap-3"
+                  style={{ background: "linear-gradient(135deg, #00C896, #0A192F)" }}
+                  className="w-full sm:w-auto h-16 sm:h-14 px-10 rounded-[1.8rem] text-white font-black text-lg border-none shadow-2xl transition-all hover:scale-105 active:scale-95 gap-3"
                 >
                   إرسال <Send className="h-5 w-5 rotate-180" />
                 </Button>
@@ -89,93 +56,24 @@ export default function SovereignLandingPage() {
             </div>
           </div>
 
-          {/* Sovereign Features Section */}
+          {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-24">
-            <FeatureCard 
-              icon={<Zap className="h-6 w-6 text-amber-400" />} 
-              title="تحليل ذكي" 
-              desc="معالجة فورية لكافة المعطيات القانونية والمالية."
-            />
-            <FeatureCard 
-              icon={<Gavel className="h-6 w-6 text-indigo-400" />} 
-              title="مستشارين متخصصين" 
-              desc="نخبة من الخبراء السياديين في كافة المجالات."
-            />
-            <FeatureCard 
-              icon={<MessageSquare className="h-6 w-6 text-emerald-400" />} 
-              title="جلسات مباشرة" 
-              desc="اتصال فيديو مشفر وآمن لاتخاذ القرار النهائي."
-            />
+            <FeatureCard icon={<Zap className="h-6 w-6 text-amber-400" />} title="تحليل ذكي" desc="معالجة فورية لكافة المعطيات." />
+            <FeatureCard icon={<Gavel className="h-6 w-6 text-indigo-400" />} title="مستشارين متخصصين" desc="نخبة من الخبراء السياديين." />
+            <FeatureCard icon={<MessageSquare className="h-6 w-6 text-emerald-400" />} title="جلسات مباشرة" desc="اتصال فيديو مشفر وآمن." />
           </div>
 
           <div className="mt-20">
-            <Link href="/auth/signup" className="group">
+            <Link href="/auth/signup">
               <Button 
-                style={{
-                  background: "linear-gradient(135deg, #00C896, #0A192F)",
-                }}
-                className="px-16 h-20 rounded-[1.5rem] text-white font-black text-2xl shadow-[0_20px_50px_rgba(0,200,150,0.2)] border-none transition-all hover:scale-[1.05] active:scale-95 flex items-center justify-center gap-4"
+                style={{ background: "linear-gradient(135deg, #00C896, #0A192F)" }}
+                className="px-16 h-20 rounded-[1.5rem] text-white font-black text-2xl shadow-2xl transition-all hover:scale-105 active:scale-95"
               >
-                <Rocket className="h-7 w-7" /> 
                 ابدأ أول استشارة الآن
               </Button>
             </Link>
           </div>
         </motion.div>
-
-        {/* User Activity Section */}
-        <section className="space-y-12">
-          <div className="flex items-center justify-between border-b border-white/5 pb-6">
-            <div className="flex items-center gap-3">
-              <TabButton active={activeTab === "my-projects"} onClick={() => setActiveTab("my-projects")} label="سجل الاستشارات" />
-              <TabButton active={activeTab === "templates"} onClick={() => setActiveTab("templates")} label="المكتبة السيادية" />
-            </div>
-            <Link href="/bot" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
-              عرض كافة السجلات
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <AnimatePresence mode="popLayout">
-              {activeTab === "my-projects" && (
-                <motion.div 
-                  key="projects-container" 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  exit={{ opacity: 0 }}
-                  className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-10 w-full"
-                >
-                  {recentSessions && recentSessions.length > 0 ? (
-                    recentSessions.map((session, i) => (
-                      <motion.div 
-                        key={session.id} 
-                        initial={{ opacity: 0, y: 20 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        transition={{ delay: i * 0.1 }}
-                      >
-                        <CardProject session={session} />
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="col-span-full py-32 text-center space-y-8 glass-card rounded-[4rem] border-dashed border-white/10">
-                       <Scale className="h-20 w-20 text-white/5 mx-auto" />
-                       <div className="space-y-2">
-                          <p className="text-3xl font-black text-white/20">
-                            {user ? (sessionsLoading ? "جاري مزامنة السجلات..." : "لا توجد استشارات نشطة") : "انتظار تسجيل الهوية"}
-                          </p>
-                          <p className="text-white/10 font-bold">ابدأ رحلتك القانونية الأولى الآن عبر محرك القرار.</p>
-                       </div>
-                       {user && sessionsLoading && <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary opacity-20" />}
-                       <Link href="/bot">
-                         <Button variant="outline" className="rounded-2xl border-white/10 font-black h-14 px-12 hover:bg-white/5 transition-all">ابدأ استشارة جديدة</Button>
-                       </Link>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </section>
       </div>
     </div>
   );
@@ -183,53 +81,12 @@ export default function SovereignLandingPage() {
 
 function FeatureCard({ icon, title, desc }: any) {
   return (
-    <div className="p-8 glass-card rounded-[2.5rem] border-white/5 text-right space-y-4 hover:bg-white/5 transition-all group">
-      <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+    <div className="p-8 glass-card rounded-[2.5rem] border-white/5 text-right space-y-4 hover:bg-white/5 transition-all">
+      <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
         {icon}
       </div>
       <h3 className="text-xl font-black text-white">{title}</h3>
       <p className="text-xs text-white/30 font-bold leading-relaxed">{desc}</p>
-    </div>
-  );
-}
-
-function TabButton({ active, onClick, label }: any) {
-  return (
-    <button 
-      onClick={onClick} 
-      className={`px-8 py-3 rounded-2xl text-xs font-black transition-all border ${
-        active 
-          ? 'bg-indigo-600 text-white border-indigo-500 shadow-2xl shadow-indigo-600/20' 
-          : 'bg-white/5 text-white/30 border-white/5 hover:text-white hover:bg-white/10'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function CardProject({ session }: any) {
-  return (
-    <div className="group relative flex flex-col gap-5 p-2 rounded-[3rem] glass-card transition-all cursor-pointer overflow-hidden bg-slate-950/40">
-      <div className="relative aspect-video rounded-[2.8rem] overflow-hidden bg-slate-900 border border-white/5 shadow-inner">
-        <Image 
-          src={`https://picsum.photos/seed/${session.id}/1200/675`} 
-          alt="Preview" 
-          fill 
-          className="object-cover opacity-30 group-hover:opacity-50 transition-all duration-1000 grayscale group-hover:grayscale-0 group-hover:scale-110" 
-          data-ai-hint="legal consultation preview"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-transparent to-transparent opacity-80" />
-        <div className="absolute bottom-8 right-8 left-8 flex justify-between items-end">
-           <div className="space-y-1">
-              <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase mb-2">Sovereign Case</Badge>
-              <h3 className="text-2xl font-black text-white truncate max-w-[300px] tracking-tighter">{session.title || "استشارة سيادية"}</h3>
-           </div>
-           <div className="bg-black/40 backdrop-blur-md border border-white/10 text-[9px] font-black py-2 px-5 rounded-full text-white/60 tabular-nums">
-             {session.lastMessageAt ? new Date(session.lastMessageAt).toLocaleDateString('ar-EG') : "Active"}
-           </div>
-        </div>
-      </div>
     </div>
   );
 }

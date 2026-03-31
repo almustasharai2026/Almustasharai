@@ -3,8 +3,7 @@
 import { initializeFirebase } from '@/firebase';
 
 /**
- * ملف الوصول السيادي لخدمات Firebase.
- * يقوم بتوفير النسخ الوحيدة (Singletons) من خدمات النظام لضمان الاستقرار.
+ * موديول الوصول السيادي لخدمات Firebase.
  */
 const services = initializeFirebase();
 

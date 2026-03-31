@@ -1,30 +1,34 @@
 'use client';
 
-import { Firestore, doc, setDoc, updateDoc, increment, serverTimestamp, collection, addDoc } from "firebase/firestore";
+import { Firestore, doc, getDoc, collection, getDocs, setDoc, serverTimestamp } from "firebase/firestore";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
- * إدارة العمليات المالية للمحفظة السيادية.
+ * بروتوكول المحفظة السيادية.
  */
-export function createWallet(db: Firestore, userId: string, initialBalance: number = 50) {
+export async function getWallet(db: Firestore, userId: string) {
   const walletRef = doc(db, "wallets", userId);
-  const data = { balance: initialBalance, lastUpdate: serverTimestamp() };
-  setDoc(walletRef, data, { merge: true }).catch(err => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: walletRef.path, operation: 'create', requestResourceData: data }));
-  });
-}
+  const transRef = collection(db, "wallets", userId, "transactions");
 
-export function deductBalance(db: Firestore, userId: string, amount: number, reason: string) {
-  const walletRef = doc(db, "wallets", userId);
-  updateDoc(walletRef, { balance: increment(-amount), lastUpdate: serverTimestamp() }).catch(err => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: walletRef.path, operation: 'update', requestResourceData: { amount: -amount } }));
-  });
-  
-  addDoc(collection(db, "wallets", userId, "transactions"), {
-    amount: -amount,
-    type: "deduction",
-    service: reason,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    const walletSnap = await getDoc(walletRef);
+    const transSnap = await getDocs(transRef);
+    
+    const transactions = transSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    if (!walletSnap.exists()) {
+      const initialData = { balance: 50, createdAt: serverTimestamp() };
+      await setDoc(walletRef, initialData);
+      return { ...initialData, transactions: [] };
+    }
+
+    return { ...walletSnap.data(), transactions };
+  } catch (error) {
+    errorEmitter.emit('permission-error', new FirestorePermissionError({
+      path: walletRef.path,
+      operation: 'get'
+    }));
+    return null;
+  }
 }
