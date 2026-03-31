@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -15,17 +16,16 @@ import SovereignButton from "@/components/SovereignButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("bishoysamy390@gmail.com");
-  const [password, setPassword] = useState("admin1234");
+  const [password, setPassword] = useState("king@2026");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
 
-  // 🔥 بروتوكول الدخول الفوري: إذا كان المستخدم مسجلاً بالفعل، توجه للوحة التحكم
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.replace("/dashboard");
+      router.replace("/bot");
     }
   }, [user, isUserLoading, router]);
 
@@ -34,16 +34,20 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "تم تسجيل الدخول", description: "مرحباً بك مجدداً في كوكب المستشار." });
-      router.push("/dashboard");
+      toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول السيادي king2026." });
+      router.push("/bot");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "فشل الدخول", description: "تأكد من البريد وكلمة المرور." });
+      toast({ variant: "destructive", title: "فشل الدخول السيادي", description: "تأكد من بيانات الاعتماد المحدثة." });
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isUserLoading) return null;
+  if (isUserLoading) return (
+    <div className="h-screen flex items-center justify-center bg-black">
+      <div className="animate-pulse text-white font-black tracking-[0.5em] uppercase">Authenticating Identity...</div>
+    </div>
+  );
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4">
@@ -55,29 +59,14 @@ export default function LoginPage() {
             </div>
           </div>
           <div>
-            <CardTitle className="text-3xl font-black text-white">تسجيل الدخول</CardTitle>
-            <CardDescription className="text-white/40">أهلاً بك في الجيل القادم من القانون</CardDescription>
+            <CardTitle className="text-3xl font-black text-white">الدخول السيادي</CardTitle>
+            <CardDescription className="text-white/40">مركز القيادة العليا - king2026</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
           
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="h-12 rounded-2xl glass border-white/10 hover:bg-white/5 flex gap-2">
-              <Globe className="h-4 w-4" /> Google
-            </Button>
-            <Button variant="outline" className="h-12 rounded-2xl glass border-white/10 hover:bg-white/5 flex gap-2">
-              <Facebook className="h-4 w-4" /> Facebook
-            </Button>
-          </div>
-
-          <div className="relative flex items-center gap-4 py-2">
-            <div className="h-px bg-white/5 flex-1" />
-            <span className="text-[10px] text-white/20 font-bold">أو عبر البريد</span>
-            <div className="h-px bg-white/5 flex-1" />
-          </div>
-
           <div className="space-y-2">
-            <Label className="text-white/40 text-xs px-2">البريد الإلكتروني</Label>
+            <Label className="text-white/40 text-xs px-2">البريد السيادي</Label>
             <Input 
               type="email" 
               placeholder="name@example.com" 
@@ -88,7 +77,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between px-2">
-              <Link href="#" className="text-[10px] text-white/30 hover:underline">نسيت كلمة المرور؟</Link>
+              <Link href="#" className="text-[10px] text-white/30 hover:underline">فقدان المفتاح؟</Link>
               <Label className="text-white/40 text-xs">كلمة المرور</Label>
             </div>
             <Input 
@@ -100,7 +89,7 @@ export default function LoginPage() {
           </div>
           
           <SovereignButton 
-            text={isLoading ? "جاري الدخول..." : "دخول سيادي"}
+            text={isLoading ? "جاري تفعيل البروتوكول..." : "دخول سيادي مطلق"}
             onClick={handleLogin}
             disabled={isLoading}
             className="mt-2"
@@ -108,9 +97,8 @@ export default function LoginPage() {
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
-          <div className="text-sm text-center text-white/30">
-            ليس لديك حساب؟{" "}
-            <Link href="/auth/signup" className="text-white font-bold hover:underline">إنشاء حساب جديد</Link>
+          <div className="text-sm text-center text-white/30 uppercase tracking-widest font-black opacity-20">
+            Sovereign Protocol Protected
           </div>
         </CardFooter>
       </Card>

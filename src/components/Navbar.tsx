@@ -1,16 +1,13 @@
+
 "use client";
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { Scale, User, LogOut } from "lucide-react";
+import { Scale, User, LogOut, LayoutDashboard } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-/**
- * شريط التنقل العلوي البسيط (يظهر في الصفحات العامة فقط).
- * في صفحة البوت المتقدمة، يتم استخدام Top-Bar المدمج.
- */
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -19,7 +16,7 @@ export default function Navbar() {
 
   useEffect(() => setMounted(true), []);
 
-  // عدم عرض النافبار التقليدي داخل صفحة البوت المتقدمة لتجنب التكرار
+  // عدم عرض النافبار داخل لوحة التحكم المتقدمة لتجنب تكرار الأشرطة العلوية
   if (pathname === "/bot") return null;
 
   return (
@@ -39,14 +36,14 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               href="/bot"
-              className="text-xs font-black flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl border border-primary hover:scale-105 transition-all shadow-md"
+              className="text-xs font-black flex items-center gap-2 bg-gradient-to-r from-[#43cea2] to-[#185a9d] text-white px-4 py-2.5 rounded-xl border-none hover:scale-105 transition-all shadow-lg"
             >
-              <User className="h-4 w-4" />
-              {profile?.fullName?.split(' ')[0] || "لوحة التحكم"}
+              <LayoutDashboard className="h-4 w-4" />
+              {profile?.fullName?.split(' ')[0] || "القيادة"}
             </Link>
             
             <button 
-              onClick={signOut}
+              onClick={() => signOut()}
               className="p-2.5 bg-red-500/10 text-red-600 rounded-xl hover:bg-red-500/20 transition-all border border-red-500/10"
               title="تسجيل خروج"
             >
