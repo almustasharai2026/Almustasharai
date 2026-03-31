@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
-  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket
+  Plus, ArrowUp, Sparkles, Scale, ChevronRight, Loader2, Rocket, Zap, Gavel, MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -12,10 +12,11 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 /**
  * الواجهة الرئيسية المحدثة لكوكب المستشار.
- * تعكس الهوية السيادية: "المستشار AI - استشارة ذكية في ثواني".
+ * تعكس الهوية السيادية والمميزات التقنية المتقدمة.
  */
 export default function SovereignLandingPage() {
   const { user, isUserLoading } = useUser();
@@ -35,7 +36,7 @@ export default function SovereignLandingPage() {
   const { data: recentSessions, isLoading: sessionsLoading } = useCollection(sessionsQuery);
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30" dir="rtl">
+    <div className="min-h-screen bg-[#02040a] text-white selection:bg-indigo-500/30 font-sans" dir="rtl">
       {/* Sovereign Synchronization Bar */}
       {isUserLoading && (
         <div className="fixed top-0 left-0 w-full h-1 bg-primary/20 z-[200]">
@@ -53,7 +54,7 @@ export default function SovereignLandingPage() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-10 mb-24"
+          className="text-center space-y-10 mb-32"
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border-white/5 text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Sovereign Power v4.5
@@ -68,9 +69,40 @@ export default function SovereignLandingPage() {
             </p>
           </div>
 
-          <div className="flex flex-col items-center gap-8 mt-16">
-            {/* Sovereign Quick Input */}
-            <div className="w-full max-w-3xl relative">
+          {/* Sovereign Features Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16">
+            <FeatureCard 
+              icon={<Zap className="h-6 w-6 text-amber-400" />} 
+              title="تحليل ذكي" 
+              desc="معالجة فورية لكافة المعطيات القانونية والمالية."
+            />
+            <FeatureCard 
+              icon={<Gavel className="h-6 w-6 text-indigo-400" />} 
+              title="مستشارين متخصصين" 
+              desc="نخبة من الخبراء السياديين في كافة المجالات."
+            />
+            <FeatureCard 
+              icon={<MessageSquare className="h-6 w-6 text-emerald-400" />} 
+              title="جلسات مباشرة" 
+              desc="اتصال فيديو مشفر وآمن لاتخاذ القرار النهائي."
+            />
+          </div>
+
+          <div className="flex flex-col items-center gap-8 mt-20">
+            {/* Supreme CTA Button */}
+            <Link href="/auth/signup" className="w-full max-w-md group">
+              <Button 
+                style={{
+                  background: "linear-gradient(135deg, #00C896, #0A192F)",
+                }}
+                className="w-full h-20 rounded-[1.5rem] text-white font-black text-2xl shadow-[0_20px_50px_rgba(0,200,150,0.2)] border-none transition-all hover:scale-[1.05] active:scale-95 flex items-center justify-center gap-4"
+              >
+                <Rocket className="h-7 w-7 group-hover:translate-x-1 transition-transform" /> 
+                ابدأ أول استشارة الآن
+              </Button>
+            </Link>
+
+            <div className="w-full max-w-3xl relative mt-8">
               <div className="relative glass-cosmic rounded-[2.5rem] border-white/10 p-2.5 flex items-center gap-3 shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all focus-within:border-primary/30">
                 <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-white/20 hover:text-white">
                   <Plus className="h-6 w-6" />
@@ -92,15 +124,6 @@ export default function SovereignLandingPage() {
                 </div>
               </div>
             </div>
-
-            {/* Supreme CTA Button */}
-            <Link href="/auth/signup" className="w-full max-w-md">
-              <Button 
-                className="w-full h-16 rounded-[12px] text-white font-black text-xl shadow-[0_20px_50px_rgba(0,200,150,0.2)] border-none transition-all hover:scale-[1.05] active:scale-95 bg-gradient-to-br from-[#00C896] to-[#0A192F] group"
-              >
-                <Rocket className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" /> ابدأ الآن
-              </Button>
-            </Link>
           </div>
         </motion.div>
 
@@ -158,6 +181,18 @@ export default function SovereignLandingPage() {
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: any) {
+  return (
+    <div className="p-8 glass-card rounded-[2.5rem] border-white/5 text-right space-y-4 hover:bg-white/5 transition-all group">
+      <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-xl font-black text-white">{title}</h3>
+      <p className="text-xs text-white/30 font-bold leading-relaxed">{desc}</p>
     </div>
   );
 }
