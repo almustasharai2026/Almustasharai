@@ -19,7 +19,7 @@ import SovereignButton from "@/components/SovereignButton";
  */
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("king2026");
-  const [password, setPassword] = useState("king2020");
+  const [password, setPassword] = useState("king2026");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const { user, isUserLoading } = useUser();

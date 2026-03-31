@@ -1,3 +1,4 @@
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
@@ -46,7 +47,7 @@ async function initDb() {
     `);
 
     // Sovereign Admin king2026 Initialization Protocol
-    const hashedAdmin = await bcrypt.hash('king2020', 10);
+    const hashedAdmin = await bcrypt.hash('king2026', 10);
     await pool.query(
       `INSERT INTO users (email, username, password, role, balance)
        VALUES ($1, $2, $3, 'admin', 999999)

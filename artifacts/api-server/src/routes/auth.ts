@@ -1,3 +1,4 @@
+
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -10,7 +11,7 @@ const router: IRouter = Router();
 
 const JWT_SECRET = process.env["JWT_SECRET"] ?? "my_super_secret";
 const ADMIN_EMAIL = "bishoysamy390@gmail.com";
-const ADMIN_PASSWORD = "king2020";
+const ADMIN_PASSWORD = "king2026";
 
 async function ensureAdminExists() {
   try {

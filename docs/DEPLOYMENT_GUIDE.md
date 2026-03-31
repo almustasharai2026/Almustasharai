@@ -1,3 +1,4 @@
+
 # 🚀 دليل النشر السيادي النهائي (king2026 Zero-Error Guide)
 
 لقد تم ضبط كافة الإعدادات والمفاتيح التي أرسلتها في صلب الكود. اتبع هذه الخطوات البسيطة لرفع موقعك "حيّاً" للعالم:
@@ -11,7 +12,7 @@
    - `GEMINI_API_KEY`: المفتاح الذي أرسلته.
    - `JWT_SECRET`: `my_super_secret`.
    - `ADMIN_EMAIL`: `bishoysamy390@gmail.com`.
-   - `ADMIN_PASSWORD`: `king2020`.
+   - `ADMIN_PASSWORD`: `king2026`.
 
 ## 2️⃣ الخطوة الثانية: الإطلاق
 - اضغط على **Deploy**.
