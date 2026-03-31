@@ -8,14 +8,14 @@ import {
   Trash2, CheckCircle2, XCircle, UserPlus, ShieldCheck, 
   Activity, LayoutDashboard, Settings, MessageSquare, 
   ArrowLeft, Loader2, Plus, Zap, Star, ArrowRightLeft,
-  UserCheck, ShieldEllipsis, History, Cpu, Globe
+  UserCheck, ShieldEllipsis, History, Cpu, Globe, RefreshCcw
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { 
   collection, doc, updateDoc, deleteDoc, addDoc, 
-  serverTimestamp, increment, query, orderBy, setDoc 
+  serverTimestamp, increment, query, orderBy, setDoc, onSnapshot
 } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { roles as ROLES_LIST, getPermissions } from "@/lib/roles";
@@ -35,8 +35,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 
 /**
- * مركز القيادة العليا السيادي - king2026 Edition
- * تم تفعيل كافة المحركات المالية والرقابية لتعمل بدقة متناهية.
+ * مركز القيادة العليا السيادي - king2026 Ultimate Edition
+ * تم دمج كافة السلطات المالية والرقابية في واجهة واحدة فائقة الذكاء.
  */
 export default function SupremeCommandCenter() {
   const { user, profile, role, signOut } = useUser();
@@ -72,33 +72,53 @@ export default function SupremeCommandCenter() {
   const logsQuery = useMemoFirebase(() => db ? query(collection(db, "system", "logs", "events"), orderBy("timestamp", "desc")) : null, [db]);
   const { data: systemLogs } = useCollection(logsQuery);
 
+  // Sync System Settings (Auto-Approve)
+  useEffect(() => {
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, "system", "settings"), (snap) => {
+      if (snap.exists()) {
+        setIsAutoApprove(snap.data().autoApprove || false);
+      }
+    });
+    return () => unsub();
+  }, [db]);
+
   // --- Sovereign Protocol Management ---
 
-  // 1. بروتوكول التعديل المالي
+  const handleToggleAutoApprove = async (val: boolean) => {
+    if (!db) return;
+    try {
+      await setDoc(doc(db, "system", "settings"), { autoApprove: val }, { merge: true });
+      await logEvent("SYSTEM_UPDATE", `تم ${val ? 'تفعيل' : 'إيقاف'} بروتوكول الطيار الآلي للموافقات المالية`);
+      toast({ title: val ? "تفعيل الطيار الآلي 🤖" : "إيقاف الموافقات التلقائية", description: "تم تحديث قواعد النظام السحابية." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل تحديث الإعدادات السيادية" });
+    }
+  };
+
   const handleUpdateBalance = async () => {
     if (!db || !selectedUser || !newBalance) return;
     setIsProcessing(true);
     try {
       await updateDoc(doc(db, "users", selectedUser.id), { balance: parseFloat(newBalance) });
-      await logEvent("BALANCE_UPDATE", `تم تعديل رصيد ${selectedUser.fullName} إلى ${newBalance} EGP`);
-      toast({ title: "تم التحديث المالي ✅", description: "تمت مزامنة الرصيد الجديد في السحابة." });
+      await logEvent("BALANCE_UPDATE", `تعديل رصيد ${selectedUser.fullName} إلى ${newBalance} EGP`);
+      toast({ title: "تم التحديث المالي ✅" });
       setIsBalanceModalOpen(false);
     } catch (e) {
-      toast({ variant: "destructive", title: "فشل البروتوكول المالي" });
+      toast({ variant: "destructive", title: "فشل الإجراء" });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 2. بروتوكول تحويل السيادة (Transfer)
   const handleTransfer = async () => {
     if (!db || !selectedUser || !transferAmount) return;
     setIsProcessing(true);
     try {
       const amount = parseFloat(transferAmount);
       await updateDoc(doc(db, "users", selectedUser.id), { balance: increment(amount) });
-      await logEvent("MANUAL_TRANSFER", `تم تحويل ${amount} EGP إلى ${selectedUser.fullName}`);
-      toast({ title: "تم التحويل السيادي 🚀", description: `المواطن ${selectedUser.fullName} استلم الرصيد فوراً.` });
+      await logEvent("MANUAL_TRANSFER", `تحويل سيادي: ${amount} EGP للمواطن ${selectedUser.fullName}`);
+      toast({ title: "تم التحويل الفوري 🚀" });
       setIsTransferModalOpen(false);
       setTransferAmount("");
     } catch (e) {
@@ -108,14 +128,13 @@ export default function SupremeCommandCenter() {
     }
   };
 
-  // 3. بروتوكول الترقية الرتبية
   const handleUpdateRole = async () => {
     if (!db || !selectedUser || !newRole) return;
     setIsProcessing(true);
     try {
       await updateDoc(doc(db, "users", selectedUser.id), { role: newRole });
-      await logEvent("ROLE_UPGRADE", `تمت ترقية ${selectedUser.fullName} إلى رتبة ${newRole}`);
-      toast({ title: "تمت الترقية السيادية 👑", description: `المواطن يحمل الآن رتبة ${newRole}.` });
+      await logEvent("ROLE_UPGRADE", `ترقية ${selectedUser.fullName} إلى رتبة ${newRole}`);
+      toast({ title: "تمت الترقية السيادية 👑" });
       setIsRoleModalOpen(false);
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الترقية" });
@@ -124,31 +143,28 @@ export default function SupremeCommandCenter() {
     }
   };
 
-  // 4. بروتوكول الحظر السيادي
   const handleToggleBan = async (u: any) => {
     if (!db) return;
     try {
       await updateDoc(doc(db, "users", u.id), { isBanned: !u.isBanned });
-      await logEvent("BAN_PROTOCOL", `${u.isBanned ? 'فك حظر' : 'حظر'} المواطن ${u.fullName}`);
+      await logEvent("BAN_PROTOCOL", `${u.isBanned ? 'فك حظر' : 'حظر'} ${u.fullName}`);
       toast({ title: u.isBanned ? "تم فك الحظر" : "تم الحظر السيادي 🚫" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الإجراء" });
     }
   };
 
-  // 5. بروتوكول التطهير (Delete)
   const handleDeleteUser = async (u: any) => {
-    if (!db || !confirm(`هل أنت متأكد من تطهير سجل ${u.fullName} نهائياً؟`)) return;
+    if (!db || !confirm(`تطهير سجل ${u.fullName} نهائياً؟`)) return;
     try {
       await deleteDoc(doc(db, "users", u.id));
-      await logEvent("USER_PURGE", `تم حذف المواطن ${u.fullName} نهائياً من النظام`);
+      await logEvent("USER_PURGE", `حذف المواطن ${u.fullName} نهائياً`);
       toast({ title: "تم التطهير بنجاح" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التطهير" });
     }
   };
 
-  // 6. إدارة الدرع الواقي
   const handleAddForbiddenWord = async () => {
     if (!db || !newForbiddenWord.trim()) return;
     try {
@@ -158,13 +174,12 @@ export default function SupremeCommandCenter() {
         addedAt: serverTimestamp()
       });
       setNewForbiddenWord("");
-      toast({ title: "تم تحديث الدرع الواقي 🛡️" });
+      toast({ title: "تحديث الدرع الواقي 🛡️" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التحديث" });
     }
   };
 
-  // 7. تسجيل الأحداث السيادية
   const logEvent = async (type: string, detail: string) => {
     if (!db) return;
     await addDoc(collection(db, "system", "logs", "events"), {
@@ -175,13 +190,12 @@ export default function SupremeCommandCenter() {
     });
   };
 
-  // 8. اعتماد طلبات الشحن
   const handleApproveRequest = async (req: any) => {
     if (!db) return;
     try {
       await updateDoc(doc(db, "users", req.userId), { balance: increment(req.amount) });
       await updateDoc(doc(db, "paymentRequests", req.id), { status: "approved", processedBy: "king2026" });
-      await logEvent("PAYMENT_APPROVAL", `قبول شحن ${req.amount} EGP للمواطن ${req.userName}`);
+      await logEvent("PAYMENT_APPROVAL", `قبول شحن ${req.amount} EGP لـ ${req.userName}`);
       toast({ title: "تم الاعتماد والشحن ✅" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الاعتماد" });
@@ -193,12 +207,8 @@ export default function SupremeCommandCenter() {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-[#020617] text-red-500 font-black gap-8">
         <Crown className="h-32 w-32 animate-pulse" />
-        <h1 className="text-5xl uppercase tracking-[0.5em] text-center px-10 leading-relaxed">
-          Sovereign Identity Unauthorized
-        </h1>
-        <Button onClick={() => router.push("/")} className="bg-red-600 text-white px-12 h-16 rounded-2xl text-xl font-black shadow-3xl">
-          الهروب من منطقة الحظر
-        </Button>
+        <h1 className="text-5xl uppercase tracking-[0.5em] text-center px-10 leading-relaxed">Identity Unauthorized</h1>
+        <Button onClick={() => router.push("/")} className="bg-red-600 text-white px-12 h-16 rounded-2xl text-xl font-black shadow-3xl">الهروب</Button>
       </div>
     );
   }
@@ -220,7 +230,7 @@ export default function SupremeCommandCenter() {
           </div>
           <div>
             <h2 className="text-2xl font-black tracking-tighter">غرفة القيادة</h2>
-            <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">king2026 Absolute Power</p>
+            <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">king2026 Supreme Power</p>
           </div>
         </div>
 
@@ -256,7 +266,7 @@ export default function SupremeCommandCenter() {
           <div className="flex items-center gap-8">
             <div className="text-left">
                <p className="text-sm font-black text-slate-900 dark:text-white">سيادة المالك king2026</p>
-               <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest text-emerald-500">Online & Secured</p>
+               <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest text-emerald-500">Global Admin Node</p>
             </div>
             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 p-0.5 shadow-2xl">
                <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-slate-900 flex items-center justify-center font-black text-2xl text-primary">K</div>
@@ -273,13 +283,13 @@ export default function SupremeCommandCenter() {
                 <StatBox label="المواطنون المسجلون" value={allUsers?.length || 0} icon={<Users />} color="blue" />
                 <StatBox label="طلبات الشحن النشطة" value={paymentRequests?.filter(r => r.status === "pending").length || 0} icon={<Zap />} color="amber" />
                 <StatBox label="كلمات الدرع الواقي" value={forbiddenWords?.length || 0} icon={<ShieldAlert />} color="red" />
-                <StatBox label="السيولة المالية الإجمالية" value={allUsers?.reduce((acc, curr) => acc + (curr.balance || 0), 0).toLocaleString() + " EGP"} icon={<Wallet />} color="emerald" />
+                <StatBox label="إجمالي السيولة" value={allUsers?.reduce((acc, curr) => acc + (curr.balance || 0), 0).toLocaleString() + " EGP"} icon={<Wallet />} color="emerald" />
                 
                 <Card className="md:col-span-4 rounded-[3.5rem] border-none shadow-3xl bg-white dark:bg-slate-900/50 p-12 text-center overflow-hidden relative">
                    <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                    <Activity className="h-24 w-24 mx-auto mb-8 text-primary/20 animate-pulse" />
                    <h3 className="text-4xl font-black mb-4">مركز الرصد اللحظي</h3>
-                   <p className="text-xl text-muted-foreground font-bold">النظام يراقب السحابة السيادية لضمان استقرار "كوكب المستشار" في كافة الأقطار.</p>
+                   <p className="text-xl text-muted-foreground font-bold">النظام يراقب السحابة السيادية لضمان استقرار العمليات في كافة الأقطار.</p>
                 </Card>
               </motion.div>
             )}
@@ -292,7 +302,7 @@ export default function SupremeCommandCenter() {
                   <div className="relative w-[500px]">
                     <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
                     <Input 
-                      placeholder="ابحث عن مواطن بالاسم أو البريد السيادي..." 
+                      placeholder="ابحث عن مواطن بالاسم أو البريد..." 
                       className="pr-16 h-16 rounded-3xl bg-[#f8fafc] dark:bg-slate-900 border-none text-xl font-bold placeholder:opacity-30 shadow-inner"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -312,7 +322,7 @@ export default function SupremeCommandCenter() {
                             <div className="flex items-center gap-4 mb-1">
                               <h3 className="text-2xl font-black">{u.fullName}</h3>
                               <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 py-1 font-black text-[10px] uppercase">{u.role}</Badge>
-                              {u.isBanned && <Badge variant="destructive" className="font-black text-[8px] animate-pulse">BANNED BY SOVEREIGN</Badge>}
+                              {u.isBanned && <Badge variant="destructive" className="font-black text-[8px] animate-pulse">BANNED</Badge>}
                             </div>
                             <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
                           </div>
@@ -320,12 +330,12 @@ export default function SupremeCommandCenter() {
 
                         <div className="flex items-center gap-12">
                           <div className="text-left border-l border-border pl-12">
-                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">رصيد المواطن</p>
+                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">رصيد المحفظة</p>
                             <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
                           </div>
                           <div className="flex gap-3">
                             <ActionBtn icon={<Wallet />} onClick={() => { setSelectedUser(u); setNewBalance(u.balance.toString()); setIsBalanceModalOpen(true); }} tooltip="تعديل الرصيد" color="emerald" />
-                            <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="تحويل مالي سيادي" color="blue" />
+                            <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="تحويل سيادي" color="blue" />
                             <ActionBtn icon={<Crown />} onClick={() => { setSelectedUser(u); setNewRole(u.role); setIsRoleModalOpen(true); }} tooltip="تعديل الرتبة" color="amber" />
                             <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleToggleBan(u)} color={u.isBanned ? "emerald" : "red"} tooltip={u.isBanned ? "فك الحظر" : "حظر سيادي"} />
                             <ActionBtn icon={<Trash2 />} onClick={() => handleDeleteUser(u)} color="red" tooltip="تطهير نهائي" />
@@ -338,20 +348,20 @@ export default function SupremeCommandCenter() {
               </motion.div>
             )}
 
-            {/* Billing & Requests Tab */}
+            {/* Billing & Auto-Approval Tab */}
             {activeTab === "billing" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                 <div className="flex justify-between items-center bg-white dark:bg-white/5 p-8 rounded-[3rem] shadow-xl border border-primary/10">
                   <div className="space-y-2">
                     <h2 className="text-4xl font-black text-primary tracking-tighter">مركز العمليات المالية</h2>
-                    <p className="text-muted-foreground font-bold">مراجعة طلبات الشحن واعتماد السيولة المالية.</p>
+                    <p className="text-muted-foreground font-bold">مراجعة طلبات الشحن واعتماد السيولة.</p>
                   </div>
                   <div className="flex items-center gap-6 bg-slate-950/20 px-8 py-4 rounded-3xl border border-white/5">
                     <div className="text-left">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-40">الطيار الآلي للشحن</p>
-                      <p className="text-xs font-black text-emerald-500">{isAutoApprove ? "Active Autopilot" : "Manual Mode"}</p>
+                      <p className={`text-xs font-black ${isAutoApprove ? "text-emerald-500" : "text-amber-500"}`}>{isAutoApprove ? "Active Autopilot" : "Manual Approval"}</p>
                     </div>
-                    <Switch checked={isAutoApprove} onCheckedChange={setIsAutoApprove} className="data-[state=checked]:bg-emerald-500" />
+                    <Switch checked={isAutoApprove} onCheckedChange={handleToggleAutoApprove} className="data-[state=checked]:bg-emerald-500" />
                   </div>
                 </div>
 
@@ -365,7 +375,7 @@ export default function SupremeCommandCenter() {
                           </div>
                           <div>
                             <h3 className="text-2xl font-black">طلب شحن من: {req.userName}</h3>
-                            <p className="text-xs text-muted-foreground font-bold uppercase mt-1 tracking-widest">Phone Protocol: {req.userPhone || "Not Logged"}</p>
+                            <p className="text-xs text-muted-foreground font-bold uppercase mt-1 tracking-widest">Phone: {req.userPhone || "Not Logged"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-12">
@@ -381,7 +391,7 @@ export default function SupremeCommandCenter() {
                   {paymentRequests?.filter(r => r.status === "pending").length === 0 && (
                     <div className="py-40 text-center grayscale opacity-10">
                       <Globe className="h-32 w-32 mx-auto mb-6" />
-                      <p className="text-3xl font-black">لا توجد طلبات معلقة سيادياً</p>
+                      <p className="text-3xl font-black">لا توجد طلبات معلقة</p>
                     </div>
                   )}
                 </div>
@@ -396,12 +406,12 @@ export default function SupremeCommandCenter() {
                     <ShieldEllipsis className="h-14 w-14 animate-pulse" />
                   </div>
                   <h2 className="text-5xl font-black text-red-600 tracking-tighter">إدارة الدرع الواقي</h2>
-                  <p className="text-xl text-muted-foreground font-bold max-w-xl mx-auto">تطهير محادثات الكوكب من الكلمات التي تمس السيادة أو الأخلاق العامة.</p>
+                  <p className="text-xl text-muted-foreground font-bold max-w-xl mx-auto">تطهير محادثات الكوكب من الكلمات غير المرغوبة سيادياً.</p>
                 </div>
 
-                <div className="flex gap-4 bg-white dark:bg-white/5 p-4 rounded-[2.5rem] shadow-2xl">
+                <div className="flex gap-4 bg-white dark:bg-white/5 p-4 rounded-[2.5rem] shadow-2xl border border-white/5">
                   <Input 
-                    placeholder="أدخل كلمة محظورة جديدة للدرع..." 
+                    placeholder="أدخل كلمة محظورة للدرع..." 
                     className="h-16 rounded-2xl bg-transparent border-none px-8 text-xl font-bold focus:ring-0" 
                     value={newForbiddenWord}
                     onChange={(e) => setNewForbiddenWord(e.target.value)}
@@ -413,7 +423,7 @@ export default function SupremeCommandCenter() {
                   {forbiddenWords?.map(w => (
                     <Badge key={w.id} className="p-6 rounded-[1.8rem] bg-white dark:bg-slate-900 text-red-600 border-2 border-red-500/10 shadow-xl group hover:border-red-500/40 transition-all">
                       <span className="font-black text-xl">{w.word}</span>
-                      <button onClick={async () => { await deleteDoc(doc(db!, "system/moderation/forbiddenWords", w.id)); toast({ title: "تم التطهير من الدرع" }); }} className="mr-6 text-red-300 hover:text-red-600 transition-colors"><Trash2 className="h-5 w-5" /></button>
+                      <button onClick={async () => { await deleteDoc(doc(db!, "system/moderation/forbiddenWords", w.id)); toast({ title: "تم التطهير" }); }} className="mr-6 text-red-300 hover:text-red-600 transition-colors"><Trash2 className="h-5 w-5" /></button>
                     </Badge>
                   ))}
                 </div>
@@ -463,7 +473,7 @@ export default function SupremeCommandCenter() {
           </DialogHeader>
           <div className="py-12 space-y-8">
             <div className="space-y-3">
-              <Label className="text-white/60 font-black uppercase text-[10px] tracking-widest mr-2">القيمة الجديدة للمحفظة (EGP)</Label>
+              <Label className="text-white/60 font-black uppercase text-[10px] tracking-widest mr-2">القيمة الجديدة (EGP)</Label>
               <Input 
                 type="number" 
                 value={newBalance} 
@@ -473,7 +483,7 @@ export default function SupremeCommandCenter() {
             </div>
           </div>
           <DialogFooter className="gap-6 pt-4">
-            <Button variant="ghost" onClick={() => setIsBalanceModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء الأمر</Button>
+            <Button variant="ghost" onClick={() => setIsBalanceModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء</Button>
             <Button onClick={handleUpdateBalance} disabled={isProcessing} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl">
               {isProcessing ? <Loader2 className="animate-spin" /> : "تثبيت الرصيد الجديد"}
             </Button>
@@ -491,11 +501,11 @@ export default function SupremeCommandCenter() {
           <div className="py-12 space-y-10">
             <div className="p-8 bg-primary/10 rounded-[2.5rem] border border-primary/20 flex items-center justify-between">
                <div className="space-y-1">
-                  <p className="text-[10px] text-primary font-black uppercase tracking-widest">Identity Confirmed</p>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest">Target Identity</p>
                   <p className="text-2xl font-black text-white">{selectedUser?.fullName}</p>
                </div>
-               <div className="h-16 w-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
-                  <UserCheck className="h-8 w-8 text-primary" />
+               <div className="h-16 w-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-primary">
+                  <UserCheck className="h-8 w-8" />
                </div>
             </div>
             <div className="space-y-3">
@@ -522,20 +532,20 @@ export default function SupremeCommandCenter() {
       <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-4xl font-black text-white mb-4">ترقية الهوية الرقمية</DialogTitle>
+            <DialogTitle className="text-4xl font-black text-white mb-4">ترقية الهوية السيادية</DialogTitle>
             <DialogDescription className="text-white/40 font-bold text-lg">تغيير رتبة المواطن: {selectedUser?.fullName}</DialogDescription>
           </DialogHeader>
           <div className="py-12">
             <Select value={newRole} onValueChange={setNewRole}>
               <SelectTrigger className="h-20 rounded-3xl bg-white/5 border-white/10 text-2xl font-black text-white focus:ring-primary/20 px-8 shadow-inner">
-                <SelectValue placeholder="اختر الرتبة السيادية" />
+                <SelectValue placeholder="اختر الرتبة" />
               </SelectTrigger>
               <SelectContent className="bg-[#1e1b4b] border-white/10 text-white font-bold p-2 rounded-2xl shadow-3xl">
                 <SelectItem value="user" className="h-14 rounded-xl focus:bg-primary/20">مواطن عادي (User)</SelectItem>
-                <SelectItem value="vip" className="h-14 rounded-xl focus:bg-primary/20">عميل مميز (VIP) - خصم ٥٠٪</SelectItem>
+                <SelectItem value="vip" className="h-14 rounded-xl focus:bg-primary/20">عميل مميز (VIP)</SelectItem>
                 <SelectItem value="consultant" className="h-14 rounded-xl focus:bg-primary/20">خبير قانوني (Consultant)</SelectItem>
                 <SelectItem value="moderator" className="h-14 rounded-xl focus:bg-primary/20">مشرف نظام (Moderator)</SelectItem>
-                <SelectItem value="admin" className="h-14 rounded-xl focus:bg-primary/20 text-primary">مدير سيادي (Admin)</SelectItem>
+                <SelectItem value="admin" className="h-14 rounded-xl focus:bg-primary/20 text-primary font-black">مدير سيادي (Admin)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -565,7 +575,7 @@ function AdminNavBtn({ icon, text, active, onClick }: any) {
   );
 }
 
-function StatBox({ label, value, icon, color, isStatus }: any) {
+function StatBox({ label, value, icon, color }: any) {
   const colors: any = {
     blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
     amber: "text-amber-500 bg-amber-500/10 border-amber-500/20",
@@ -574,7 +584,7 @@ function StatBox({ label, value, icon, color, isStatus }: any) {
   };
   return (
     <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 overflow-hidden relative group hover:scale-[1.05] transition-all duration-500">
-      <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-700">
+      <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-700 text-primary">
          {icon}
       </div>
       <CardContent className="p-10 flex flex-col items-start gap-4 relative z-10">

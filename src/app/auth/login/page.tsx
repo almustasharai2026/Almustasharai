@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -13,9 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import SovereignButton from "@/components/SovereignButton";
 
+/**
+ * بوابة الدخول السيادية المحدثة.
+ * تدعم بيانات الاعتماد king2026 / king2020.
+ */
 export default function LoginPage() {
   const [email, setEmail] = useState("bishoysamy390@gmail.com");
-  const [password, setPassword] = useState("king@2026");
+  const [password, setPassword] = useState("king2020");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -36,7 +41,7 @@ export default function LoginPage() {
       toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول السيادي king2026." });
       router.push("/bot");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "فشل الدخول السيادي", description: "تأكد من بيانات الاعتماد المحدثة." });
+      toast({ variant: "destructive", title: "فشل الدخول السيادي", description: "يرجى التحقق من بيانات المفتاح السيادي." });
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +81,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between px-2">
               <Link href="#" className="text-[10px] text-white/30 hover:underline">فقدان المفتاح؟</Link>
-              <Label className="text-white/40 text-xs">كلمة المرور</Label>
+              <Label className="text-white/40 text-xs">كلمة المرور السيادية</Label>
             </div>
             <Input 
               type="password" 
@@ -94,6 +99,10 @@ export default function LoginPage() {
           />
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-white/5 pt-8 pb-10">
+          <div className="text-sm text-center text-white/30">
+            ليس لديك حساب؟{" "}
+            <Link href="/auth/signup" className="text-white font-bold hover:underline">سجل كعضو جديد</Link>
+          </div>
           <Link href="/" className="flex items-center gap-2 text-xs text-white/30 hover:text-white transition-all font-bold">
             <Home className="h-4 w-4" /> العودة للصفحة الرئيسية
           </Link>
