@@ -4,41 +4,72 @@
 
 @layer base {
   :root {
-    /* Sovereign Theme Overrides */
-    --background: 222 47% 11%; /* #0f172a */
-    --foreground: 0 0% 100%;    /* #ffffff */
+    /* Sovereign Palette: Soft Light Mode */
+    --background: 210 40% 96%;    /* #F1F5F9 - Soft */
+    --foreground: 222 47% 11%;    /* #0F172A - Text/Primary */
     
-    --card: 222 47% 13%;       /* Slightly lighter than bg */
-    --card-foreground: 213 31% 91%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
     
-    --popover: 222 47% 13%;
-    --popover-foreground: 213 31% 91%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
     
-    --primary: 239 84% 67%;    /* #6366f1 */
+    --primary: 222 47% 11%;       /* #0F172A - Dark Navy */
     --primary-foreground: 210 40% 98%;
     
-    --secondary: 142 71% 45%;  /* #22c55e */
+    --secondary: 221 39% 11%;     /* #111827 - Deep Dark */
     --secondary-foreground: 210 40% 98%;
     
-    --muted: 215 16% 65%;      /* #94a3b8 */
-    --muted-foreground: 215 20% 65%;
+    --muted: 215 16% 47%;         /* #64748B - Muted */
+    --muted-foreground: 215 16% 47%;
     
-    --accent: 38 92% 50%;      /* Maintaining the Gold Branding */
-    --accent-foreground: 222 47% 2%;
+    --accent: 142 71% 45%;        /* #22C55E - Smart Green */
+    --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 84% 60%;  /* #ef4444 */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
     
-    --border: 222 47% 15%;
-    --input: 222 47% 15%;
-    --ring: 239 84% 67%;
-    --radius: 1.5rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 47% 11%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    /* Sovereign Palette: Dark Command Mode */
+    --background: 222 47% 11%;    /* #0F172A - Dark Navy Base */
+    --foreground: 210 40% 98%;    /* Off-White */
+    
+    --card: 221 39% 11%;          /* #111827 - Deep Dark */
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 221 39% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 215 16% 47%;         /* #64748B - Muted */
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 142 71% 45%;        /* #22C55E - Smart Green */
+    --accent-foreground: 222 47% 11%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 142 71% 45%;
   }
 }
 
 @layer utilities {
   .glass-cosmic {
-    @apply bg-slate-950/60 backdrop-blur-3xl border border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.5)];
+    @apply bg-[#0F172A]/80 backdrop-blur-3xl border border-white/[0.05] shadow-[0_0_50px_rgba(0,0,0,0.5)];
   }
   
   .glass-card {
@@ -46,15 +77,15 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-white to-amber-200;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#22C55E] via-white to-[#64748B];
   }
 
-  .btn-primary {
-    @apply bg-indigo-600 text-white hover:bg-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] transition-all active:scale-95 font-black uppercase tracking-widest;
+  .btn-sovereign {
+    @apply bg-[#22C55E] text-[#0F172A] hover:bg-[#1eb054] shadow-[0_0_30px_rgba(34,197,94,0.3)] transition-all active:scale-95 font-black uppercase tracking-widest;
   }
 
   .sovereign-badge {
-    @apply inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400;
+    @apply inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/20 text-[9px] font-black uppercase tracking-[0.2em] text-[#22C55E];
   }
 }
 
@@ -98,12 +129,9 @@
 }
 
 body {
-  background: radial-gradient(circle at 50% -20%, hsla(230, 100%, 20%, 0.4) 0%, transparent 50%),
-              radial-gradient(circle at 0% 100%, hsla(38, 100%, 15%, 0.15) 0%, transparent 40%),
-              #02040a;
+  @apply bg-background text-foreground;
   background-attachment: fixed;
   font-family: 'Cairo', sans-serif;
-  overflow-x: hidden;
 }
 
 .mirror {
