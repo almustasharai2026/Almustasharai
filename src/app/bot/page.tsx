@@ -3,8 +3,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, BrainCircuit, Sparkles, User, ShieldCheck } from "lucide-react";
+import { Send, BrainCircuit, Sparkles, User, ShieldCheck, Cpu } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Image from "next/image";
 
 interface Message {
   role: "user" | "ai";
@@ -13,8 +14,8 @@ interface Message {
 }
 
 /**
- * محرك المحادثة السيادي (Sovereign Chat Engine).
- * واجهة تفاعلية ذكية مصممة لتقديم الاستشارات القانونية بأسلوبChatGPT.
+ * محرك المحادثة السيادي المطور.
+ * واجهة تفاعلية ذكية مع شخصيات قانونية متحركة.
  */
 export default function BotPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -28,7 +29,6 @@ export default function BotPage() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // بروتوكول التمرير التلقائي لضمان رؤية أحدث الرسائل السيادية
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -57,10 +57,28 @@ export default function BotPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
+      <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
         
-        {/* Sovereign Messages Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-hide">
+        {/* Sovereign Characters (Animated Background) */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] overflow-hidden">
+           <motion.div 
+             animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+             className="absolute -right-20 top-20"
+           >
+             <Image src="https://picsum.photos/seed/char1/400/400" width={400} height={400} alt="Character 1" data-ai-hint="legal character" />
+           </motion.div>
+           <motion.div 
+             animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
+             transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+             className="absolute -left-20 bottom-20"
+           >
+             <Image src="https://picsum.photos/seed/char2/400/400" width={400} height={400} alt="Character 2" data-ai-hint="judge character" />
+           </motion.div>
+        </div>
+
+        {/* Messages Area */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-6 relative z-10 scrollbar-hide">
           <AnimatePresence initial={false}>
             {messages.map((m) => (
               <motion.div
@@ -73,7 +91,7 @@ export default function BotPage() {
                   <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">
                     {m.role === "user" ? "المواطن الرقمي" : "المستشار AI"}
                   </span>
-                  {m.role === "ai" ? <BrainCircuit className="h-3 w-3 text-accent" /> : <User className="h-3 w-3 text-primary" />}
+                  {m.role === "ai" ? <Cpu className="h-3 w-3 text-accent" /> : <User className="h-3 w-3 text-primary" />}
                 </div>
                 
                 <div
@@ -101,8 +119,8 @@ export default function BotPage() {
           <div className="h-4" />
         </div>
 
-        {/* Sovereign Input Terminal */}
-        <div className="p-4 bg-white dark:bg-slate-900 border-t border-border shadow-2xl relative z-10">
+        {/* Input Terminal */}
+        <div className="p-4 bg-white dark:bg-slate-900 border-t border-border shadow-2xl relative z-20">
           <div className="max-w-2xl mx-auto relative flex gap-2">
             <input
               value={text}

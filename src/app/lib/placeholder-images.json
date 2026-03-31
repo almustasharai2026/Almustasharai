@@ -2,64 +2,22 @@
 {
   "placeholderImages": [
     {
-      "id": "hero-bg",
-      "description": "Professional legal office background",
-      "imageUrl": "https://picsum.photos/seed/legal1/1200/600",
-      "imageHint": "legal office"
-    },
-    {
       "id": "char-1",
-      "description": "Lawyer Character",
-      "imageUrl": "https://picsum.photos/seed/lawyer/200/200",
-      "imageHint": "lawyer avatar"
+      "description": "Legal Expert Character",
+      "imageUrl": "https://picsum.photos/seed/legalexpert/400/400",
+      "imageHint": "legal character"
     },
     {
       "id": "char-2",
-      "description": "Judge Character",
-      "imageUrl": "https://picsum.photos/seed/judge/200/200",
-      "imageHint": "judge avatar"
+      "description": "Supreme Judge Character",
+      "imageUrl": "https://picsum.photos/seed/judgeexpert/400/400",
+      "imageHint": "judge character"
     },
     {
-      "id": "char-3",
-      "description": "Consultant Character",
-      "imageUrl": "https://picsum.photos/seed/consultant/200/200",
-      "imageHint": "consultant avatar"
-    },
-    {
-      "id": "char-4",
-      "description": "Notary Character",
-      "imageUrl": "https://picsum.photos/seed/notary/200/200",
-      "imageHint": "notary avatar"
-    },
-    {
-      "id": "char-5",
-      "description": "Forensic Character",
-      "imageUrl": "https://picsum.photos/seed/forensic/200/200",
-      "imageHint": "forensic avatar"
-    },
-    {
-      "id": "char-6",
-      "description": "Arbitrator Character",
-      "imageUrl": "https://picsum.photos/seed/arbitrator/200/200",
-      "imageHint": "arbitrator avatar"
-    },
-    {
-      "id": "char-7",
-      "description": "Prosecutor Character",
-      "imageUrl": "https://picsum.photos/seed/prosecutor/200/200",
-      "imageHint": "prosecutor avatar"
-    },
-    {
-      "id": "char-8",
-      "description": "Mediator Character",
-      "imageUrl": "https://picsum.photos/seed/mediator/200/200",
-      "imageHint": "mediator avatar"
-    },
-    {
-      "id": "char-9",
-      "description": "Researcher Character",
-      "imageUrl": "https://picsum.photos/seed/researcher/200/200",
-      "imageHint": "researcher avatar"
+      "id": "hero-bg",
+      "description": "Advanced tech background for justice planet",
+      "imageUrl": "https://picsum.photos/seed/planetjustice/1200/600",
+      "imageHint": "cyberpunk office"
     }
   ]
 }

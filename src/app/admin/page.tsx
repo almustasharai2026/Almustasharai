@@ -1,299 +1,230 @@
 
 "use client";
 
-import { useUser, useFirestore, useCollection, useDoc } from "@/firebase";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useUser, useFirestore, useCollection } from "@/firebase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
-  Users, Gavel, ShieldAlert, Trash2, Terminal, Wallet, X, CreditCard, Lock, Plus, Activity, Loader2, ShieldCheck, Settings, Home, Tag
+  Users, Gavel, ShieldAlert, Tag, Activity, Trash2, 
+  UserPlus, Plus, Ban, CheckCircle2, History, ShieldCheck, Lock
 } from "lucide-react";
-import { collection, doc, deleteDoc, updateDoc, addDoc, query, orderBy, increment, setDoc } from "firebase/firestore";
+import { collection, doc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import SovereignButton from "@/components/SovereignButton";
 import { banSovereignUser } from "@/lib/sovereign-moderation";
+import { Loading } from "@/components/Loading";
 
-type AdminTab = "users" | "finance" | "moderation" | "system";
-
-export default function MasterCommandPanel() {
-  const { user } = useUser();
+/**
+ * غرفة القيادة العليا - النسخة المتقدمة.
+ * توفر تحكماً تبويبياً شاملاً في كافة مفاصل المنصة.
+ */
+export default function MasterAdminPanel() {
+  const { user, role } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<AdminTab>("users");
   
-  // States for dynamic config
-  const [homeTitle, setHomeTitle] = useState("");
-  const [homeSubtitle, setHomeSubtitle] = useState("");
-  const [newWord, setNewWord] = useState("");
-  const [chargeAmount, setChargeAmount] = useState<number>(0);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [newBannedWord, setNewBannedWord] = useState("");
 
-  // Firestore Queries
+  // استعلامات سحابية سيادية
   const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
-  const { data: allUsers, isLoading: usersLoading } = useCollection(usersQuery);
+  const { data: citizens, isLoading: usersLoading } = useCollection(usersQuery);
+
+  const consultantsQuery = useMemoFirebase(() => db ? collection(db, "consultants") : null, [db]);
+  const { data: experts } = useCollection(consultantsQuery);
 
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
-  const { data: forbiddenWords } = useCollection(wordsQuery);
-
-  const settingsRef = useMemoFirebase(() => db ? doc(db, "system", "settings") : null, [db]);
-  const { data: currentSettings } = useDoc(settingsRef);
+  const { data: bannedWords } = useCollection(wordsQuery);
 
   const offersQuery = useMemoFirebase(() => db ? collection(db, "system", "offers") : null, [db]);
-  const { data: allOffers } = useCollection(offersQuery);
+  const { data: currentOffers } = useCollection(offersQuery);
 
-  useEffect(() => {
-    if (currentSettings) {
-      setHomeTitle(currentSettings.homeTitle || "");
-      setHomeSubtitle(currentSettings.homeSubtitle || "");
-    }
-  }, [currentSettings]);
+  const logsQuery = useMemoFirebase(() => db ? collection(db, "analytics") : null, [db]);
+  const { data: sovereignLogs } = useCollection(logsQuery);
 
+  // بروتوكول حماية الحدود: لا يسمح إلا للمالك king2026 بالدخول
   if (user?.email !== "bishoysamy390@gmail.com") {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-950 text-red-500 font-black gap-8">
         <Lock className="h-24 w-24 animate-pulse" />
-        <h1 className="text-3xl uppercase tracking-[0.3em] text-center px-10">Sovereign Access Denied</h1>
+        <h1 className="text-3xl uppercase tracking-[0.3em] text-center px-10">Access Denied: Sovereign Lock</h1>
       </div>
     );
   }
 
-  const handleUpdateSettings = async () => {
-    if (!db) return;
-    try {
-      await setDoc(doc(db, "system", "settings"), {
-        homeTitle,
-        homeSubtitle,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-      toast({ title: "تم تحديث النظام", description: "تم تعديل نصوص الواجهة بنجاح." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل التحديث السيادي" });
-    }
-  };
-
-  const handleAddBalance = async (userId: string) => {
-    if (chargeAmount <= 0 || !db) return;
-    try {
-      await updateDoc(doc(db, "users", userId), { balance: increment(chargeAmount) });
-      toast({ title: "تم تحديث الرصيد", description: `تمت إضافة ${chargeAmount} EGP للمواطن.` });
-      setChargeAmount(0);
-      setSelectedUserId(null);
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل الإجراء المالي" });
-    }
-  };
-
-  const handleBanToggle = (userId: string, currentStatus: boolean) => {
-    if (!db) return;
-    banSovereignUser(db, userId, !currentStatus);
-    toast({ title: currentStatus ? "تم فك الحظر" : "تم الحظر السيادي بنجاح" });
-  };
-
-  const handleAddForbiddenWord = async () => {
-    if (!newWord.trim() || !db) return;
+  const handleAddWord = async () => {
+    if (!newBannedWord.trim() || !db) return;
     try {
       await addDoc(collection(db, "system", "moderation", "forbiddenWords"), {
-        word: newWord.trim(),
-        addedAt: new Date().toISOString()
+        word: newBannedWord.trim(),
+        addedAt: serverTimestamp()
       });
-      setNewWord("");
-      toast({ title: "تم تحديث الرقابة", description: "أضيفت الكلمة لدرع الحماية." });
+      setNewBannedWord("");
+      toast({ title: "تم تحديث الرقابة", description: "أضيفت الكلمة لدرع الحماية السيادي." });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل التحديث" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] p-4 lg:p-10 font-sans" dir="rtl">
-      <header className="max-w-5xl mx-auto mb-12">
-        <div className="flex items-center gap-6 mb-8">
-           <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center shadow-xl border border-white/10">
-              <Terminal className="h-8 w-8 text-white" />
-           </div>
-           <div>
-              <h1 className="text-3xl font-black text-primary tracking-tighter">غرفة القيادة <span className="text-accent">العليا</span></h1>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Master Console v5.0 | king2026</p>
-           </div>
+    <div className="min-h-screen bg-[#020617] p-5 lg:p-10 text-right" dir="rtl">
+      <header className="mb-10 flex items-center gap-4">
+        <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+          <ShieldCheck className="h-6 w-6 text-white" />
         </div>
-        
-        <div className="flex flex-wrap gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-border/50 shadow-sm">
-          <TabBtn active={activeTab === "users"} onClick={() => setActiveTab("users")} icon={<Users className="h-4 w-4" />} label="المواطنون" />
-          <TabBtn active={activeTab === "finance"} onClick={() => setActiveTab("finance")} icon={<Wallet className="h-4 w-4" />} label="المالية" />
-          <TabBtn active={activeTab === "system"} onClick={() => setActiveTab("system")} icon={<Settings className="h-4 w-4" />} label="إعدادات النظام" />
-          <TabBtn active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} icon={<ShieldAlert className="h-4 w-4" />} label="الرقابة" />
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight">غرفة القيادة العليا</h1>
+          <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Master Control Hub | v5.5</p>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto space-y-10">
-        <AnimatePresence mode="wait">
-          {activeTab === "users" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
-                  <CardHeader className="bg-primary text-white p-8">
-                     <CardTitle className="text-xl font-black flex items-center gap-3">
-                       <Users className="h-6 w-6" /> إدارة المواطنين
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {usersLoading ? (
-                        <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>
-                      ) : allUsers?.map(u => (
-                        <div key={u.id} className="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                           <div className="flex items-center gap-4">
-                              <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black ${u.isBanned ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'} border border-current/10`}>
-                                {u.fullName?.charAt(0)}
-                              </div>
-                              <div>
-                                 <p className="text-sm font-black text-primary">{u.fullName}</p>
-                                 <p className="text-[10px] text-muted-foreground font-bold">{u.email}</p>
-                              </div>
-                           </div>
-                           <Button 
-                             variant={u.isBanned ? "destructive" : "outline"} 
-                             onClick={() => handleBanToggle(u.id, u.isBanned)}
-                             className="rounded-xl h-10 px-4 text-[10px] font-black uppercase"
-                           >
-                             {u.isBanned ? "فك الحظر" : "حظر سيادي"}
-                           </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-               </Card>
-            </motion.div>
-          )}
+      <Tabs defaultValue="users" className="space-y-8">
+        <TabsList className="bg-slate-900/50 border border-white/5 p-1 rounded-2xl h-auto flex flex-wrap gap-1">
+          <TabTrigger value="users" icon={<Users className="h-4 w-4" />} label="المواطنون" />
+          <TabTrigger value="advisors" icon={<Gavel className="h-4 w-4" />} label="المستشارون" />
+          <TabTrigger value="banned" icon={<ShieldAlert className="h-4 w-4" />} label="المحظورات" />
+          <TabTrigger value="offers" icon={<Tag className="h-4 w-4" />} label="العروض" />
+          <TabTrigger value="logs" icon={<Activity className="h-4 w-4" />} label="سجل الأحداث" />
+        </TabsList>
 
-          {activeTab === "system" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
-                  <CardHeader className="bg-slate-900 text-white p-8">
-                     <CardTitle className="text-xl font-black flex items-center gap-3">
-                       <Home className="h-6 w-6 text-accent" /> تخصيص الواجهة والعروض
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-8 space-y-8">
-                    <div className="space-y-4">
-                      <div className="grid gap-2">
-                        <label className="text-xs font-black text-muted-foreground uppercase px-2">عنوان الصفحة الرئيسية</label>
-                        <Input value={homeTitle} onChange={e => setHomeTitle(e.target.value)} className="h-12 rounded-xl" />
+        <TabsContent value="users">
+          <Card className="glass-cosmic border-none rounded-[2.5rem] shadow-2xl overflow-hidden">
+            <CardHeader className="bg-white/[0.02] border-b border-white/5 p-8 flex flex-row items-center justify-between">
+              <CardTitle className="text-xl font-black text-white">إدارة المواطنين الرقميين</CardTitle>
+              <Button className="rounded-xl bg-accent hover:bg-emerald-600 gap-2 font-black text-xs">
+                <UserPlus className="h-4 w-4" /> إضافة مواطن
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-white/5">
+                {citizens?.map(citizen => (
+                  <div key={citizen.id} className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black ${citizen.isBanned ? 'bg-red-500/20 text-red-500' : 'bg-primary/10 text-primary'}`}>
+                        {citizen.fullName?.charAt(0)}
                       </div>
-                      <div className="grid gap-2">
-                        <label className="text-xs font-black text-muted-foreground uppercase px-2">الوصف الفرعي</label>
-                        <Textarea value={homeSubtitle} onChange={e => setHomeSubtitle(e.target.value)} className="rounded-xl min-h-[100px]" />
+                      <div>
+                        <p className="font-black text-white text-sm">{citizen.fullName}</p>
+                        <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{citizen.email}</p>
                       </div>
-                      <SovereignButton text="حفظ إعدادات الواجهة" onClick={handleUpdateSettings} />
                     </div>
-
-                    <div className="pt-8 border-t border-border">
-                       <h3 className="text-lg font-black mb-4 flex items-center gap-2"><Tag className="h-5 w-5 text-accent" /> باقات الأسعار النشطة</h3>
-                       <div className="grid gap-4">
-                          {allOffers?.map(offer => (
-                            <div key={offer.id} className="p-4 bg-secondary/30 rounded-2xl border border-border/50 flex justify-between items-center">
-                               <div>
-                                  <p className="font-black text-primary text-sm">{offer.name}</p>
-                                  <p className="text-[10px] text-muted-foreground">{offer.price} EGP / {offer.minutes} min</p>
-                               </div>
-                               <Button variant="ghost" size="icon" onClick={() => deleteDoc(doc(db!, "system", "offers", offer.id))} className="text-red-500">
-                                  <Trash2 className="h-4 w-4" />
-                               </Button>
-                            </div>
-                          ))}
-                          <Button variant="outline" className="rounded-xl border-dashed h-12 text-xs font-bold gap-2">
-                             <Plus className="h-4 w-4" /> إضافة باقة جديدة (تجريبي)
-                          </Button>
-                       </div>
-                    </div>
-                  </CardContent>
-               </Card>
-            </motion.div>
-          )}
-
-          {activeTab === "moderation" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
-                  <CardHeader className="bg-slate-900 text-white p-8">
-                     <CardTitle className="text-xl font-black flex items-center gap-3">
-                       <ShieldAlert className="h-6 w-6 text-accent" /> إدارة القائمة السوداء
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-8 space-y-6">
                     <div className="flex gap-2">
-                      <Input 
-                        placeholder="أضف كلمة محظورة..." 
-                        value={newWord}
-                        onChange={(e) => setNewWord(e.target.value)}
-                        className="h-12 rounded-xl flex-1"
-                      />
-                      <Button onClick={handleAddForbiddenWord} className="h-12 px-6 rounded-xl bg-accent text-white font-black">إضافة</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 p-4 bg-secondary/30 rounded-2xl">
-                      {forbiddenWords?.map(fw => (
-                        <Badge key={fw.id} className="bg-white dark:bg-slate-800 text-primary border border-border px-3 py-1.5 rounded-lg flex items-center gap-2 group transition-all">
-                          {fw.word}
-                          <button onClick={() => deleteDoc(doc(db!, "system", "moderation", "forbiddenWords", fw.id))} className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-               </Card>
-            </motion.div>
-          )}
-
-          {activeTab === "finance" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <Card className="border-none rounded-[2rem] shadow-xl overflow-hidden">
-                  <CardHeader className="bg-emerald-600 text-white p-8">
-                     <CardTitle className="text-xl font-black flex items-center gap-3">
-                       <Wallet className="h-6 w-6" /> بروتوكول شحن الرصيد
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-8 space-y-6">
-                    <div className="grid gap-4">
-                      <select 
-                        className="w-full h-12 bg-secondary/30 rounded-xl px-4 text-sm font-bold outline-none border border-border/50"
-                        onChange={(e) => setSelectedUserId(e.target.value)}
-                        value={selectedUserId || ""}
+                      <Button variant="ghost" size="icon" className="text-white/20 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                      <Button 
+                        variant={citizen.isBanned ? "destructive" : "outline"}
+                        onClick={() => banSovereignUser(db!, citizen.id, !citizen.isBanned)}
+                        className="rounded-xl h-9 text-[10px] font-black"
                       >
-                        <option value="">-- اختر المواطن --</option>
-                        {allUsers?.map(u => (
-                          <option key={u.id} value={u.id}>{u.fullName} ({u.balance} EGP)</option>
-                        ))}
-                      </select>
-                      <Input 
-                        type="number" 
-                        placeholder="المبلغ المراد شحنه..."
-                        value={chargeAmount} 
-                        onChange={(e) => setChargeAmount(Number(e.target.value))}
-                        className="h-12 rounded-xl text-lg font-black text-center"
-                      />
+                        {citizen.isBanned ? "فك الحظر" : <Ban className="h-4 w-4" />}
+                      </Button>
                     </div>
-                    <SovereignButton 
-                      text="تفعيل الشحن المالي" 
-                      onClick={() => selectedUserId && handleAddBalance(selectedUserId)}
-                      disabled={!selectedUserId || chargeAmount <= 0}
-                    />
-                  </CardContent>
-               </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="advisors">
+          <Card className="glass-cosmic border-none rounded-[2.5rem]">
+            <CardHeader className="p-8">
+              <CardTitle className="text-xl font-black flex items-center gap-3">هيئة الخبراء المعتمدين <Plus className="h-5 w-5 text-accent cursor-pointer" /></CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <div className="grid md:grid-cols-2 gap-4">
+                {experts?.map(exp => (
+                  <div key={exp.id} className="p-5 glass rounded-3xl border-white/5 flex items-center justify-between">
+                    <div>
+                      <p className="font-black text-white">{exp.name}</p>
+                      <p className="text-[10px] text-primary font-bold uppercase">{exp.specialization}</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="rounded-xl border-white/5 text-[9px] font-black uppercase">تعديل الصلاحيات</Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="banned">
+          <Card className="glass-cosmic border-none rounded-[2.5rem] p-8">
+            <div className="space-y-6">
+              <div className="flex gap-2">
+                <Input 
+                  value={newBannedWord} 
+                  onChange={e => setNewBannedWord(e.target.value)}
+                  placeholder="أضف كلمة للقائمة السوداء..." 
+                  className="glass h-12 rounded-xl text-right font-bold" 
+                />
+                <Button onClick={handleAddWord} className="h-12 px-8 bg-primary rounded-xl font-black">إدراج</Button>
+              </div>
+              <div className="flex flex-wrap gap-2 p-6 bg-white/5 rounded-3xl min-h-[100px]">
+                {bannedWords?.map(bw => (
+                  <Badge key={bw.id} className="bg-slate-800 text-white border-white/10 px-4 py-2 rounded-xl flex items-center gap-2 group">
+                    {bw.word}
+                    <Trash2 onClick={() => deleteDoc(doc(db!, "system", "moderation", "forbiddenWords", bw.id))} className="h-3 w-3 text-red-500 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="offers">
+          <div className="grid gap-4">
+            {currentOffers?.map(offer => (
+              <Card key={offer.id} className="glass-cosmic border-none rounded-3xl p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
+                    <Tag className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="font-black text-white">{offer.name}</p>
+                    <p className="text-xl font-black text-accent tabular-nums">{offer.price} EGP</p>
+                  </div>
+                </div>
+                <Button variant="ghost" onClick={() => deleteDoc(doc(db!, "system", "offers", offer.id))} className="text-red-500">حذف</Button>
+              </Card>
+            ))}
+            <Button variant="outline" className="border-dashed border-white/10 h-20 rounded-3xl text-white/30 font-black gap-2">
+              <Plus className="h-5 w-5" /> إضافة عرض سيادي جديد
+            </Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <Card className="bg-slate-900 border-none rounded-[2.5rem] overflow-hidden">
+            <div className="p-8 bg-black/40 border-b border-white/5 flex items-center gap-3">
+              <History className="h-5 w-5 text-primary" />
+              <h3 className="font-black text-white">سجل العمليات السيادي</h3>
+            </div>
+            <div className="p-6 font-mono text-[10px] text-emerald-500 space-y-2 max-h-[500px] overflow-y-auto scrollbar-hide bg-black/20">
+              {sovereignLogs?.map((log, i) => (
+                <div key={i} className="flex gap-4 opacity-80 hover:opacity-100 transition-opacity">
+                  <span className="text-white/20 shrink-0">[{new Date(log.createdAt?.seconds * 1000).toLocaleTimeString()}]</span>
+                  <span className="text-primary shrink-0">PROTOCOL_OK:</span>
+                  <span className="break-all">{log.event}: {JSON.stringify(log.data)}</span>
+                </div>
+              ))}
+              {sovereignLogs?.length === 0 && <div className="text-center py-10 text-white/10">لا توجد عمليات مسجلة حالياً...</div>}
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-function TabBtn({ active, onClick, icon, label }: any) {
+function TabTrigger({ value, icon, label }: { value: string; icon: React.ReactNode; label: string }) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black transition-all ${active ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground hover:text-primary hover:bg-secondary/50'}`}>
+    <TabsTrigger 
+      value={value} 
+      className="flex-1 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+    >
       {icon} {label}
-    </button>
+    </TabsTrigger>
   );
 }
