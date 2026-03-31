@@ -1,101 +1,26 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Send, Scale, Sparkles, Sun, Moon,
-  ChevronLeft, Loader2, Mic, Camera, Paperclip, 
-  ShieldCheck, BrainCircuit, History, Volume2, MicOff
+  Send, Scale, Sparkles, Mic, Camera, Paperclip, 
+  History, Volume2, Loader2, BrainCircuit, Book, FileText, UserCheck
 } from "lucide-react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import SovereignLayout from "@/components/SovereignLayout";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "next-themes";
-import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import { roles as ROLES_LIST } from "@/lib/roles";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from "@/components/ui/dialog";
-import { useMemoFirebase } from "@/firebase/provider";
-import IdCaptureWizard from "@/components/IdCaptureWizard";
+import { collection, query, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import Image from "next/image";
-import { executeSovereignBilling } from "@/lib/sovereign-billing";
 
 export default function SmartConsultantPage() {
   const { user, profile, role } = useUser();
   const db = useFirestore();
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-
   const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
-
-  // --- بروتوكول التوثيق الصوتي (Speech to Text) ---
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.lang = 'ar-SA';
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-
-        recognitionRef.current.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          setInputText(prev => prev + (prev ? " " : "") + transcript);
-          setIsRecording(false);
-        };
-
-        recognitionRef.current.onerror = () => setIsRecording(false);
-        recognitionRef.current.onend = () => setIsRecording(false);
-      }
-    }
-  }, []);
-
-  const toggleVoiceRecording = () => {
-    if (!recognitionRef.current) {
-      toast({ variant: "destructive", title: "المتصفح لا يدعم الإملاء الصوتي" });
-      return;
-    }
-    if (isRecording) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
-      setIsRecording(true);
-      toast({ title: "بروتوكول الإملاء الصوتي نشط 🎤" });
-    }
-  };
-
-  // --- بروتوكول القراءة الآلية (Text to Speech) ---
-  const readLastResponse = () => {
-    if (!cloudMessages || cloudMessages.length === 0) return;
-    const lastAiMsg = [...cloudMessages].reverse().find(m => m.role === 'ai');
-    if (!lastAiMsg) return;
-
-    if (isReading) {
-      window.speechSynthesis.cancel();
-      setIsReading(false);
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(lastAiMsg.text);
-    utterance.lang = 'ar-SA';
-    utterance.onstart = () => setIsReading(true);
-    utterance.onend = () => setIsReading(false);
-    window.speechSynthesis.speak(utterance);
-  };
 
   const chatQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -112,17 +37,7 @@ export default function SmartConsultantPage() {
   const handleSend = async () => {
     const text = inputText.trim();
     if (!text || isTyping || !db || !user) return;
-
-    const billing = await executeSovereignBilling(db, user.uid, 'ai_chat', role);
-    if (!billing.canProceed) {
-      toast({ 
-        variant: "destructive", 
-        title: "الرصيد السيادي نفذ 💰", 
-        description: "يرجى شحن محفظتك لتتمكن من متابعة استشارتك الذكية." 
-      });
-      return;
-    }
-
+    
     setInputText("");
     setIsTyping(true);
 
@@ -146,162 +61,104 @@ export default function SmartConsultantPage() {
         timestamp: serverTimestamp()
       });
     } catch (e) {
-      toast({ variant: "destructive", title: "انقطاع الاتصال السيادي" });
+      toast({ variant: "destructive", title: "فشل المحرك السيادي" });
     } finally {
       setIsTyping(false);
     }
   };
 
   return (
-    <ProtectedRoute>
-      <SovereignLayout activeId="bot">
-        <div className="flex flex-col h-screen relative overflow-hidden bg-[#020205]">
-          {/* Deep Cinematic Background Overlay */}
-          <div className="absolute inset-0 -z-10 opacity-10">
-            <Image 
-              src="https://picsum.photos/seed/library88/1920/1080"
-              alt="Legal Background"
-              fill
-              className="object-cover"
-              data-ai-hint="law books"
-            />
-          </div>
-
-          <header className="h-20 bg-black/40 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-10 z-40 relative">
-            <div className="flex items-center gap-6">
-              <div className="bg-primary/10 px-6 py-2 rounded-xl border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
-                 <ShieldCheck className="h-3 w-3" /> Citizen Support Active
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 bg-white/5 rounded-2xl text-primary border border-white/5 hover:bg-white/10 transition-all">
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-            </div>
-          </header>
-
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12 pb-48 scrollbar-none">
-            <div className="max-w-4xl mx-auto space-y-10">
-              <AnimatePresence mode="popLayout">
-                {cloudMessages?.length === 0 && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 space-y-10">
-                     <div className="h-32 w-32 rounded-[3rem] bg-primary/10 mx-auto flex items-center justify-center border border-primary/20 shadow-3xl float-sovereign">
-                        <BrainCircuit className="h-16 w-16 text-primary" />
-                     </div>
-                     <div className="space-y-4">
-                        <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في فضاء المستشار الذكي</h3>
-                        <p className="text-white/30 font-bold text-lg max-w-lg mx-auto leading-relaxed">أنا المحرك السيادي المخصص لخدمتك. اطرح سؤالك القانوني أو ارفع وثائقك للتحليل الفوري.</p>
-                     </div>
-                  </motion.div>
-                )}
-                {cloudMessages?.map((m) => (
-                  <motion.div key={m.id} initial={{ opacity: 0, x: m.role === 'user' ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}>
-                    <div className={`p-8 rounded-[3rem] max-w-[90%] text-lg leading-relaxed shadow-3xl border ${
-                      m.role === 'user' ? 'bg-white text-slate-900 font-bold rounded-tr-none border-white/10' : 'bg-[#0a0a1f]/90 backdrop-blur-2xl text-white border-primary/20 rounded-tl-none font-medium shadow-primary/5'
-                    }`}>
-                      {m.text}
-                    </div>
-                    <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.4em] mt-3 px-6">Documented · Sovereign Protocol</span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {isTyping && <div className="p-5 bg-primary/5 rounded-[2rem] border border-primary/10 w-fit animate-pulse text-[9px] font-black uppercase text-primary tracking-[0.4em]">يتم معالجة الرد برصانة...</div>}
-            </div>
-          </div>
-
-          {/* --- Smart Chat Input: الجيل الجديد من الإدخال السيادي --- */}
-          <div className="absolute bottom-0 inset-x-0 p-10 z-20 bg-gradient-to-t from-[#02020a] via-[#02020a]/90 to-transparent">
-            <div className="max-w-4xl mx-auto relative">
-              
-              {/* Floating Volume Action */}
-              <AnimatePresence>
-                {cloudMessages && cloudMessages.length > 0 && (
-                  <motion.button 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={readLastResponse}
-                    className={`absolute -top-14 left-8 px-6 py-2 rounded-full flex items-center gap-3 text-[10px] font-black uppercase tracking-widest border transition-all z-30 ${
-                      isReading ? 'bg-primary text-black border-primary animate-pulse' : 'bg-white/5 text-white/40 border-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Volume2 size={14} /> {isReading ? "جاري قراءة الرد القانوني" : "استماع للرد الأخير"}
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <div className="relative glass-cosmic border border-white/10 rounded-[3rem] overflow-hidden shadow-3xl bg-zinc-900/50 backdrop-blur-3xl focus-within:border-primary/30 transition-all p-3">
-                <div className="flex items-center gap-2 bg-black/40 border border-white/5 p-2 rounded-[2.2rem]">
-                  
-                  {/* tools */}
-                  <div className="flex items-center gap-1">
-                    <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.jpg,.png" />
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-4 text-zinc-500 hover:text-primary transition-all rounded-2xl hover:bg-white/5" 
-                      title="إرفاق ملف"
-                    >
-                      <Paperclip size={22} />
-                    </button>
-                    
-                    <button 
-                      onClick={() => setIsCameraOpen(true)}
-                      className="p-4 text-zinc-500 hover:text-emerald-500 transition-all rounded-2xl hover:bg-white/5" 
-                      title="المعالج البصري"
-                    >
-                      <Camera size={22} />
-                    </button>
+    <SovereignLayout activeId="bot">
+      <div className="grid grid-cols-12 gap-8 h-full">
+        
+        {/* 1. Main Chat Glass Workspace */}
+        <div className="col-span-12 lg:col-span-8 glass-cosmic rounded-[3rem] p-10 flex flex-col min-h-[700px] relative overflow-hidden shadow-3xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] -z-10" />
+          
+          {/* Message Area */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-10 pb-10 scrollbar-none">
+            <AnimatePresence mode="popLayout">
+              {cloudMessages?.length === 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-center items-center opacity-30 text-center space-y-6">
+                  <Sparkles size={80} className="text-emerald-500 animate-pulse" />
+                  <p className="text-2xl font-light italic tracking-widest">مرحباً بك في مستقبل المحاماة الرقمية..</p>
+                </motion.div>
+              )}
+              {cloudMessages?.map((m) => (
+                <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                  <div className={`p-6 rounded-[2rem] max-w-[85%] text-lg leading-relaxed shadow-xl border ${
+                    m.role === 'user' ? 'bg-white text-black font-bold rounded-tr-none' : 'bg-black/40 text-emerald-400 border-emerald-500/20 rounded-tl-none font-medium'
+                  }`}>
+                    {m.text}
                   </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {isTyping && <div className="text-[10px] font-black uppercase text-emerald-500 animate-pulse tracking-[0.4em]">Processing Sovereignty...</div>}
+          </div>
 
-                  {/* text input */}
-                  <textarea 
-                    value={inputText} 
-                    onChange={(e) => {
-                      setInputText(e.target.value);
-                      e.target.style.height = "auto";
-                      e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                    placeholder="تحدث أو اكتب مشكلتك هنا..."
-                    className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-white placeholder:text-white/10 resize-none py-3 px-4 scrollbar-none"
-                    rows={1}
-                  />
-
-                  {/* voice input */}
-                  <button 
-                    onClick={toggleVoiceRecording}
-                    className={`p-4 rounded-2xl transition-all ${
-                      isRecording ? 'text-red-500 bg-red-500/10 animate-pulse' : 'text-zinc-500 hover:text-red-400'
-                    }`}
-                    title="إملاء صوتي"
-                  >
-                    {isRecording ? <MicOff size={22} /> : <Mic size={22} />}
-                  </button>
-
-                  {/* send button */}
-                  <button 
-                    onClick={() => handleSend()} 
-                    disabled={!inputText.trim() || isTyping} 
-                    className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-2xl transition-all disabled:opacity-20 hover:scale-105 active:scale-95 shrink-0"
-                  >
-                    {isTyping ? <Loader2 className="animate-spin" size={24} /> : <Send className="rotate-180" size={24} fill="currentColor" />}
-                  </button>
-                </div>
-              </div>
+          {/* Cinematic Input bar */}
+          <div className="mt-auto relative group">
+            <div className="absolute inset-0 bg-emerald-500/10 blur-3xl group-focus-within:opacity-100 opacity-0 transition-opacity duration-1000" />
+            <div className="relative bg-black/60 border border-white/10 p-3 rounded-[2.5rem] flex items-center gap-3 shadow-2xl">
+               <button className="p-4 hover:bg-white/5 rounded-full text-zinc-500 transition-colors"><Mic size={24}/></button>
+               <input 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="تحدث مع المستشار.." 
+                className="flex-1 bg-transparent py-4 px-2 outline-none text-xl font-bold text-white placeholder:text-white/10" 
+               />
+               <button 
+                onClick={handleSend}
+                disabled={!inputText.trim() || isTyping}
+                className="bg-emerald-500 text-black px-10 py-4 rounded-[1.8rem] font-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-emerald-500/20 disabled:opacity-20"
+               >
+                {isTyping ? <Loader2 className="animate-spin" /> : "إرسال"}
+               </button>
             </div>
           </div>
         </div>
 
-        {/* Camera/Vision Dialog */}
-        <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
-          <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 max-w-2xl bg-black/95 shadow-3xl">
-             <DialogHeader className="mb-10 text-center">
-                <DialogTitle className="text-3xl font-black text-white">المعالج البصري الذكي</DialogTitle>
-                <DialogDescription className="text-white/30 font-bold uppercase tracking-widest text-[10px] mt-2">Vision Recognition Protocol</DialogDescription>
-             </DialogHeader>
-             <IdCaptureWizard onComplete={() => { setIsCameraOpen(false); toast({ title: "تم التوثيق البصري بنجاح ✅" }); }} />
-          </DialogContent>
-        </Dialog>
-      </SovereignLayout>
-    </ProtectedRoute>
+        {/* 2. Side Services Cards */}
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+           <ServiceCard title="صياغة العقود" icon={<FileText />} desc="توليد مستندات قانونية فورية بذكاء اصطناعي" color="blue" />
+           <ServiceCard title="المكتبة الرقمية" icon={<Book />} desc="تصفح القوانين المصرية المحدثة 2026" color="emerald" />
+           <ServiceCard title="تحدث مع خبير" icon={<UserCheck />} desc="اتصال فيديو مباشر مع أفضل المحامين" color="purple" />
+           
+           {/* History Preview Card */}
+           <div className="glass-cosmic rounded-[2.5rem] p-8 space-y-6">
+              <h4 className="font-black text-sm uppercase tracking-widest text-zinc-500 flex items-center gap-3">
+                <History size={16} /> السجل السيادي
+              </h4>
+              <div className="space-y-4">
+                {cloudMessages?.slice(-3).map(m => (
+                  <div key={m.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-bold text-zinc-400 truncate">
+                    {m.text}
+                  </div>
+                ))}
+              </div>
+           </div>
+        </div>
+
+      </div>
+    </SovereignLayout>
+  );
+}
+
+function ServiceCard({ title, icon, desc, color }: any) {
+  const colors: any = {
+    blue: "text-blue-400 bg-blue-500/5 hover:border-blue-500/30",
+    emerald: "text-emerald-400 bg-emerald-500/5 hover:border-emerald-500/30",
+    purple: "text-purple-400 bg-purple-500/5 hover:border-purple-500/30"
+  }
+  return (
+    <div className={`p-8 glass-cosmic rounded-[2.5rem] space-y-4 transition-all duration-500 hover:scale-[1.02] cursor-pointer group ${colors[color]}`}>
+      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-xl font-black text-white">{title}</h3>
+      <p className="text-xs text-zinc-500 font-bold leading-relaxed">{desc}</p>
+    </div>
   );
 }
