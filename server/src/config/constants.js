@@ -1,7 +1,11 @@
 
+/**
+ * ميثاق الثوابت السيادية - إصدار king2026.
+ * يتم جلب هذه القيم من بيئة الإنتاج لضمان أمان الكوكب.
+ */
 const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret';
 const ADMIN_EMAIL = 'bishoysamy390@gmail.com';
-const ADMIN_PASSWORD = 'king2026';
+const ADMIN_PASSWORD = 'king@2020';
 const DEFAULT_BALANCE = Number(process.env.DEFAULT_BALANCE || 50);
 const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;

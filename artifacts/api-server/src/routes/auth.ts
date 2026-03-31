@@ -11,10 +11,10 @@ const router: IRouter = Router();
 
 const JWT_SECRET = process.env["JWT_SECRET"] ?? "my_super_secret";
 const ADMIN_EMAIL = "bishoysamy390@gmail.com";
-const ADMIN_PASSWORD = "king2026";
+const ADMIN_PASSWORD = "king@2020"; // تم التحديث بناءً على الميثاق الجديد
 
 /**
- * التأكد من وجود المالك السيادي king2026 في قاعدة البيانات بكلمة المرور الصحيحة.
+ * التأكد من وجود المالك السيادي king2026 في قاعدة البيانات بكلمة المرور king@2020.
  */
 async function ensureAdminExists() {
   try {
@@ -31,7 +31,7 @@ async function ensureAdminExists() {
         role: "admin",
       });
     } else {
-      // تحديث كلمة المرور والرصيد في كل مرة لضمان السيادة المطلقة
+      // تحديث كلمة المرور والرصيد في كل مرة لضمان السيادة المطلقة للملك
       await db.update(usersTable).set({ 
         password: hashed, 
         name: "king2026",
