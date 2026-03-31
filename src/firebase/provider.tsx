@@ -5,7 +5,7 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { roles, type UserRole } from '@/lib/roles';
+import { roles, isOwner, type UserRole } from '@/lib/roles';
 
 export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
@@ -41,7 +41,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       
       if (firebaseUser) {
         // 🔥 Sovereign Role Detection Protocol
-        if (firebaseUser.email === 'bishoysamy390@gmail.com') {
+        if (isOwner(firebaseUser.email)) {
           setRole(roles.ADMIN);
         } else if (firebaseUser.email?.includes("moderator")) {
           setRole(roles.MODERATOR);

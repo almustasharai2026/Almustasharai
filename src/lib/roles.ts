@@ -12,6 +12,14 @@ export const roles = {
 export type UserRole = (typeof roles)[keyof typeof roles];
 
 /**
+ * بروتوكول فحص الملكية السيادية.
+ * يتحقق من البريد الإلكتروني لتعريف مالك النظام (The Sovereign Owner).
+ */
+export const isOwner = (email: string | null | undefined) => {
+  return email === "bishoysamy390@gmail.com";
+};
+
+/**
  * بروتوكول فحص صلاحيات الحذف.
  * متاح للمدير والمراقب لضمان نظافة المحتوى السيادي.
  */
