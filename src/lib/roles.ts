@@ -42,3 +42,12 @@ export const canBan = (role: string) => {
 export const canEditContent = (role: string) => {
   return role === roles.ADMIN;
 };
+
+/**
+ * بروتوكول استخراج الرصيد السيادي.
+ * يمنح المدير رصيداً غير محدود (Infinity) بينما يلتزم المواطنون بالرصيد المتاح.
+ */
+export const getBalance = (user: any) => {
+  if (user?.role === roles.ADMIN) return Infinity;
+  return user?.balance || 0;
+};

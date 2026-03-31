@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser } from "@/firebase";
@@ -7,13 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Wallet, CalendarCheck, Gavel, ArrowLeftRight, ShieldCheck, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { getBalance } from "@/lib/roles";
 
 /**
  * لوحة التحكم السيادية للمواطن الرقمي.
  * توفر رؤية شاملة للرصيد، الحجوزات، والوصول السريع للهيئة القانونية.
  */
 export default function Dashboard() {
-  const { user, profile, isUserLoading } = useUser();
+  const { user, profile } = useUser();
+  const balance = getBalance(profile);
 
   return (
     <ProtectedRoute>
@@ -42,7 +43,9 @@ export default function Dashboard() {
             <CardContent className="p-8 space-y-2 relative z-10">
               <p className="text-xs font-black text-accent uppercase tracking-[0.2em]">الرصيد السيادي المتاح</p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-white tabular-nums">{profile?.balance || 0}</h3>
+                <h3 className="text-4xl font-black text-white tabular-nums">
+                  {balance === Infinity ? "∞" : balance}
+                </h3>
                 <span className="text-sm font-bold text-white/60">جنيه مصري</span>
               </div>
               <div className="pt-4">
