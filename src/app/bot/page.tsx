@@ -10,6 +10,7 @@ import {
   FileText, Zap, MessageSquare, ShieldCheck, History, BrainCircuit
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SovereignSidebar from "@/components/SovereignSidebar";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
@@ -29,11 +30,11 @@ import Link from "next/link";
 import SovereignButton from "@/components/SovereignButton";
 
 /**
- * مركز قيادة "المستشار الذكي" - الإصدار الفائق (The Sovereign AI Node).
- * تصميم سينمائي يدمج بين وسائل الراحة المتقدمة وقوة التحليل اللحظي.
+ * مركز قيادة "المستشار الذكي" (The Sovereign AI Node).
+ * مخصص لخدمة المواطنين بكافة وسائل الراحة والتحليل اللحظي.
  */
 export default function SmartConsultantPage() {
-  const { user, profile, signOut, role } = useUser();
+  const { user, profile, role } = useUser();
   const db = useFirestore();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -102,55 +103,15 @@ export default function SmartConsultantPage() {
     }
   };
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#050510] border-l border-white/5 relative">
-      <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-black/40">
-        <div className="h-14 w-14 rounded-[1.5rem] bg-primary/20 flex items-center justify-center shadow-2xl border border-primary/20">
-          <Scale className="h-8 w-8 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-white tracking-tight">المستشار الذكي</h2>
-          <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.3em]">Supreme AI Assistant</p>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-none">
-        <button onClick={() => setInputText("ابدأ جلسة استشارية جديدة")} className="w-full flex items-center gap-4 px-6 py-5 rounded-[1.8rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-black text-xs group shadow-xl">
-          <Plus className="h-5 w-5 text-primary group-hover:rotate-90 transition-transform" /> محادثة جديدة
-        </button>
-
-        <div className="space-y-3">
-          <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] px-4">بروتوكولات المواطن</p>
-          <CommandBtn icon={<FileText />} text="تحليل مستند معقد" onClick={() => handleSend("قم بتحليل هذا المستند وتوضيح الثغرات القانونية.")} color="blue" />
-          <CommandBtn icon={<Zap />} text="رأي قانوني عاجل" onClick={() => handleSend("أحتاج رأيك القانوني الفوري في هذا الموقف العاجل.")} color="amber" />
-          <CommandBtn icon={<MessageSquare />} text="صياغة عقد سيادي" onClick={() => handleSend("ساعدني في صياغة عقد احترافي يحفظ حقوقي بالكامل.")} color="emerald" />
-          <CommandBtn icon={<ShieldCheck />} text="فحص امتثال دولي" onClick={() => handleSend("هل هذا الإجراء متوافق مع المعايير القانونية الدولية؟")} color="blue" />
-        </div>
-      </div>
-
-      <div className="p-8 border-t border-white/5 bg-black/40 space-y-6">
-        <div className="flex items-center justify-between bg-white/[0.02] p-5 rounded-[2rem] border border-white/5 shadow-inner">
-           <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Wallet className="h-5 w-5 text-primary" /></div>
-              <span className="text-lg font-black tabular-nums">{profile?.balance || 0} EGP</span>
-           </div>
-           <Link href="/pricing" className="text-[9px] font-black text-primary hover:underline tracking-widest">شحن</Link>
-        </div>
-        <button onClick={() => signOut()} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-white/20 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.3em]">
-          <LogOut className="h-4 w-4" /> إنهاء الجلسة السيادية
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <ProtectedRoute>
       <div className="flex h-screen bg-[#02020a] overflow-hidden font-sans" dir="rtl">
+        {/* Sovereign Sidebar Integration */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
-            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="hidden lg:flex flex-col flex-shrink-0 z-50">
-              <SidebarContent />
-            </motion.aside>
+            <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 288, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="hidden lg:block relative z-50">
+              <SovereignSidebar activeId="bot" />
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -162,14 +123,9 @@ export default function SmartConsultantPage() {
               {isSidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <div className="flex items-center gap-6">
-              {role === ROLES_LIST.ADMIN && (
-                <Link href="/admin">
-                  <button className="bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-4 transition-all shadow-2xl">
-                    <LayoutDashboard className="h-4 w-4" /> غرفة القيادة العليا
-                  </button>
-                </Link>
-              )}
-              <div className="h-10 w-px bg-white/5 mx-2" />
+              <div className="bg-primary/10 px-6 py-2 rounded-xl border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
+                 <ShieldCheck className="h-3 w-3" /> Citizen Support Hub
+              </div>
               <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 bg-white/5 rounded-2xl text-primary border border-white/5 shadow-xl">
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
@@ -187,7 +143,7 @@ export default function SmartConsultantPage() {
                        </div>
                        <div className="space-y-4">
                           <h3 className="text-4xl font-black text-white tracking-tighter">أهلاً بك في فضاء المستشار الذكي</h3>
-                          <p className="text-white/30 font-bold text-lg max-w-lg mx-auto">أنا المحرك السيادي المخصص لخدمتك. اطرح سؤالك القانوني أو ارفع وثائقك للتحليل الفوري.</p>
+                          <p className="text-white/30 font-bold text-lg max-w-lg mx-auto leading-relaxed">أنا المحرك السيادي المخصص لخدمتك وتوفير كافة سبل الراحة. اطرح سؤالك القانوني أو ارفع وثائقك للتحليل الفوري.</p>
                        </div>
                     </motion.div>
                   )}
@@ -233,7 +189,7 @@ export default function SmartConsultantPage() {
                     </button>
                   </div>
                 </div>
-                <p className="text-[8px] text-center text-white/10 font-black uppercase tracking-[0.6em]">Sovereign AI Node v4.5 · king2026 Shield Active</p>
+                <p className="text-[8px] text-center text-white/10 font-black uppercase tracking-[0.6em]">Smart Citizen Assistant Node v4.5 · Protected Session</p>
               </div>
             </div>
           </main>
@@ -243,27 +199,13 @@ export default function SmartConsultantPage() {
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 max-w-2xl bg-black/90 shadow-[0_0_100px_rgba(99,102,241,0.1)]">
            <DialogHeader className="mb-10 text-center">
-              <DialogTitle className="text-3xl font-black text-white">المعالج البصري السيادي</DialogTitle>
+              <DialogTitle className="text-3xl font-black text-white">المعالج البصري الذكي</DialogTitle>
               <DialogDescription className="text-white/30 font-bold uppercase tracking-widest text-[10px] mt-2">Vision Identity Recognition Protocol</DialogDescription>
            </DialogHeader>
            <IdCaptureWizard onComplete={() => { setIsCameraOpen(false); toast({ title: "تم التوثيق البصري بنجاح ✅" }); }} />
         </DialogContent>
       </Dialog>
     </ProtectedRoute>
-  );
-}
-
-function CommandBtn({ icon, text, onClick, color }: any) {
-  const colors: any = {
-    blue: "text-blue-400 bg-blue-500/5 hover:bg-blue-500/10 border-blue-500/10 hover:border-blue-500/30",
-    amber: "text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 border-amber-500/10 hover:border-amber-500/30",
-    emerald: "text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/10 hover:border-emerald-500/30",
-  };
-  return (
-    <button onClick={onClick} className={`w-full flex items-center justify-between px-8 py-5 rounded-[1.8rem] border transition-all duration-500 shadow-lg group ${colors[color]}`}>
-      <span className="text-sm font-black tracking-tight">{text}</span>
-      <span className="group-hover:scale-125 transition-transform">{icon}</span>
-    </button>
   );
 }
 
