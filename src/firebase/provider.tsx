@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react';
@@ -35,12 +36,9 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
       setUser(firebaseUser);
       
       if (firebaseUser) {
+        // التحقق الفوري من الهوية السيادية king2026
         if (isOwner(firebaseUser.email)) {
           setRole(roles.ADMIN);
-        } else if (firebaseUser.email?.includes("moderator")) {
-          setRole(roles.MODERATOR);
-        } else if (firebaseUser.email?.includes("consultant")) {
-          setRole(roles.CONSULTANT);
         } else {
           setRole(roles.USER);
         }
@@ -55,13 +53,20 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
     return () => unsubscribeAuth();
   }, [auth]);
 
-  // Real-time profile sync
+  // مزامنة الملف الشخصي اللحظية من السحابة
   useEffect(() => {
     if (!firestore || !user) return;
     
-    const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
-      if (doc.exists()) {
-        setProfile(doc.data());
+    const unsub = onSnapshot(doc(firestore, "users", user.uid), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setProfile(data);
+        // تحديث الرتبة بناءً على بيانات السحابة أو الهوية الملكية
+        if (isOwner(user.email) || data.role === roles.ADMIN) {
+          setRole(roles.ADMIN);
+        } else {
+          setRole(data.role || roles.USER);
+        }
       }
     }, (err) => {
       console.warn("Sovereign Profile sync paused:", err.message);

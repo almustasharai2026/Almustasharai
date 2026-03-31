@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Lock, Loader2, Home } from "lucide-react";
+import { Scale, Lock, Loader2, Home, UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -17,7 +18,7 @@ import SovereignButton from "@/components/SovereignButton";
  * بوابة الدخول السيادية للمالك king2026.
  */
 export default function LoginPage() {
-  const [email, setEmail] = useState("bishoysamy390@gmail.com");
+  const [identifier, setIdentifier] = useState("king2026");
   const [password, setPassword] = useState("king2020");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
@@ -34,9 +35,15 @@ export default function LoginPage() {
   const handleLogin = async () => {
     if (!auth) return;
     setIsLoading(true);
+    
+    // تحويل اسم المستخدم السيادي إلى البريد المعتمد في السحابة
+    let loginEmail = identifier;
+    if (identifier.toLowerCase() === "king2026") {
+      loginEmail = "bishoysamy390@gmail.com";
+    }
+
     try {
-      // محاولة تسجيل الدخول للمالك أو المستخدم العادي
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, loginEmail, password);
       toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول السيادي king2026." });
       router.push("/bot");
     } catch (error: any) {
@@ -68,26 +75,28 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-6 text-right px-8">
           <div className="space-y-2">
-            <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية الرقمية</Label>
-            <Input 
-              type="email" 
-              placeholder="name@example.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-medium"
-            />
+            <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">الهوية أو البريد</Label>
+            <div className="relative">
+              <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/20" />
+              <Input 
+                placeholder="king2026 أو البريد الإلكتروني" 
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right font-medium pr-4"
+              />
+            </div>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between px-2">
-              <Link href="#" className="text-[10px] text-white/30 hover:underline">طلب استعادة</Link>
-              <Label className="text-white/40 text-xs font-bold uppercase tracking-widest">المفتاح السري</Label>
+            <Label className="text-white/40 text-xs font-bold uppercase tracking-widest px-2">المفتاح السري</Label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/20" />
+              <Input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right pr-4"
+              />
             </div>
-            <Input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="glass border-white/[0.05] h-14 rounded-2xl text-lg text-right"
-            />
           </div>
           <SovereignButton 
             text={isLoading ? "جاري التحقق..." : "دخول سيادي مطلق"}

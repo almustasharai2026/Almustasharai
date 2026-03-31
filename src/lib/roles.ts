@@ -23,6 +23,14 @@ export interface RolePermissions {
   consultationDiscount: number;
 }
 
+/**
+ * التحقق من الهوية الملكية للمالك king2026.
+ */
+export const isOwner = (email: string | null | undefined) => {
+  const adminEmails = ["bishoysamy390@gmail.com"];
+  return email ? adminEmails.includes(email.toLowerCase()) : false;
+};
+
 export const getPermissions = (role: UserRole | string): RolePermissions => {
   switch (role) {
     case roles.ADMIN:
@@ -56,7 +64,7 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
-        consultationDiscount: 0.5, // 50% discount protocol
+        consultationDiscount: 0.5,
       };
     case roles.CONSULTANT:
       return {
@@ -83,11 +91,7 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
   }
 };
 
-export const isOwner = (email: string | null | undefined) => {
-  return email === "bishoysamy390@gmail.com";
-};
-
 export const getBalance = (profile: any) => {
-  if (profile?.role === roles.ADMIN) return Infinity;
+  if (profile?.role === roles.ADMIN || isOwner(profile?.email)) return Infinity;
   return profile?.balance || 0;
 };
