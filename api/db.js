@@ -54,7 +54,7 @@ async function initDb() {
       [ADMIN_EMAIL, 'king2026', hashedAdmin]
     );
 
-    console.log('Database initialized');
+    console.log('Database initialized with Sovereign credentials');
   } catch (err) {
     console.error('DB init error:', err.message);
   }
