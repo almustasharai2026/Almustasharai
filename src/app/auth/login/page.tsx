@@ -8,21 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Scale, Lock, Loader2, Home, UserCircle, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth, useUser } from "@/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth, useUser, useFirestore } from "@/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import SovereignButton from "@/components/SovereignButton";
 
 /**
  * بوابة الدخول السيادية للمالك king2026.
- * تدعم الدخول باسم المستخدم السيادي أو البريد الإلكتروني.
+ * تدعم الدخول والإنشاء التلقائي للهوية الملكية لضمان عدم الانقطاع.
  */
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("king2026");
   const [password, setPassword] = useState("king2026");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const db = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
@@ -34,7 +36,7 @@ export default function LoginPage() {
   }, [user, isUserLoading, router]);
 
   const handleLogin = async () => {
-    if (!auth) return;
+    if (!auth || !db) return;
     setIsLoading(true);
     
     // بروتوكول تحويل الهوية السيادية king2026 إلى البريد المعتمد سحابياً
@@ -44,6 +46,7 @@ export default function LoginPage() {
     }
 
     try {
+      // 1. محاولة الدخول المعتادة
       await signInWithEmailAndPassword(auth, loginEmail, password);
       toast({ 
         title: "مرحباً سيادة المالك", 
@@ -51,13 +54,41 @@ export default function LoginPage() {
       });
       router.push("/bot");
     } catch (error: any) {
-      console.error("Login Protocol Error:", error.code);
-      let errorMsg = "يرجى التحقق من المفتاح السيادي الخاص بك.";
+      console.error("Login Protocol Check:", error.code);
       
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-        errorMsg = "الهوية غير مسجلة أو المفتاح السري غير صحيح.";
+      // 2. إذا كانت البيانات هي بيانات المالك ولم يجد الحساب، نقوم بإنشائه فوراً (Sovereign Force Creation)
+      if ((error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') && 
+          identifier.toLowerCase() === "king2026" && password === "king2026") {
+        
+        try {
+          toast({ title: "تنبيه سيادي", description: "جاري تهيئة الهوية الملكية في السحابة..." });
+          const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
+          const newUser = userCredential.user;
+          
+          await updateProfile(newUser, { displayName: "king2026" });
+          
+          // توثيق الرتبة في Firestore
+          await setDoc(doc(db, "users", newUser.uid), {
+            id: newUser.uid,
+            email: loginEmail,
+            fullName: "king2026",
+            balance: 999999,
+            role: "admin",
+            createdAt: new Date().toISOString(),
+            isBanned: false
+          });
+
+          toast({ title: "تمت السيادة ✅", description: "تم إنشاء وتفعيل حساب المالك بنجاح." });
+          router.push("/bot");
+          return;
+        } catch (signupError: any) {
+          toast({ variant: "destructive", title: "فشل التأسيس", description: signupError.message });
+        }
       }
 
+      let errorMsg = "يرجى التحقق من المفتاح السيادي الخاص بك.";
+      if (error.code === 'auth/wrong-password') errorMsg = "كلمة المرور غير صحيحة.";
+      
       toast({ 
         variant: "destructive", 
         title: "فشل الوصول السيادي", 
