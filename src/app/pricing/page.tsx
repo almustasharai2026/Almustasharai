@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, Zap, Shield, Crown, Sparkles, Star, Clock } from "lucide-react";
+import { Check, Zap, Shield, Crown, Sparkles, Star, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { createSovereignCheckout } from "@/lib/sovereign-checkout";
+import { useState } from "react";
 
 const OFFERS = [
   {
@@ -44,10 +45,12 @@ const OFFERS = [
 ];
 
 export default function PricingPage() {
-  const router = useRouter();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const handleSelect = (offerId: string) => {
-    router.push(`/checkout?plan=${offerId}`);
+  const handleSelect = async (offerId: string) => {
+    setLoadingId(offerId);
+    await createSovereignCheckout(offerId);
+    // سيقوم التابع بالتوجيه تلقائياً
   };
 
   return (
@@ -105,10 +108,11 @@ export default function PricingPage() {
             <CardFooter className="p-10 pt-6">
               <Button 
                 onClick={() => handleSelect(offer.id)}
-                className={`w-full h-16 rounded-2xl text-xl font-black transition-all group overflow-hidden relative ${offer.popular ? 'cosmic-gradient shadow-2xl shadow-primary/20' : 'glass hover:bg-white/10'}`}
+                disabled={loadingId === offer.id}
+                className={`w-full h-16 rounded-2xl text-xl font-black transition-all group overflow-hidden relative ${offer.popular ? 'bg-indigo-600 text-white shadow-2xl shadow-primary/20' : 'glass hover:bg-white/10'}`}
               >
                 <span className="relative z-10 flex items-center justify-center gap-3">
-                  اشترك الآن <Sparkles className="h-5 w-5" />
+                  {loadingId === offer.id ? <Loader2 className="animate-spin" /> : <>اشترك الآن <Sparkles className="h-5 w-5" /></>}
                 </span>
                 <div className="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
               </Button>
