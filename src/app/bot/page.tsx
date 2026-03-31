@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Cpu, Scale, LogOut, Home, Settings, Users, Gavel, ShieldAlert, Tag, Activity,
-  Menu, X, Plus, ChevronDown, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon
+  Menu, X, Plus, ChevronDown, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
+  ArrowLeft
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -110,7 +111,7 @@ export default function SovereignBotPage() {
             >
               <div className="p-8 border-b border-white/10 flex items-center gap-4">
                 <div className="h-12 w-12 rounded-[1.2rem] bg-white/20 flex items-center justify-center border border-white/10 shadow-inner">
-                  <Scale className="h-7 w-7 text-white" />
+                  <Scale className="h-7 v-7 text-white" />
                 </div>
                 <div>
                   <h2 className="text-xl font-black tracking-tighter">المستشار AI</h2>
