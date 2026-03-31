@@ -9,7 +9,7 @@ import {
   Activity, Settings, MessageSquare, 
   ArrowLeft, Loader2, Plus, Zap, ArrowRightLeft,
   UserCheck, History, Cpu, Globe, RefreshCcw, X, Send, CreditCard,
-  UserMinus, UserPlus, Filter
+  UserMinus, UserPlus, Filter, ChevronLeft
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 import { collection, doc, updateDoc, deleteDoc, increment, serverTimestamp, addDoc, query, orderBy } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import Link from "next/link";
@@ -50,7 +51,6 @@ export default function SupremeCommandCenter() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
-  const [transferBy, setTransferBy] = useState<"username" | "phone">("username");
 
   const handlePurgeUser = async (id: string) => {
     if (!confirm("هل أنت متأكد من تطهير هذا السجل نهائياً؟")) return;
@@ -94,6 +94,7 @@ export default function SupremeCommandCenter() {
       toast({ title: "تم إتمام المعاملة بنجاح ✅" });
       setIsTransferModalOpen(false);
       setTransferAmount("");
+      setSelectedUser(null);
     } catch (e) {
       toast({ variant: "destructive", title: "فشل بروتوكول التحويل" });
     }
@@ -111,7 +112,7 @@ export default function SupremeCommandCenter() {
     }
   };
 
-  // محاكاة الطيار الآلي للموافقات التلقائية
+  // محاكاة الطيار الآلي للموافقات التلقائية (Sovereign Auto-Pilot)
   useEffect(() => {
     if (isAutoApprove && paymentRequests) {
       const pending = paymentRequests.filter(r => r.status === 'pending');
@@ -156,6 +157,7 @@ export default function SupremeCommandCenter() {
         <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10">
           <AdminNavBtn icon={<Activity />} text="نظرة شاملة" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
           <AdminNavBtn icon={<Users />} text="إدارة المواطنين" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
+          <AdminNavBtn icon={<ArrowRightLeft />} text="محرك التحويل" active={activeTab === "transfer"} onClick={() => setActiveTab("transfer")} />
           <AdminNavBtn icon={<Wallet />} text="العمليات المالية" active={activeTab === "billing"} onClick={() => setActiveTab("billing")} />
           <AdminNavBtn icon={<ShieldAlert />} text="الدرع الواقي" active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} />
           <AdminNavBtn icon={<History />} text="سجلات الأحداث" active={activeTab === "logs"} onClick={() => setActiveTab("logs")} />
@@ -165,7 +167,7 @@ export default function SupremeCommandCenter() {
           <Link href="/bot">
             <AdminNavBtn icon={<ArrowLeft />} text="العودة للبوت" active={false} />
           </Link>
-          <button onClick={() => signOut()} className="w-full mt-6 flex items-center gap-5 px-6 py-4 rounded-2xl text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all font-black text-sm group">
+          <button onClick={() => signOut()} className="w-full mt-6 flex items-center gap-5 px-6 py-4 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
             <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
           </button>
         </div>
@@ -260,6 +262,54 @@ export default function SupremeCommandCenter() {
               </motion.div>
             )}
 
+            {activeTab === "transfer" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                <div className="bg-white dark:bg-slate-900 rounded-[4rem] p-12 shadow-3xl border border-primary/10">
+                  <div className="text-center space-y-4 mb-12">
+                    <div className="h-20 w-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto border border-primary/20 text-primary">
+                      <ArrowRightLeft className="h-10 w-10" />
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tighter">محرك التحويل السيادي</h2>
+                    <p className="text-muted-foreground font-bold">ابحث عن المواطن لتفعيل بروتوكول تحويل الوحدات المالية.</p>
+                  </div>
+
+                  <div className="max-w-2xl mx-auto space-y-10">
+                    <div className="relative">
+                      <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
+                      <Input 
+                        placeholder="ابحث بالاسم أو الرقم لتحديد المواطن..." 
+                        className="pr-16 h-20 rounded-[2rem] bg-secondary/30 border-white/5 text-xl font-bold"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      {filteredUsers?.slice(0, 3).map(u => (
+                        <button 
+                          key={u.id}
+                          onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }}
+                          className="w-full flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-white/10 transition-all group"
+                        >
+                          <div className="flex items-center gap-6">
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black">{u.fullName?.charAt(0)}</div>
+                            <div className="text-right">
+                              <p className="font-black text-lg">{u.fullName}</p>
+                              <p className="text-xs text-muted-foreground font-bold">{u.phone || u.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <p className="text-xl font-black tabular-nums text-white/40 group-hover:text-primary transition-colors">{u.balance} EGP</p>
+                            <ChevronLeft className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === "billing" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
                 <div className="flex justify-between items-center bg-white dark:bg-white/5 p-8 rounded-[3rem] shadow-xl border border-primary/10">
@@ -342,12 +392,12 @@ export default function SupremeCommandCenter() {
         </div>
       </main>
 
-      {/* Sovereign Transfer Modal (The requested Engine) */}
+      {/* Sovereign Transfer Modal (Supreme Engine) */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-4xl font-black text-white mb-4">محرك التحويل السيادي</DialogTitle>
-            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية.</DialogDescription>
+            <DialogTitle className="text-4xl font-black text-white mb-4">إتمام المعاملة السيادية</DialogTitle>
+            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية الموثقة.</DialogDescription>
           </DialogHeader>
           
           <div className="py-10 space-y-8">
@@ -359,7 +409,7 @@ export default function SupremeCommandCenter() {
                   </div>
                   <div>
                     <p className="text-2xl font-black text-white">{selectedUser?.fullName}</p>
-                    <p className="text-xs text-primary font-bold uppercase mt-1 tracking-widest">{selectedUser?.phone || "No Registered Phone"}</p>
+                    <p className="text-xs text-primary font-bold uppercase mt-1 tracking-widest">{selectedUser?.phone || selectedUser?.email}</p>
                   </div>
                </div>
                <div className="text-left">
@@ -369,7 +419,7 @@ export default function SupremeCommandCenter() {
             </div>
 
             <div className="space-y-4">
-              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد توجيهها</Label>
+              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد تحويلها</Label>
               <div className="relative">
                 <Input 
                   type="number" 
@@ -386,7 +436,7 @@ export default function SupremeCommandCenter() {
           <DialogFooter className="gap-6 pt-4">
             <Button variant="ghost" onClick={() => setIsTransferModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء العملية</Button>
             <Button onClick={handleTransfer} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl gap-3">
-               إتمام المعاملة السيادية <ArrowRightLeft className="h-6 w-6" />
+               تأكيد وإتمام التحويل <ArrowRightLeft className="h-6 w-6" />
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -398,8 +448,8 @@ export default function SupremeCommandCenter() {
 
 function AdminNavBtn({ icon, text, active, onClick }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${active ? "bg-primary text-primary-foreground shadow-3xl scale-[1.05]" : "text-white/30 hover:text-white hover:bg-white/5"}`}>
-      {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-primary rounded-[1.8rem] -z-10 shadow-3xl shadow-primary/40" />}
+    <button onClick={onClick} className={`w-full flex items-center gap-6 px-8 py-5 rounded-[1.8rem] transition-all duration-500 font-black text-sm relative group ${active ? "bg-white/20 text-white shadow-3xl scale-[1.05]" : "text-white/30 hover:text-white hover:bg-white/5"}`}>
+      {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
       <span className={`shrink-0 transition-transform duration-500 ${active ? "scale-125" : "group-hover:scale-110"}`}>{icon}</span>
       <span className="tracking-tight text-lg">{text}</span>
     </button>
