@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Professional Light Mode - Sovereign Gold & Royal Blue */
+    /* Royal Sovereign Palette - Light */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -28,7 +28,7 @@
   }
 
   .dark {
-    /* Sovereign Dark Mode - Deep Luxury */
+    /* Deep Luxury Palette - Dark */
     --background: 222 47% 4%;
     --foreground: 210 40% 98%;
     --card: 222 47% 6%;
@@ -69,13 +69,4 @@
   .btn-primary {
     @apply bg-gradient-to-r from-primary to-blue-700 text-white font-black shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all;
   }
-  .float-sovereign {
-    animation: float 6s ease-in-out infinite;
-  }
-}
-
-@keyframes float {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
 }

@@ -1,12 +1,14 @@
-
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import Webcam from "react-webcam";
+import dynamic from 'next/dynamic';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, RefreshCw, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// 🔥 استيراد ديناميكي لمنع أخطاء الخادم (Next.js SSR Fix)
+const Webcam = dynamic(() => import('react-webcam'), { ssr: false });
 
 interface IdCaptureWizardProps {
   onComplete: (docs: {
@@ -31,7 +33,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const webcamRef = useRef<Webcam>(null);
+  const webcamRef = useRef<any>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -55,7 +57,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
     } finally {
       setIsCapturing(false);
     }
-  }, [webcamRef, currentStep]);
+  }, [currentStep]);
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
@@ -79,7 +81,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between mb-2 px-2">
+      <div className="flex items-center justify-between mb-2 px-2 text-right">
         <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sovereign Capture: Step {currentStep + 1} of 4</span>
         <div className="flex gap-1.5">
           {STEPS.map((_, i) => (

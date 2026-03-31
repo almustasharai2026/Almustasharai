@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -22,7 +21,7 @@ import { verifyLegalIdentity } from "@/ai/flows/verify-id-flow";
 
 /**
  * صفحة التسجيل السيادية المحدثة (king2026 Sovereign Protocol).
- * تضمن بروتوكول التحقق الصارم للسادة المحامين والمستشارين مع إصلاح عيوب التبديل.
+ * تضمن بروتوكول التحقق الصارم للسادة المحامين والمستشارين مع تحسينات الألوان والأمان.
  */
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -58,7 +57,6 @@ export default function SignupPage() {
 
     // 🔥 بروتوكول التوجيه القسري لتصوير الوثائق للمحامين
     if (isProfessional && !idDocs) {
-      console.log("[Sovereign Signup] Redirecting to Capture Wizard...");
       setIsCapturing(true);
       return;
     }
@@ -90,7 +88,7 @@ export default function SignupPage() {
           status: 'pending'
         };
 
-        // محاولة التحقق الذكي (AI Check)
+        // محاولة التحقق الذكي عبر Gemini
         try {
           const aiResult = await verifyLegalIdentity({
             frontIdUri: idDocs.syndicateFront,
@@ -106,10 +104,10 @@ export default function SignupPage() {
       await setDoc(doc(db, "users", newUser.uid), userData);
       
       toast({ 
-        title: isProfessional ? "تم التوثيق وبانتظار المراجعة ✅" : "مرحباً بك في الكوكب", 
+        title: isProfessional ? "بانتظار المراجعة السيادية ✅" : "مرحباً بك في الكوكب", 
         description: isProfessional 
-          ? "سيتم مراجعة وثائقك من قبل المالك king2026 لتفعيل حسابك." 
-          : "حصلت على ٥٠ EGP رصيد ترحيبي." 
+          ? "سيتم مراجعة وثائقك من قبل king2026 لتفعيل حسابك كخبير." 
+          : "حصلت على ٥٠ EGP رصيد ترحيبي مجاني." 
       });
       router.push("/bot");
     } catch (error: any) {
@@ -123,7 +121,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-[#020617] relative overflow-hidden" dir="rtl">
-      {/* Dynamic Decor */}
+      {/* Background Decor */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-500/10 blur-[150px] rounded-full pointer-events-none" />
 
@@ -136,7 +134,7 @@ export default function SignupPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-black text-slate-900 dark:text-white">تسجيل مواطن جديد</CardTitle>
-            <CardDescription className="text-muted-foreground font-bold">انضم لكوكب المستشار AI واحصل على رصيدك الترحيبي.</CardDescription>
+            <CardDescription className="text-muted-foreground font-bold">انضم لكوكب المستشار AI واستلم رصيدك السيادي.</CardDescription>
           </div>
         </CardHeader>
         
@@ -152,13 +150,13 @@ export default function SignupPage() {
               >
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">الاسم الكامل</Label>
+                    <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">الاسم الكامل رباعي</Label>
                     <div className="relative group">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <input 
                         value={fullName}
                         onChange={e => setFullName(e.target.value)}
-                        placeholder="أدخل اسمك رباعي كما في الهوية"
+                        placeholder="الاسم كما هو مكتوب في الهوية الوطنية"
                         className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 pl-12 text-lg font-bold focus:ring-2 focus:ring-primary/20 transition-all text-right"
                       />
                     </div>
@@ -167,56 +165,50 @@ export default function SignupPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">البريد الإلكتروني</Label>
-                      <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <input 
-                          type="email"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          placeholder="name@domain.com"
-                          className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 pl-10 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all text-right"
-                        />
-                      </div>
+                      <input 
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="name@domain.com"
+                        className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 text-right"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">رقم الجوال الشخصي</Label>
-                      <div className="relative group">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <input 
-                          value={phone}
-                          onChange={e => setPhone(e.target.value)}
-                          placeholder="01xxxxxxxxx"
-                          className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 pl-10 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all text-right"
-                        />
-                      </div>
+                      <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">رقم الجوال</Label>
+                      <input 
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="01xxxxxxxxx"
+                        className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 text-right"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">كلمة المرور</Label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                      <input 
-                        type="password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 pl-12 text-lg font-bold focus:ring-2 focus:ring-primary/20 transition-all text-right"
-                      />
-                    </div>
+                    <input 
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-lg font-bold focus:ring-2 focus:ring-primary/20 text-right"
+                    />
                   </div>
                 </div>
 
                 <div 
                   className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${isProfessional ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-white/5 hover:border-primary/20'}`}
-                  onClick={() => setIsProfessional(!isProfessional)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsProfessional(!isProfessional);
+                  }}
                 >
                   <div className="flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-4">
                       <Checkbox checked={isProfessional} className="h-6 w-6 rounded-lg pointer-events-auto" />
                       <div>
                         <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">أنا محامي أو مستشار قانوني</p>
-                        <p className="text-[10px] text-muted-foreground font-bold">يتطلب هذا الخيار رفع وثائق المهنة للمصادقة السيادية.</p>
+                        <p className="text-[10px] text-muted-foreground font-bold">يتطلب هذا الخيار توثيق الهوية المهنية للقبول في مجلس الخبراء.</p>
                       </div>
                     </div>
                     <Gavel className={`h-6 w-6 transition-all ${isProfessional ? 'text-primary' : 'opacity-20'}`} />
@@ -228,16 +220,16 @@ export default function SignupPage() {
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden pt-2">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">هاتف العمل (اختياري)</Label>
+                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">هاتف العمل (إن وجد)</Label>
                           <input 
                             value={workPhone}
                             onChange={e => setWorkPhone(e.target.value)}
-                            placeholder="رقم المكتب أو هو نفسه الجوال"
+                            placeholder="رقم المكتب الرسمي"
                             className="w-full h-14 bg-slate-100 dark:bg-black/40 border-none rounded-2xl px-6 text-sm font-bold focus:ring-2 focus:ring-primary/20 text-right"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">عنوان المكتب (اختياري)</Label>
+                          <Label className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2">عنوان المكتب (إن وجد)</Label>
                           <input 
                             value={workAddress}
                             onChange={e => setWorkAddress(e.target.value)}
@@ -251,14 +243,14 @@ export default function SignupPage() {
                         <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex items-center justify-between">
                            <div className="flex items-center gap-3">
                               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                              <span className="text-[10px] text-emerald-500 font-black uppercase">Identity Assets Secured</span>
+                              <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Identity Secured</span>
                            </div>
-                           <button onClick={() => setIsCapturing(true)} className="text-[10px] text-emerald-500 underline font-black">تعديل الوثائق</button>
+                           <button onClick={() => setIsCapturing(true)} className="text-[10px] text-emerald-500 underline font-black">تعديل الصور</button>
                         </div>
                       ) : (
                         <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 flex items-center gap-3">
                           <Camera className="h-5 w-5 text-amber-500" />
-                          <p className="text-[10px] text-amber-500 font-bold leading-tight">يجب تصوير الكارنيه والبطاقة لفتح بروتوكول الحساب المهني.</p>
+                          <p className="text-[10px] text-amber-500 font-bold leading-tight">يجب تصوير مستنداتك المهنية لفتح بروتوكول حساب الخبير.</p>
                         </div>
                       )}
                     </motion.div>
@@ -283,10 +275,10 @@ export default function SignupPage() {
                 <IdCaptureWizard onComplete={(docs) => {
                   setIdDocs(docs);
                   setIsCapturing(false);
-                  toast({ title: "تم التوثيق المبدئي بنجاح ✅", description: "البيانات جاهزة الآن للمراجعة النهائية." });
+                  toast({ title: "تم توثيق الوثائق بنجاح ✅", description: "البيانات جاهزة للمراجعة من قبل king2026." });
                 }} />
                 <button onClick={() => setIsCapturing(false)} className="w-full text-xs font-black text-muted-foreground hover:text-slate-900 dark:hover:text-white transition-colors py-2 uppercase tracking-widest">
-                  إلغاء والعودة للبيانات الأساسية
+                  إلغاء والعودة للبيانات
                 </button>
               </motion.div>
             )}
@@ -295,11 +287,11 @@ export default function SignupPage() {
 
         <CardFooter className="flex flex-col space-y-6 border-t border-slate-100 dark:border-white/5 pt-8 pb-10">
           <div className="text-sm text-center text-muted-foreground font-bold">
-            لديك هوية سيادية مسبقة؟{" "}
+            لديك هوية سيادية؟{" "}
             <Link href="/auth/login" className="text-primary hover:underline">سجل دخولك الآن</Link>
           </div>
           <Link href="/" className="flex items-center gap-2 text-xs font-black text-muted-foreground hover:text-primary transition-all">
-            <Home className="h-4 w-4" /> العودة للصفحة الرئيسية
+            <Home className="h-4 w-4" /> العودة للرئيسية
           </Link>
         </CardFooter>
       </Card>
