@@ -20,6 +20,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { Label } from "@/components/ui/label";
 import { SOVEREIGN_ADMIN_EMAIL } from "@/lib/roles";
 import SovereignButton from "@/components/SovereignButton";
 
