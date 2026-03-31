@@ -18,8 +18,8 @@ interface SovereignLayoutProps {
 }
 
 /**
- * إطار الجهاز السيادي (The Sovereign Device Body).
- * تصميم مطفي (Matte Black) مستوحى من Rabbit R1 مع حواف دائرية ضخمة.
+ * إطار النظام السيادي الممتد (Sovereign OS Max Viewport).
+ * تم التوسعة لتشغل كامل الشاشة بنمط Matte Black الغامر دون قيود.
  */
 export default function SovereignLayout({ children, activeId }: SovereignLayoutProps) {
   const pathname = usePathname();
@@ -37,71 +37,73 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-4 lg:p-10 font-sans" dir="rtl">
+    <div className="min-h-screen bg-black flex items-center justify-center font-sans overflow-hidden" dir="rtl">
       
-      {/* Sovereign Device Body (Matte Black Finish) */}
+      {/* Sovereign Full-Screen Canvas */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-[440px] h-[880px] bg-[#0a0a0a] rounded-[4.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border-[10px] border-[#151515] relative overflow-hidden flex flex-col matte-black"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="w-full h-screen bg-[#050505] relative overflow-hidden flex flex-col matte-black border-none"
       >
         
-        {/* Tucked Vault Header */}
-        <div className="p-10 pt-16 flex justify-between items-center relative z-50">
+        {/* Tucked Vault Header (Grand Scale) */}
+        <div className="p-8 md:p-12 pt-12 md:pt-16 flex justify-between items-center relative z-50 max-w-7xl mx-auto w-full">
           <button 
             onClick={() => setSidebarOpen(true)}
-            className="w-14 h-14 bg-[#1a1a1a] rounded-2xl flex items-center justify-center border border-white/5 hover:bg-white/5 transition-colors shadow-inner"
+            className="w-16 h-16 bg-[#151515] rounded-3xl flex items-center justify-center border border-white/5 hover:bg-white/10 transition-all shadow-2xl"
           >
-            <Menu size={24} className="text-zinc-600" />
+            <Menu size={32} className="text-zinc-500" />
           </button>
 
           <Link href="/pricing">
-            <div className="bg-[#1a1a1a] border border-white/5 px-6 py-3 rounded-3xl flex items-center gap-4 shadow-inner hover:bg-white/5 transition-all group">
+            <div className="bg-[#151515] border border-white/5 px-8 py-4 rounded-[2rem] flex items-center gap-6 shadow-2xl hover:bg-white/5 transition-all group">
                {sovereign.isOwner ? (
-                 <Crown size={16} className="text-primary animate-pulse" />
+                 <Crown size={24} className="text-primary animate-pulse" />
                ) : (
-                 <Wallet size={16} className="text-zinc-700 group-hover:text-primary transition-colors" />
+                 <Wallet size={24} className="text-zinc-700 group-hover:text-primary transition-colors" />
                )}
                <div className="flex flex-col items-end">
-                  <span className={`text-xl font-black tabular-nums leading-none ${sovereign.isOwner ? 'text-primary' : 'text-white'}`}>
+                  <span className={`text-3xl font-black tabular-nums leading-none ${sovereign.isOwner ? 'text-primary' : 'text-white'}`}>
                     {balance}
                   </span>
-                  <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mt-1">
-                    {sovereign.isOwner ? 'Supreme Status' : 'Sovereign Units'}
+                  <span className="text-[10px] font-black text-zinc-700 uppercase tracking-widest mt-2">
+                    {sovereign.isOwner ? 'Supreme Sovereign Account' : 'Available Sovereign Units'}
                   </span>
                </div>
             </div>
           </Link>
         </div>
 
-        {/* Content Area */}
-        <main className="flex-1 px-8 overflow-y-auto custom-scrollbar relative scroll-smooth scrollbar-none bg-gradient-to-b from-transparent to-black/40">
-          {isUserLoading ? (
-            <div className="h-full flex flex-col items-center justify-center opacity-20">
-              <Loader2 className="animate-spin text-primary h-8 w-8" />
-            </div>
-          ) : (
-            <div className="h-full">
-              {children}
-            </div>
-          )}
+        {/* Immersive Content Area */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar relative scroll-smooth scrollbar-none bg-gradient-to-b from-transparent to-black/60">
+          <div className="max-w-7xl mx-auto h-full px-8 md:px-12">
+            {isUserLoading ? (
+              <div className="h-full flex flex-col items-center justify-center opacity-20">
+                <Loader2 className="animate-spin text-primary h-12 w-12" />
+              </div>
+            ) : (
+              <div className="h-full">
+                {children}
+              </div>
+            )}
+          </div>
         </main>
 
-        {/* Device Sidebar Drawer */}
+        {/* Sovereign Sidebar Drawer */}
         <SovereignSidebar 
           isOpen={isSidebarOpen} 
           onClose={() => setSidebarOpen(false)} 
         />
 
-        {/* Minimalist Device Dock */}
-        <div className="p-8 pb-14 relative z-50">
-          <div className="bg-[#1a1a1a]/80 backdrop-blur-3xl rounded-[3.5rem] p-3 flex items-center justify-between border border-white/5 shadow-2xl">
-            <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={26} />} />
-            <DockItem href="/dashboard" active={pathname === '/dashboard'} icon={<User size={26} />} />
+        {/* Sovereign Command Dock (Floating Wide) */}
+        <div className="p-10 pb-16 relative z-50 max-w-4xl mx-auto w-full">
+          <div className="bg-[#151515]/90 backdrop-blur-3xl rounded-[4rem] p-4 flex items-center justify-between border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+            <DockItem href="/bot" active={pathname === '/bot'} icon={<MessageSquare size={32} />} label="Bot" />
+            <DockItem href="/dashboard" active={pathname === '/dashboard'} icon={<User size={32} />} label="Vault" />
             {sovereign.isOwner && (
-              <DockItem href="/admin" active={pathname === '/admin'} icon={<Crown size={26} />} />
+              <DockItem href="/admin" active={pathname === '/admin'} icon={<Crown size={32} />} label="Crown" />
             )}
-            <DockItem href="/" active={pathname === '/'} icon={<ArrowUp size={26} />} />
+            <DockItem href="/" active={pathname === '/'} icon={<ArrowUp size={32} />} label="Home" />
           </div>
         </div>
 
@@ -110,18 +112,19 @@ export default function SovereignLayout({ children, activeId }: SovereignLayoutP
   );
 }
 
-function DockItem({ href, active, icon }: any) {
+function DockItem({ href, active, icon, label }: any) {
   return (
-    <Link href={href}>
+    <Link href={href} className="flex-1">
       <motion.button 
         whileTap={{ scale: 0.9 }}
-        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+        className={`w-full h-20 rounded-[2.5rem] flex flex-col items-center justify-center gap-1 transition-all ${
           active 
-            ? 'bg-primary text-black shadow-2xl shadow-primary/20 scale-110' 
-            : 'text-zinc-700 hover:text-white'
+            ? 'bg-primary text-black shadow-2xl shadow-primary/20 scale-105' 
+            : 'text-zinc-700 hover:text-white hover:bg-white/5'
         }`}
       >
         {icon}
+        <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{label}</span>
       </motion.button>
     </Link>
   );

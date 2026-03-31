@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -18,8 +17,8 @@ interface RoyalWalletProps {
 }
 
 /**
- * المحفظة الملكية السيادية (Royal Sovereign Wallet king2026).
- * واجهة مالية متطورة تدعم الضمان، التقسيط، والتحليلات.
+ * المحفظة الملكية السيادية الممتدة (Royal Wallet Max Viewport).
+ * تم التوسعة لتناسب العرض الكامل للشاشة بأسلوب سينمائي ضخم.
  */
 export default function RoyalWallet({ userRole, balance }: RoyalWalletProps) {
   const [escrowBalance, setEscrowBalance] = useState(450.00); 
@@ -34,160 +33,86 @@ export default function RoyalWallet({ userRole, balance }: RoyalWalletProps) {
   const isExpert = userRole === ROLES_LIST.CONSULTANT;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 text-right" dir="rtl">
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-1000 text-right" dir="rtl">
       
-      {/* Sovereign Card - الكارت الملكي */}
+      {/* Sovereign Card - Expanded Scale */}
       <motion.div 
-        whileHover={{ scale: 1.01 }}
-        className="relative group overflow-hidden glass-cosmic border-white/10 p-12 rounded-[4rem] shadow-3xl"
+        whileHover={{ scale: 1.005 }}
+        className="relative group overflow-hidden bg-[#111] border border-white/5 p-16 md:p-24 rounded-[5rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)]"
       >
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-transparent to-indigo-600/10 opacity-50" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-indigo-600/5 opacity-50" />
         
-        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-12">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-              <p className="text-white/40 text-[10px] font-black tracking-[0.3em] uppercase">Sovereign Asset Node</p>
+        <div className="relative z-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-20">
+          <div className="space-y-10">
+            <div className="flex items-center gap-4">
+              <span className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_25px_rgba(16,185,129,0.8)]" />
+              <p className="text-white/40 text-xs font-black tracking-[0.5em] uppercase">Supreme Liquidity Core v4.5</p>
             </div>
             
-            <div className="space-y-1">
-              <h2 className="text-8xl font-black text-white tracking-tighter tabular-nums leading-none">
+            <div className="space-y-4">
+              <h2 className="text-[10rem] md:text-[12rem] font-black text-white tracking-tighter tabular-nums leading-none flex items-baseline gap-8">
                 {balance === Infinity ? "∞" : balance.toLocaleString()} 
-                <span className="text-3xl text-primary font-bold mr-4 uppercase tracking-widest">EGP</span>
+                <span className="text-5xl text-primary font-black uppercase tracking-[0.3em]">Units</span>
               </h2>
-              <p className="text-white/20 font-bold text-sm">إجمالي الرصيد المتاح للاستخدام الفوري</p>
+              <p className="text-2xl text-white/20 font-bold max-w-xl">الرصيد السيادي المتاح حالياً لكافة العمليات الإدارية والقانونية داخل الكوكب.</p>
             </div>
             
-            {/* Escrow Balance - نظام الضمان */}
+            {/* Escrow Balance Status */}
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4 text-white/60 text-sm bg-white/[0.03] backdrop-blur-xl w-fit px-6 py-3 rounded-2xl border border-white/5 shadow-inner"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-6 text-white/60 text-xl bg-white/[0.02] backdrop-blur-3xl w-fit px-10 py-5 rounded-[2.5rem] border border-white/5 shadow-2xl"
             >
-              <ShieldCheck size={18} className="text-primary" />
-              <span className="font-bold">مبالغ تحت حماية الضمان: <strong className="text-white tabular-nums">{escrowBalance} EGP</strong></span>
+              <ShieldCheck size={28} className="text-primary" />
+              <span className="font-bold">المبالغ تحت الحماية البرمجية: <strong className="text-white tabular-nums text-2xl">{escrowBalance} EGP</strong></span>
             </motion.div>
           </div>
 
-          <div className="flex flex-col gap-4 w-full lg:w-80">
+          <div className="flex flex-col gap-6 w-full xl:w-[400px]">
              <Link href="/pricing" className="w-full">
-               <button className="w-full h-20 bg-primary text-[#020617] font-black text-xl rounded-3xl hover:scale-105 transition-all flex items-center justify-center gap-4 shadow-2xl shadow-primary/20 group">
-                  <Zap size={24} fill="currentColor" className="group-hover:animate-bounce" /> 
-                  {isAdmin || isExpert ? 'إدارة الأرباح' : 'شحن سيادي'}
+               <button className="w-full h-32 bg-primary text-[#020617] font-black text-3xl rounded-[3.5rem] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-6 shadow-[0_30px_60px_rgba(255,87,34,0.3)] group">
+                  <Zap size={40} fill="currentColor" className="group-hover:animate-pulse" /> 
+                  {isAdmin || isExpert ? 'إدارة الأصول' : 'شحن المحفظة'}
                </button>
              </Link>
-             <button className="w-full h-16 bg-white/5 text-white/40 font-black text-sm rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-3">
-                <FileText size={20} /> تحميل كشف حساب موثق (PDF)
+             <button className="w-full h-24 bg-white/5 text-white/40 font-black text-lg rounded-[2.5rem] border border-white/5 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-4">
+                <FileText size={32} /> تقرير مالي موثق (PDF)
              </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Smart Widgets - الأدوات الذكية */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-         {/* VIP Offer Card */}
-         <motion.div whileHover={{ y: -5 }} className="bg-primary/5 border border-primary/20 p-8 rounded-[3rem] flex items-center justify-between group overflow-hidden relative">
-            <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity">
-               <Crown size={150} className="text-primary" />
+      {/* Expanded Matrix Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+         <motion.div whileHover={{ y: -10 }} className="bg-[#111] border border-primary/20 p-12 rounded-[4rem] flex items-center justify-between group overflow-hidden relative shadow-2xl">
+            <div className="absolute -right-20 -bottom-20 opacity-5 group-hover:opacity-10 transition-opacity duration-700 scale-150">
+               <Crown size={250} className="text-primary" />
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <Crown className="text-primary h-5 w-5" />
-                <h4 className="text-primary font-black text-xl">عرض السيادة المتاح</h4>
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><Crown size={24} /></div>
+                <h4 className="text-primary font-black text-3xl tracking-tight">بروتوكول الملكية</h4>
               </div>
-              <p className="text-white/40 font-bold text-sm">اشحن بـ ٥٠٠ EGP واحصل على باقة "الجنايات" مجاناً.</p>
+              <p className="text-white/40 font-bold text-xl max-w-xs">فعل باقة الـ VIP لتحصل على أولوية قصوى في مجلس الخبراء.</p>
             </div>
-            <button className="relative z-10 bg-primary text-black font-black px-8 py-3 rounded-xl text-xs hover:scale-110 transition-all shadow-xl">تفعيل</button>
+            <button className="relative z-10 bg-primary text-black font-black px-12 py-5 rounded-3xl text-sm hover:scale-110 transition-all shadow-3xl">تفعيل الآن</button>
          </motion.div>
 
-         {/* Installments Card */}
-         <motion.div whileHover={{ y: -5 }} className="bg-indigo-500/5 border border-indigo-500/20 p-8 rounded-[3rem] flex items-center justify-between group overflow-hidden relative">
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2 text-indigo-400">
-                <Percent className="h-5 w-5" />
-                <h4 className="font-black text-xl">بروتوكول التقسيط</h4>
+         <motion.div whileHover={{ y: -10 }} className="bg-[#111] border border-indigo-500/20 p-12 rounded-[4rem] flex items-center justify-between group overflow-hidden relative shadow-2xl">
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-4 mb-2 text-indigo-400">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20"><Percent size={24} /></div>
+                <h4 className="font-black text-3xl tracking-tight">نظام التقسيط</h4>
               </div>
-              <p className="text-white/40 font-bold text-sm">متاح للقضايا الاستراتيجية (خصم شهري آلي).</p>
+              <p className="text-white/40 font-bold text-xl max-w-xs">تفعيل الخصم الشهري الآلي للقضايا الاستراتيجية الكبرى.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer z-10">
               <input type="checkbox" className="sr-only peer" checked={isAutoDraftActive} onChange={() => setIsAutoDraftActive(!isAutoDraftActive)} />
-              <div className="w-14 h-8 bg-white/5 border border-white/10 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-[-1.5rem] rtl:peer-checked:after:translate-x-[-1.5rem] after:content-[''] after:absolute after:top-[4px] after:right-[4px] after:bg-white/20 after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+              <div className="w-20 h-12 bg-white/5 border border-white/10 rounded-full peer peer-checked:after:translate-x-[-2rem] rtl:peer-checked:after:translate-x-[-2rem] after:content-[''] after:absolute after:top-[6px] after:right-[6px] after:bg-white/20 after:rounded-full after:h-9 after:w-9 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
             </label>
          </motion.div>
       </div>
 
-      {/* Analytics for Admin/Expert */}
-      {(isAdmin || isExpert) && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/[0.02] border border-white/5 p-10 rounded-[3.5rem] shadow-inner">
-           <div className="flex flex-col md:flex-row justify-between items-end gap-8">
-              <div className="space-y-4 w-full">
-                <div className="flex items-center gap-3 text-emerald-500">
-                   <TrendingUp className="h-6 w-6" />
-                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sovereign Growth Analytics</p>
-                </div>
-                <h3 className="text-4xl font-black text-white tracking-tight">
-                  زيادة في الدخل بنسبة <span className="text-emerald-500 text-5xl">٢٤%</span> هذا الشهر
-                </h3>
-                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                   <motion.div initial={{ width: 0 }} animate={{ width: "74%" }} transition={{ duration: 2 }} className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                </div>
-              </div>
-              <div className="text-[10px] text-white/10 font-black italic whitespace-nowrap bg-black/40 px-6 py-3 rounded-2xl border border-white/5">
-                 LAST SYNC: {new Date().toLocaleTimeString('ar-EG')}
-              </div>
-           </div>
-        </motion.div>
-      )}
-
-      {/* Transaction History - سجل الحركات */}
-      <div className="bg-[#05050a] border border-white/5 rounded-[4rem] p-10 shadow-3xl">
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 border border-white/5 shadow-inner">
-               <History size={24} />
-            </div>
-            <h3 className="text-3xl font-black text-white">سجل العمليات</h3>
-          </div>
-          <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All Records</button>
-        </div>
-        
-        <div className="space-y-4">
-          <TransactionItem label="استشارة عقارية موثقة" amount="-250" status="Escrow Protected" date="اليوم" icon={<ShieldCheck />} color="amber" />
-          <TransactionItem label="شحن محفظة سيادي (فوري)" amount="+1500" status="Success" date="أمس" icon={<Zap />} color="emerald" />
-          <TransactionItem label="إصدار عقد إيجار موحد" amount="-25" status="Success" date="١٤ مارس" icon={<FileText />} color="blue" />
-        </div>
-      </div>
     </div>
-  );
-}
-
-function TransactionItem({ label, amount, status, date, icon, color }: any) {
-  const colors: any = {
-    amber: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-    emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-    blue: "text-blue-500 bg-blue-500/10 border-blue-500/20"
-  };
-  return (
-    <motion.div 
-      whileHover={{ x: -10 }}
-      className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.04] transition-all group"
-    >
-      <div className="flex items-center gap-6">
-        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border transition-transform duration-500 group-hover:rotate-12 ${colors[color]}`}>
-          {icon}
-        </div>
-        <div>
-          <p className="text-white text-lg font-black tracking-tight">{label}</p>
-          <div className="flex items-center gap-3 mt-1">
-             <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{date}</span>
-             <div className="w-1 h-1 bg-white/10 rounded-full" />
-             <span className={`text-[9px] font-black uppercase tracking-widest ${status === 'Success' ? 'text-emerald-500' : 'text-primary'}`}>{status}</span>
-          </div>
-        </div>
-      </div>
-      <p className={`text-2xl font-black tabular-nums ${amount.startsWith('+') ? 'text-emerald-500' : 'text-white'}`}>
-        {amount} <span className="text-[10px] opacity-40">EGP</span>
-      </p>
-    </motion.div>
   );
 }
