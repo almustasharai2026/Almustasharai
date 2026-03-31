@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
     ],
   },
-  // 🔥 تحصين اتصالات بيئة التطوير السيادية لمنع عطل الـ Manifest
+  // 🔥 تحصين اتصالات بيئة التطوير السيادية لضمان استقرار الـ Manifest والـ HMR
   experimental: {
     allowedDevOrigins: [
       "6000-firebase-studio-1774815253377.cluster-cbeiita7rbe7iuwhvjs5zww2i4.cloudworkstations.dev",

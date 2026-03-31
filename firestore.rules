@@ -27,7 +27,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
       
-      // سجل التوثيق السيادي - مفتوح للطرفين
+      // سجل التوثيق السيادي - مفتوح للطرفين (المواطن والمدير)
       match /chatHistory/{msgId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
