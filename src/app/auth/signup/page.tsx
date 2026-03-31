@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -6,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Gift, Sparkles, Globe, Facebook } from "lucide-react";
-import { useState } from "react";
-import { useAuth, useFirestore } from "@/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { Scale, Gift, Globe, Facebook, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth, useFirestore, useUser } from "@/firebase";
+import { createUserWithEmailAndPassword, updateProfile as updateAuthProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -22,8 +21,16 @@ export default function SignupPage() {
   
   const auth = useAuth();
   const db = useFirestore();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
+
+  // 🔥 بروتوكول التحقق الاستباقي: إذا كان مسجلاً، توجه فوراً للوحة التحكم
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isUserLoading, router]);
 
   const handleSignup = async () => {
     if (!auth || !db || !email || !password || !fullName) {
@@ -33,30 +40,37 @@ export default function SignupPage() {
     
     setIsLoading(true);
     try {
+      // 1. إنشاء الحساب في Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      await updateProfile(user, { displayName: fullName });
+      const newUser = userCredential.user;
       
-      // Grant 50 EGP Welcome Bonus
-      await setDoc(doc(db, "users", user.uid), {
-        id: user.uid,
+      // 2. تحديث الاسم التعريفي
+      await updateAuthProfile(newUser, { displayName: fullName });
+      
+      // 3. إنشاء الملف السيادي في Firestore مع الرصيد الترحيبي
+      // يجب انتظار هذه الخطوة لضمان جاهزية الملف عند الوصول للوحة التحكم
+      await setDoc(doc(db, "users", newUser.uid), {
+        id: newUser.uid,
         email,
         fullName,
         balance: 50,
         languagePreference: "ar",
         dateJoined: new Date().toISOString(),
         status: "active",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        role: "user"
       });
       
       toast({ title: "مبروك!", description: "تم إنشاء الحساب وحصلت على ٥٠ جنيه رصيد ترحيبي." });
       router.push("/dashboard");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "خطأ", description: error.message });
+      toast({ variant: "destructive", title: "خطأ في التسجيل", description: error.message });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isUserLoading) return null;
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4">
@@ -124,7 +138,7 @@ export default function SignupPage() {
             onClick={handleSignup}
             disabled={isLoading}
           >
-            {isLoading ? "جاري التحليق..." : "انطلق الآن"}
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : "انطلق الآن"}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-6 border-t border-white/5 pt-8 pb-10">

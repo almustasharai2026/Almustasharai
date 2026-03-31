@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Scale, Globe, Facebook, Lock } from "lucide-react";
-import { useState } from "react";
-import { useAuth } from "@/firebase";
+import { useState, useEffect } from "react";
+import { useAuth, useUser } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -18,8 +18,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("admin1234");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
+
+  // 🔥 بروتوكول الدخول الفوري: إذا كان المستخدم مسجلاً بالفعل، توجه للوحة التحكم
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isUserLoading, router]);
 
   const handleLogin = async () => {
     if (!auth) return;
@@ -34,6 +42,8 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isUserLoading) return null;
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-10rem)] py-12 px-4">

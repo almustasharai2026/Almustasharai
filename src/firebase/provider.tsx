@@ -31,16 +31,10 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 Sovereign Safety Valve
-    const safetyTimer = setTimeout(() => {
-      setIsUserLoading(false);
-    }, 3000);
-
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // 🔥 Sovereign Role Detection Protocol
         if (isOwner(firebaseUser.email)) {
           setRole(roles.ADMIN);
         } else if (firebaseUser.email?.includes("moderator")) {
@@ -52,35 +46,28 @@ export const FirebaseProvider: React.FC<{ children: ReactNode; firebaseApp: Fire
         }
       } else {
         setRole(roles.USER);
+        setProfile(null);
       }
 
       setIsUserLoading(false);
-      clearTimeout(safetyTimer);
     });
 
-    return () => {
-      unsubscribeAuth();
-      clearTimeout(safetyTimer);
-    };
+    return () => unsubscribeAuth();
   }, [auth]);
 
-  // Real-time profile sync with Sovereign Shield
+  // Real-time profile sync
   useEffect(() => {
-    if (!firestore || !user) {
-      setProfile(null);
-      return;
-    }
+    if (!firestore || !user) return;
     
-    try {
-      const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
-        if (doc.exists()) setProfile(doc.data());
-      }, (err) => {
-        console.warn("Sovereign Profile sync paused:", err.message);
-      });
-      return () => unsub();
-    } catch (e) {
-      console.error("Firestore sync error:", e);
-    }
+    const unsub = onSnapshot(doc(firestore, "users", user.uid), (doc) => {
+      if (doc.exists()) {
+        setProfile(doc.data());
+      }
+    }, (err) => {
+      console.warn("Sovereign Profile sync paused:", err.message);
+    });
+
+    return () => unsub();
   }, [firestore, user]);
 
   const contextValue = useMemo(() => ({
