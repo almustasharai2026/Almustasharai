@@ -4,19 +4,31 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Home, BarChart3, FileText, Briefcase, Headphones, Settings, 
-  Search, Bell, LogOut, Download, Trash2, CheckCircle2, 
-  AlertCircle, Loader2, Plus, Users, Wallet, Cpu, Scale, ChevronLeft,
-  LayoutDashboard, Layers, Clock, ShieldCheck
+  Users, ShieldAlert, Wallet, Crown, Search, Bell, LogOut, 
+  Trash2, CheckCircle2, XCircle, UserPlus, ShieldCheck, 
+  Activity, LayoutDashboard, Settings, MessageSquare, 
+  ArrowLeft, Loader2, Plus, Zap, Star
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { collection, doc, updateDoc, deleteDoc, query, orderBy, limit } from "firebase/firestore";
+import { 
+  collection, doc, updateDoc, deleteDoc, addDoc, 
+  serverTimestamp, increment, query, orderBy 
+} from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
+import { roles as ROLES_LIST, getPermissions } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, 
+  DialogFooter, DialogDescription 
+} from "@/components/ui/dialog";
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from "@/components/ui/select";
 
 export default function SupremeCommandCenter() {
   const { user, profile, role, signOut } = useUser();
@@ -24,289 +36,440 @@ export default function SupremeCommandCenter() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [activeTab, setActiveTab] = useState("home");
-  const [isCleaning, setIsCleaning] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // States for Modals
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [newBalance, setNewBalance] = useState("");
+  const [newRole, setNewRole] = useState("");
+  const [newForbiddenWord, setNewForbiddenWord] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // استعلامات المالك السيادية
+  // Sovereign Queries
   const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
-  const { data: allUsers } = useCollection(usersQuery);
+  const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersQuery);
 
-  const logsQuery = useMemoFirebase(() => db ? query(collection(db, "analytics"), orderBy("createdAt", "desc"), limit(5)) : null, [db]);
-  const { data: recentLogs } = useCollection(logsQuery);
+  const bannedWordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
+  const { data: forbiddenWords } = useCollection(bannedWordsQuery);
 
-  // التحقق من الهوية السيادية
+  const requestsQuery = useMemoFirebase(() => db ? collection(db, "paymentRequests") : null, [db]);
+  const { data: paymentRequests } = useCollection(requestsQuery);
+
+  // Protect Admin Access
   if (role !== "admin") {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-[#020617] text-red-500 font-black gap-8">
-        <Scale className="h-20 w-20 animate-bounce" />
-        <h1 className="text-4xl uppercase tracking-[0.5em]">Sovereign Access Denied</h1>
-        <Button onClick={() => router.push("/")} variant="outline" className="border-red-500/20 text-red-500">العودة للسطح</Button>
+        <Crown className="h-20 w-20 animate-bounce" />
+        <h1 className="text-4xl uppercase tracking-[0.5em]">Access Denied</h1>
+        <Button onClick={() => router.push("/")} className="bg-red-600 text-white">العودة للرئيسية</Button>
       </div>
     );
   }
 
-  const handleCleanup = () => {
-    setIsCleaning(true);
-    toast({ title: "بدء بروتوكول التطهير", description: "جاري فحص الملفات وإزالة التكرارات السيادية..." });
-    setTimeout(() => {
-      setIsCleaning(false);
-      toast({ title: "اكتمل التطهير ✅", description: "تم تنظيف النظام بنسبة 100% وتحسين الأداء." });
-    }, 3000);
+  // --- Sovereign Actions ---
+
+  const handleUpdateBalance = async () => {
+    if (!db || !selectedUser || !newBalance) return;
+    setIsProcessing(true);
+    try {
+      await updateDoc(doc(db, "users", selectedUser.id), {
+        balance: parseFloat(newBalance)
+      });
+      toast({ title: "تم التحديث المالي", description: `رصيد ${selectedUser.fullName} أصبح ${newBalance} EGP.` });
+      setIsBalanceModalOpen(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل التحديث" });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
+  const handleUpdateRole = async () => {
+    if (!db || !selectedUser || !newRole) return;
+    setIsProcessing(true);
+    try {
+      await updateDoc(doc(db, "users", selectedUser.id), { role: newRole });
+      toast({ title: "تمت الترقية السيادية", description: `تم تغيير رتبة ${selectedUser.fullName} إلى ${newRole}.` });
+      setIsRoleModalOpen(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الترقية" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleToggleBan = async (u: any) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, "users", u.id), { isBanned: !u.isBanned });
+      toast({ 
+        title: u.isBanned ? "تم فك الحظر" : "تم الحظر السيادي", 
+        description: `المواطن ${u.fullName} ${u.isBanned ? 'نشط الآن' : 'تم تجميده'}.` 
+      });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الإجراء" });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!db || !confirm("هل أنت متأكد من الحذف النهائي لهذا المواطن؟ لا يمكن التراجع!")) return;
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      toast({ title: "تم الحذف النهائي", description: "تم تطهير السجل من قاعدة البيانات." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الحذف" });
+    }
+  };
+
+  const handleAddForbiddenWord = async () => {
+    if (!db || !newForbiddenWord.trim()) return;
+    try {
+      await addDoc(collection(db, "system", "moderation", "forbiddenWords"), {
+        word: newForbiddenWord.trim(),
+        severity: "high",
+        addedAt: new Date().toISOString()
+      });
+      setNewForbiddenWord("");
+      toast({ title: "تمت إضافة كلمة للدرع" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الإضافة" });
+    }
+  };
+
+  const handleApprovePayment = async (req: any) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, "users", req.userId), { balance: increment(req.amount) });
+      await updateDoc(doc(db, "paymentRequests", req.id), { status: "approved" });
+      toast({ title: "تم قبول الشحن ✅", description: `تمت إضافة ${req.amount} EGP لحساب العميل.` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الاعتماد" });
+    }
+  };
+
+  const filteredUsers = allUsers?.filter(u => 
+    u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="flex h-screen bg-[#f0f4f8] dark:bg-[#020617] text-slate-800 dark:text-white overflow-hidden font-sans" dir="rtl">
+    <div className="flex h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white font-sans" dir="rtl">
       
-      {/* Sidebar السيادي (كما في التصميم) */}
-      <aside className="w-64 bg-[#1e293b] text-white flex flex-col z-50 flex-shrink-0 shadow-2xl">
-        <div className="p-8 border-b border-white/5 flex items-center gap-3">
-          <div className="h-10 w-10 bg-gradient-to-br from-primary to-amber-500 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="font-black text-xl">AI</span>
+      {/* Supreme Sidebar */}
+      <aside className="w-72 bg-[#1e1b4b] text-white flex flex-col z-50 shadow-2xl overflow-hidden flex-shrink-0">
+        <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-black/20">
+          <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
+            <Crown className="h-7 w-7 text-primary-foreground" />
           </div>
-          <span className="font-black text-lg tracking-tight">إدارة المشروعات</span>
+          <div>
+            <h2 className="text-xl font-black tracking-tighter">غرفة القيادة</h2>
+            <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Sovereign Control Hub</p>
+          </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          <SideLink icon={<Home className="h-5 w-5" />} text="الرئيسية" active={activeTab === "home"} onClick={() => setActiveTab("home")} />
-          <SideLink icon={<BarChart3 className="h-5 w-5" />} text="المشاريع" active={activeTab === "projects"} onClick={() => setActiveTab("projects")} />
-          <SideLink icon={<FileText className="h-5 w-5" />} text="التقارير" active={activeTab === "reports"} onClick={() => setActiveTab("reports")} />
-          <SideLink icon={<Briefcase className="h-5 w-5" />} text="الملفات" active={activeTab === "files"} onClick={() => setActiveTab("files")} />
-          <SideLink icon={<Headphones className="h-5 w-5" />} text="الدعم الفني" active={activeTab === "support"} onClick={() => setActiveTab("support")} />
-          <SideLink icon={<Settings className="h-5 w-5" />} text="الإعدادات" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <AdminSideBtn icon={<Activity className="h-5 w-5" />} text="نظرة عامة" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
+          <AdminSideBtn icon={<Users className="h-5 w-5" />} text="إدارة المواطنين" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
+          <AdminSideBtn icon={<ShieldAlert className="h-5 w-5" />} text="الدرع الواقي" active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} />
+          <AdminSideBtn icon={<Wallet className="h-5 w-5" />} text="طلبات الشحن" active={activeTab === "billing"} onClick={() => setActiveTab("billing")} />
+          <AdminSideBtn icon={<Settings className="h-5 w-5" />} text="إعدادات النظام" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
         </nav>
 
-        <div className="p-4 border-t border-white/5 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-all">
-            <Download className="h-4 w-4" /> تحميل الملفات
-          </button>
-          <button onClick={() => signOut()} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/40 hover:text-white hover:bg-red-500/10 transition-all font-bold text-xs">
-            <LogOut className="h-4 w-4" /> تسجيل الخروج
+        <div className="p-6 border-t border-white/5 bg-black/10">
+          <Link href="/bot" className="w-full">
+            <AdminSideBtn icon={<ArrowLeft className="h-5 w-5" />} text="العودة للبوت" active={false} />
+          </Link>
+          <button onClick={() => signOut()} className="w-full mt-4 flex items-center gap-4 px-6 py-4 rounded-2xl text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all font-black text-sm">
+            <LogOut className="h-5 w-5" /> خروج سيادي
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Command Area */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
         
-        {/* Top Header */}
-        <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-10 z-40">
-          <div className="flex items-center gap-4">
-             <div className="h-10 w-10 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center text-slate-400">
-               <Search className="h-5 w-5" />
-             </div>
-             <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-               مرحباً بك في إدارة المشروعات الذكية!
-             </h1>
+        {/* Superior Header */}
+        <header className="h-20 bg-white dark:bg-slate-900 border-b border-border flex items-center justify-between px-10 z-40 shadow-sm">
+          <div className="flex items-center gap-6">
+            <div className="h-10 w-10 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400">
+              <Search className="h-5 w-5" />
+            </div>
+            <h1 className="text-xl font-black tracking-tight text-primary uppercase">king2026 Dashboard</h1>
           </div>
 
           <div className="flex items-center gap-6">
             <div className="text-left">
-               <p className="text-xs font-black text-slate-900 dark:text-white">king2026, مرحباً</p>
-               <p className="text-[10px] text-slate-400 font-medium">bishoysamy390@gmail.com</p>
+               <p className="text-xs font-black text-slate-900 dark:text-white">سيادة المالك</p>
+               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Supreme Authority</p>
             </div>
-            <div className="relative">
-               <Bell className="h-6 w-6 text-slate-400" />
-               <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900">3</span>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 p-0.5 shadow-xl">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-amber-600 p-0.5 shadow-xl">
                <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                  <Image src="https://picsum.photos/seed/king/200/200" alt="Admin" width={48} height={48} className="object-cover" />
+                  <span className="font-black text-primary">K</span>
                </div>
             </div>
           </div>
         </header>
 
-        {/* Dynamic Body */}
-        <div className="flex-1 p-8 overflow-y-auto space-y-8">
+        {/* Dynamic Content */}
+        <div className="flex-1 p-8 overflow-y-auto bg-[#f8f9fc] dark:bg-[#020617]">
           
-          {/* Stats Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StatItem label="المشاريع الحالية" value="5" color="green" />
-            <StatItem label="المهام الجديدة" value="12" color="orange" />
-            <StatItem label="الإشعارات" value="3" color="red" />
-            <StatItem label="البوت جاري العمل" value="Active" color="primary" isBadge />
-          </div>
-
-          <div className="grid lg:grid-cols-12 gap-8">
-            
-            {/* Left Column (Recent Projects) */}
-            <div className="lg:col-span-5 space-y-8">
-              <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
-                <CardHeader className="p-8 border-b border-slate-50 dark:border-white/5 flex flex-row items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Briefcase className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg font-black">المشاريع الأخيرة</CardTitle>
-                  </div>
-                  <Search className="h-4 w-4 text-slate-300" />
-                </CardHeader>
-                <CardContent className="p-8 space-y-8">
-                  <ProjectProgress title="تطوير موقع إلكتروني" status="قيد التنفيذ" progress={65} color="bg-primary" />
-                  <ProjectProgress title="تطبيق الهاتف الجديد" status="قيد التنفيذ" progress={40} color="bg-orange-500" />
-                  <ProjectProgress title="حملة تسويقية" status="مكتمل" progress={100} color="bg-emerald-500" />
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
-                <CardHeader className="p-8 border-b border-slate-50 dark:border-white/5">
-                  <div className="flex items-center gap-3">
-                    <Layers className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg font-black">الإصدارات الأخيرة</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-8 space-y-4">
-                  <FileLink name="عرض تقديمي.pdf" icon="🔴" />
-                  <FileLink name="تقارير المشروع.xlsx" icon="🟢" />
-                  <FileLink name="logo_design.jpg" icon="🔵" />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column (Bot & Activity) */}
-            <div className="lg:col-span-7 space-y-8">
-              <Card className="rounded-[2.5rem] border-none shadow-xl bg-gradient-to-br from-indigo-600 to-[#4e54c8] text-white overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-                <CardContent className="p-10 relative z-10 space-y-8">
-                  <div className="flex items-center gap-6">
-                    <div className="h-20 w-20 rounded-[2rem] bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
-                       <Cpu className="h-10 w-10 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-black tracking-tight">البوت الذكي</h3>
-                      <p className="text-white/60 font-bold">المساعد الافتراضي جاهز لخدمتك</p>
-                    </div>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10">
-                    <p className="text-lg font-medium">أهلاً بك! كيف يمكنني مساعدتك اليوم؟</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <button className="flex-1 h-14 rounded-2xl bg-white text-indigo-600 font-black shadow-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
-                      <Clock className="h-5 w-5" /> إدارة المهام
-                    </button>
-                    <button className="flex-1 h-14 rounded-2xl bg-orange-500 text-white font-black shadow-xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2">
-                      <Plus className="h-5 w-5" /> إرسال ملف تنظيف
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid md:grid-cols-2 gap-8">
-                <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
-                  <CardHeader className="p-8 border-b border-slate-50 dark:border-white/5">
-                    <div className="flex items-center gap-3">
-                      <Download className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg font-black">التنزيلات الأخيرة</CardTitle>
-                    </div>
+          <AnimatePresence mode="wait">
+            {activeTab === "overview" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <StatCard label="إجمالي المواطنين" value={allUsers?.length || 0} icon={<Users />} color="blue" />
+                  <StatCard label="طلبات معلقة" value={paymentRequests?.filter(r => r.status === "pending").length || 0} icon={<Wallet />} color="amber" />
+                  <StatCard label="الدرع الواقي" value={forbiddenWords?.length || 0} icon={<ShieldAlert />} color="red" />
+                  <StatCard label="الحالة العامة" value="Sovereign" icon={<Activity />} color="emerald" isStatus />
+                </div>
+                
+                <Card className="rounded-[3rem] border-none shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
+                  <CardHeader className="p-10 border-b border-slate-50 dark:border-white/5">
+                    <CardTitle className="text-3xl font-black">أحدث العمليات</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-8 space-y-4">
-                    <FileLink name="عرض تقديمي.pdf" icon="📄" />
-                    <FileLink name="تقارير المشروع.xlsx" icon="📊" />
-                    <FileLink name="logo_design.jpg" icon="🖼️" />
+                  <CardContent className="p-10 text-center opacity-20">
+                    <Activity className="h-20 w-20 mx-auto mb-4" />
+                    <p className="text-xl font-bold">جاري رصد التفاعلات الحية من السحابة...</p>
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
 
-                <Card className="rounded-[2.5rem] border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
-                  <CardHeader className="p-8 border-b border-slate-50 dark:border-white/5">
-                    <div className="flex items-center gap-3">
-                      <Bell className="h-5 w-5 text-orange-500" />
-                      <CardTitle className="text-lg font-black">الإشعارات الحديثة</CardTitle>
+            {activeTab === "users" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-4xl font-black text-primary tracking-tighter">قاعدة المواطنين السيادية</h2>
+                  <div className="relative w-96">
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                    <Input 
+                      placeholder="بحث بالاسم أو البريد..." 
+                      className="pr-12 h-14 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-xl"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-6">
+                  {filteredUsers?.map((u) => (
+                    <Card key={u.id} className={`rounded-[2.5rem] border-none shadow-xl transition-all ${u.isBanned ? 'opacity-50 grayscale' : 'hover:scale-[1.01]'}`}>
+                      <CardContent className="p-8 flex items-center justify-between gap-8">
+                        <div className="flex items-center gap-6">
+                          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary">
+                            {u.fullName?.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <h3 className="text-xl font-black">{u.fullName}</h3>
+                              <Badge className={`bg-primary/10 text-primary border-none font-black text-[10px] px-3`}>{u.role}</Badge>
+                              {u.isBanned && <Badge variant="destructive" className="font-black text-[8px]">BANNED</Badge>}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-bold mt-1 uppercase tracking-widest">{u.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-8">
+                          <div className="text-left">
+                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">رصيد المواطن</p>
+                            <p className="text-2xl font-black text-primary tabular-nums">{u.balance} EGP</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <ActionBtn icon={<Wallet />} onClick={() => { setSelectedUser(u); setNewBalance(u.balance.toString()); setIsBalanceModalOpen(true); }} tooltip="تعديل الرصيد" />
+                            <ActionBtn icon={<Crown />} onClick={() => { setSelectedUser(u); setNewRole(u.role); setIsRoleModalOpen(true); }} tooltip="تغيير الرتبة" />
+                            <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleToggleBan(u)} color={u.isBanned ? "emerald" : "amber"} tooltip={u.isBanned ? "فك الحظر" : "حظر سيادي"} />
+                            <ActionBtn icon={<Trash2 />} onClick={() => handleDeleteUser(u.id)} color="red" tooltip="حذف نهائي" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "moderation" && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-10 text-center">
+                <div className="space-y-4">
+                  <div className="h-24 w-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center mx-auto text-red-600 border-2 border-red-500/20 shadow-2xl">
+                    <ShieldAlert className="h-12 w-12" />
+                  </div>
+                  <h2 className="text-5xl font-black text-red-600 tracking-tighter">الدرع الواقي السيادي</h2>
+                  <p className="text-muted-foreground font-bold max-w-xl mx-auto">إدارة الكلمات المحظورة التي تسبب الحظر التلقائي الفوري لأي مواطن يتجاوز حدود الأدب والسيادة.</p>
+                </div>
+
+                <div className="flex gap-4">
+                  <Input 
+                    placeholder="أدخل كلمة محظورة جديدة..." 
+                    className="h-16 rounded-[1.5rem] bg-white dark:bg-slate-900 border-2 border-red-500/10 px-8 text-lg font-bold" 
+                    value={newForbiddenWord}
+                    onChange={(e) => setNewForbiddenWord(e.target.value)}
+                  />
+                  <Button onClick={handleAddForbiddenWord} className="h-16 px-12 rounded-[1.5rem] bg-red-600 hover:bg-red-700 text-white font-black text-xl shadow-2xl">إضافة للدرع</Button>
+                </div>
+
+                <div className="flex flex-wrap gap-4 justify-center pt-8">
+                  {forbiddenWords?.map(w => (
+                    <Badge key={w.id} className="p-5 rounded-2xl bg-white dark:bg-slate-900 text-red-600 border border-red-500/20 shadow-xl group">
+                      <span className="font-black text-lg">{w.word}</span>
+                      <button onClick={async () => { await deleteDoc(doc(db!, "system/moderation/forbiddenWords", w.id)); toast({ title: "تم الحذف من الدرع" }); }} className="mr-4 opacity-0 group-hover:opacity-100 transition-opacity"><XCircle className="h-4 w-4" /></button>
+                    </Badge>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "billing" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                <h2 className="text-4xl font-black text-primary tracking-tighter">مركز العمليات المالية</h2>
+                <div className="grid gap-6">
+                  {paymentRequests?.filter(r => r.status === "pending").map(req => (
+                    <Card key={req.id} className="rounded-[2.5rem] border-none shadow-xl bg-amber-500/5 border-amber-500/10">
+                      <CardContent className="p-8 flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className="h-16 w-16 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600">
+                            <Wallet className="h-8 w-8" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black">طلب شحن من: {req.userName}</h3>
+                            <p className="text-xs text-muted-foreground font-bold uppercase mt-1 tracking-widest">Phone: {req.userPhone || "Not Provided"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-10">
+                          <p className="text-4xl font-black text-amber-600 tabular-nums">{req.amount} <span className="text-xs">EGP</span></p>
+                          <div className="flex gap-3">
+                            <Button onClick={() => handleApprovePayment(req)} className="bg-emerald-600 hover:bg-emerald-700 h-14 px-8 rounded-2xl font-black shadow-xl">قبول الشحن ✅</Button>
+                            <Button variant="outline" onClick={async () => await deleteDoc(doc(db!, "paymentRequests", req.id))} className="h-14 rounded-2xl border-red-500/20 text-red-500 hover:bg-red-500/10">رفض وحذف</Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {paymentRequests?.filter(r => r.status === "pending").length === 0 && (
+                    <div className="py-40 text-center opacity-20">
+                      <CheckCircle2 className="h-24 w-24 mx-auto mb-4" />
+                      <p className="text-2xl font-bold">لا توجد طلبات معلقة سيادياً</p>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-8 space-y-4">
-                    <NotificationItem text="تم إضافة مهمة جديدة للمشروع." />
-                    <NotificationItem text="تم تنظيف الملفات المكررة بنجاح." />
-                    <NotificationItem text="تم تحميل الملف بنجاح." />
-                  </CardContent>
-                </Card>
-              </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              {/* Action Button */}
-              <button 
-                onClick={handleCleanup}
-                disabled={isCleaning}
-                className="w-full h-24 rounded-[2.5rem] bg-gradient-to-r from-orange-500 to-red-600 text-white font-black text-2xl shadow-3xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-6"
-              >
-                {isCleaning ? (
-                  <Loader2 className="h-10 w-10 animate-spin" />
-                ) : (
-                  <>تنظيف الملفات وإزالة التكرارات <Trash2 className="h-8 w-8" /></>
-                )}
-              </button>
-            </div>
-
-          </div>
         </div>
       </main>
+
+      {/* --- Modals --- */}
+
+      <Dialog open={isBalanceModalOpen} onOpenChange={setIsBalanceModalOpen}>
+        <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 text-right" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black text-white mb-4">تعديل الميزانية السيادية</DialogTitle>
+            <DialogDescription className="text-white/40">أنت الآن تقوم بتغيير رصيد المواطن: {selectedUser?.fullName}</DialogDescription>
+          </DialogHeader>
+          <div className="py-10 space-y-6">
+            <Label className="text-white font-bold">الرصيد الجديد (EGP)</Label>
+            <Input 
+              type="number" 
+              value={newBalance} 
+              onChange={e => setNewBalance(e.target.value)}
+              className="h-16 rounded-2xl bg-white/5 border-white/10 text-2xl font-black text-primary text-center tabular-nums" 
+            />
+          </div>
+          <DialogFooter className="gap-4">
+            <Button variant="ghost" onClick={() => setIsBalanceModalOpen(false)} className="text-white/40 font-bold">إلغاء</Button>
+            <Button onClick={handleUpdateBalance} disabled={isProcessing} className="btn-primary flex-1 h-14 rounded-2xl">
+              {isProcessing ? <Loader2 className="animate-spin" /> : "تأكيد التعديل المالي"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
+        <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 text-right" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black text-white mb-4">ترقية الهوية الرقمية</DialogTitle>
+            <DialogDescription className="text-white/40">تغيير رتبة المواطن: {selectedUser?.fullName}</DialogDescription>
+          </DialogHeader>
+          <div className="py-10 space-y-6">
+            <Select value={newRole} onValueChange={setNewRole}>
+              <SelectTrigger className="h-16 rounded-2xl bg-white/5 border-white/10 text-xl font-bold">
+                <SelectValue placeholder="اختر الرتبة الجديدة" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1e1b4b] border-white/10 text-white font-bold">
+                <SelectItem value="user">مواطن عادي (User)</SelectItem>
+                <SelectItem value="vip">عميل مميز (VIP)</SelectItem>
+                <SelectItem value="consultant">خبير قانوني (Consultant)</SelectItem>
+                <SelectItem value="moderator">مشرف نظام (Moderator)</SelectItem>
+                <SelectItem value="admin">مدير سيادي (Admin)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="gap-4">
+            <Button variant="ghost" onClick={() => setIsRoleModalOpen(false)} className="text-white/40 font-bold">إلغاء</Button>
+            <Button onClick={handleUpdateRole} disabled={isProcessing} className="btn-primary flex-1 h-14 rounded-2xl">
+              {isProcessing ? <Loader2 className="animate-spin" /> : "تثبيت الرتبة الجديدة"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
 
-function SideLink({ icon, text, active, onClick }: any) {
+function AdminSideBtn({ icon, text, active, onClick }: any) {
   return (
     <button 
-      onClick={onClick}
-      className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-sm ${active ? "bg-primary text-white shadow-xl" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+      onClick={onClick} 
+      className={`w-full flex items-center gap-5 px-6 py-4 rounded-2xl transition-all duration-300 font-black text-sm ${active ? "bg-primary text-primary-foreground shadow-2xl scale-[1.03]" : "text-white/40 hover:text-white hover:bg-white/5"}`}
     >
-      {icon}
-      <span>{text}</span>
+      <span className="shrink-0">{icon}</span>
+      <span className="tracking-tight">{text}</span>
     </button>
   );
 }
 
-function StatItem({ label, value, color, isBadge }: any) {
+function StatCard({ label, value, icon, color, isStatus }: any) {
   const colors: any = {
-    green: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-    orange: "bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400",
-    red: "bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400",
-    primary: "bg-primary/10 text-primary",
+    blue: "text-blue-500 bg-blue-500/10",
+    amber: "text-amber-500 bg-amber-500/10",
+    red: "text-red-500 bg-red-500/10",
+    emerald: "text-emerald-500 bg-emerald-500/10",
   };
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 flex items-center justify-between">
-      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-      {isBadge ? (
-        <Badge className={`${colors[color]} border-none px-4 py-1.5 rounded-xl font-black text-[10px]`}>
-          <CheckCircle2 className="h-3 w-3 mr-2" /> {value}
-        </Badge>
-      ) : (
-        <span className={`h-10 min-w-[2.5rem] px-3 rounded-xl flex items-center justify-center font-black text-lg tabular-nums ${colors[color]}`}>{value}</span>
-      )}
-    </div>
-  );
-}
-
-function ProjectProgress({ title, status, progress, color }: any) {
-  return (
-    <div className="space-y-3 group">
-      <div className="flex justify-between items-center px-1">
-        <div className="flex items-center gap-2">
-           <div className={`h-2.5 w-2.5 rounded-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary'}`} />
-           <h4 className="font-bold text-sm text-slate-700 dark:text-white">{title}</h4>
+    <Card className="rounded-[2.2rem] border-none shadow-lg bg-white dark:bg-slate-900 overflow-hidden">
+      <CardContent className="p-8 flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+          <p className={`text-3xl font-black tabular-nums ${colors[color].split(' ')[0]}`}>{value}</p>
         </div>
-        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-primary transition-colors">{status}</span>
-      </div>
-      <Progress value={progress} className={`h-3 rounded-full bg-slate-100 dark:bg-white/5 overflow-hidden`} />
-    </div>
+        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner ${colors[color]}`}>
+          {icon}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-function FileLink({ name, icon }: any) {
+function ActionBtn({ icon, onClick, color = "primary", tooltip }: any) {
+  const colors: any = {
+    primary: "text-primary bg-primary/5 hover:bg-primary/10",
+    red: "text-red-500 bg-red-500/5 hover:bg-red-500/10",
+    amber: "text-amber-500 bg-amber-500/5 hover:bg-amber-500/10",
+    emerald: "text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10",
+  };
   return (
-    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer border border-transparent hover:border-primary/20 group">
-      <div className="flex items-center gap-4">
-        <span className="text-xl group-hover:scale-110 transition-transform">{icon}</span>
-        <span className="text-xs font-bold text-slate-600 dark:text-white/60">{name}</span>
-      </div>
-      <Download className="h-3 w-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-    </div>
-  );
-}
-
-function NotificationItem({ text }: any) {
-  return (
-    <div className="flex items-center gap-4 group cursor-pointer">
-      <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
-        <CheckCircle2 className="h-4 w-4" />
-      </div>
-      <p className="text-xs font-bold text-slate-500 dark:text-white/40 leading-relaxed group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{text}</p>
-    </div>
+    <Button 
+      variant="outline" 
+      size="icon" 
+      onClick={onClick} 
+      className={`h-12 w-12 rounded-xl border-none transition-all ${colors[color]}`}
+      title={tooltip}
+    >
+      {icon}
+    </Button>
   );
 }

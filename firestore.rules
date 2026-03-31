@@ -6,7 +6,6 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     
     // وظيفة التحقق من الرتبة السيادية (Admin)
-    // يتم التحقق من البريد الإلكتروني المعتمد أو رتبة admin في التوكن
     function isAdmin() { 
       return isSignedIn() && (
         request.auth.token.email == 'bishoysamy390@gmail.com' || 
@@ -23,7 +22,6 @@ service cloud.firestore {
     
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     
-    // بروتوكول التحقق من حالة المواطن (Resilient Banned Check)
     function isNotBanned() { 
       let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
       return !exists(userPath) || get(userPath).data.get('isBanned', false) == false; 
@@ -33,24 +31,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin() || isModerator();
       allow create: if isSignedIn();
-      allow update: if (isOwner(userId) && isNotBanned()) || isAdmin();
-    }
-
-    // Wallets Protocol (Sovereign Financial Security)
-    match /wallets/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isAdmin();
-      
-      match /transactions/{transactionId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow write: if isAdmin();
-      }
-    }
-
-    // Bookings Protocol
-    match /bookings/{id} {
-      allow create, read: if isSignedIn() && isNotBanned();
-      allow update, delete: if isAdmin() || isModerator();
+      // المالك فقط يمكنه تعديل الرصيد والرتبة
+      allow update: if isAdmin() || (isOwner(userId) && isNotBanned() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
+      allow delete: if isAdmin();
     }
 
     // Consultants Registry
@@ -59,8 +42,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Sovereign System Hierarchy (Recursive Access)
-    // استخدام الرموز الارتدادية {document=**} يضمن منح صلاحيات القراءة والقائمة لكافة المسارات الفرعية مثل الباقات والكلمات المحظورة
+    // Sovereign System Hierarchy
     match /system/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
@@ -74,16 +56,16 @@ service cloud.firestore {
       }
     }
 
-    // Analytics Protocol
+    // Payment Requests
+    match /paymentRequests/{id} {
+      allow create: if isSignedIn() && isNotBanned();
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Analytics
     match /analytics/{id} {
       allow create: if isSignedIn();
       allow read: if isAdmin() || isModerator();
-    }
-    
-    // مسار طلبات الدفع
-    match /paymentRequests/{id} {
-      allow create: if isSignedIn() && isNotBanned();
-      allow read, update: if isAdmin();
     }
   }
 }

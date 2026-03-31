@@ -5,8 +5,8 @@
 export const roles = {
   ADMIN: "admin",       // المالك الملكي (king2026)
   MODERATOR: "moderator", // مشرف
-  VIP: "vip",           // عميل مميز
   CONSULTANT: "consultant", // مستشار
+  VIP: "vip",           // عميل مميز
   USER: "user",         // مواطن عادي
 } as const;
 
@@ -56,7 +56,18 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
-        consultationDiscount: 0.5,
+        consultationDiscount: 0.5, // 50% discount protocol
+      };
+    case roles.CONSULTANT:
+      return {
+        canManageUsers: false,
+        canPromoteRoles: false,
+        canManageSystem: false,
+        canConsult: true,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+        consultationDiscount: 0,
       };
     default:
       return {
