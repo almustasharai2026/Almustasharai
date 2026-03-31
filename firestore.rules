@@ -6,9 +6,12 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { return isSignedIn() && request.auth.token.email == 'bishoysamy390@gmail.com'; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    // بروتوكول التحقق من حالة المواطن (Resilient Banned Check)
+    // يسمح بالوصول في حال عدم وجود الوثيقة (للمواطنين الجدد) أو إذا لم يكن محظوراً
     function isNotBanned() { 
       let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(userPath) && get(userPath).data.isBanned == false; 
+      return !exists(userPath) || get(userPath).data.get('isBanned', false) == false; 
     }
 
     // User Profile Rules
@@ -18,10 +21,14 @@ service cloud.firestore {
       allow update: if (isOwner(userId) && isNotBanned()) || isAdmin();
     }
 
-    // Wallets Protocol (Owner read/write access)
+    // Wallets Protocol (Sovereign Financial Security)
     match /wallets/{userId} {
-      allow read, write: if isOwner(userId) && isNotBanned();
-      allow read, write: if isAdmin();
+      allow read, write: if (isOwner(userId) && isNotBanned()) || isAdmin();
+      
+      // تأمين سجل المعاملات (Sub-collection Access)
+      match /transactions/{transactionId} {
+        allow read, write: if (isOwner(userId) && isNotBanned()) || isAdmin();
+      }
     }
 
     // Bookings Protocol (Signed-in access)

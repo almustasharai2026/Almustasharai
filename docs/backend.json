@@ -57,30 +57,16 @@
       },
       "required": ["userId", "consultantId", "price", "status"]
     },
-    "LegalCase": {
-      "title": "LegalCase",
-      "description": "سجل قضية أو حالة قانونية محفوظة في الأرشيف السيادي.",
+    "Transaction": {
+      "title": "Transaction",
+      "description": "سجل حركة مالية داخل المحفظة السيادية.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "riskLevel": { "type": "string", "enum": ["low", "medium", "high"] },
-        "status": { "type": "string", "enum": ["open", "closed", "archived"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "title", "description"]
-    },
-    "AnalyticsEvent": {
-      "title": "AnalyticsEvent",
-      "description": "سجل تتبع الأحداث والنشاطات داخل النظام البيئي.",
-      "type": "object",
-      "properties": {
-        "event": { "type": "string" },
-        "data": { "type": "object" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["event", "data"]
+        "amount": { "type": "number" },
+        "type": { "type": "string" },
+        "service": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -90,6 +76,14 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "بيانات الهوية السيادية"
+    },
+    "/wallets/{userId}": {
+      "schema": "object",
+      "description": "المحفظة المالية السيادية"
+    },
+    "/wallets/{userId}/transactions/{id}": {
+      "schema": "Transaction",
+      "description": "سجل المعاملات المالية المفصل"
     },
     "/consultants/{id}": {
       "schema": "Consultant",
@@ -103,12 +97,8 @@
       "schema": "Booking",
       "description": "سجلات الحجز السيادي"
     },
-    "/cases/{caseId}": {
-      "schema": "LegalCase",
-      "description": "أرشيف القضايا والحالات القانونية"
-    },
     "/analytics/{id}": {
-      "schema": "AnalyticsEvent",
+      "schema": "object",
       "description": "سجلات التحليلات والنشاط البرمجي"
     }
   }
