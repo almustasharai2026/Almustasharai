@@ -1,3 +1,4 @@
+
 /**
  * ميثاق الرتب السيادية (Sovereign Role Constants).
  */
