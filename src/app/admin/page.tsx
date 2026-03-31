@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, ShieldAlert, Wallet, Crown, Search, Bell, LogOut, 
   Trash2, CheckCircle2, XCircle, ShieldCheck, 
   Activity, ArrowLeft, Loader2, ArrowRightLeft,
-  Zap, History, Cpu, Globe, ChevronLeft, UserMinus, Star, Eye, FileCheck
+  Zap, History, Cpu, Globe, ChevronLeft, UserMinus, Star, Eye, FileCheck, Gavel
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -16,8 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { collection, doc, updateDoc, deleteDoc, increment, serverTimestamp, addDoc, query, orderBy } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -32,19 +30,13 @@ export default function SupremeCommandCenter() {
   
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAutoApprove, setIsAutoApprove] = useState(false);
 
-  // Queries
   const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
   const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersQuery);
 
   const requestsQuery = useMemoFirebase(() => db ? query(collection(db, "paymentRequests"), orderBy("createdAt", "desc")) : null, [db]);
   const { data: paymentRequests } = useCollection(requestsQuery);
 
-  const logsQuery = useMemoFirebase(() => db ? query(collection(db, "system", "logs", "events"), orderBy("timestamp", "desc")) : null, [db]);
-  const { data: systemLogs } = useCollection(logsQuery);
-
-  // Action States
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
@@ -69,18 +61,9 @@ export default function SupremeCommandCenter() {
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: string) => {
-    try {
-      await updateDoc(doc(db!, "users", userId), { role: newRole });
-      toast({ title: "تم تحديث الرتبة", description: `المواطن الآن برتبة: ${newRole}` });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل تحديث الرتبة" });
-    }
-  };
-
   const handleApproveExpert = async (u: any) => {
     try {
-      await updateDoc(doc(db!, "users", u.id), { role: "consultant" });
+      await updateDoc(doc(db!, "users", u.id), { role: ROLES_LIST.CONSULTANT });
       await addDoc(collection(db!, "consultants"), {
         id: u.id,
         name: u.fullName,
@@ -89,7 +72,7 @@ export default function SupremeCommandCenter() {
         reviews: 0,
         isApproved: true
       });
-      toast({ title: "تم الاعتماد كخبير ✅", description: "المستخدم الآن ضمن هيئة المستشارين." });
+      toast({ title: "تم الاعتماد كخبير ✅" });
       setViewingDocs(null);
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الاعتماد" });
@@ -98,33 +81,14 @@ export default function SupremeCommandCenter() {
 
   const handleTransfer = async () => {
     if (!selectedUser || !transferAmount) return;
-    const amountNum = Number(transferAmount);
     try {
-      await updateDoc(doc(db!, "users", selectedUser.id), { balance: increment(amountNum) });
-      await addDoc(collection(db!, "system", "logs", "events"), {
-        type: "MANUAL_TRANSFER",
-        detail: `تحويل سيادي بقيمة ${amountNum} EGP للمواطن ${selectedUser.fullName}`,
-        admin: "king2026",
-        timestamp: serverTimestamp()
-      });
+      await updateDoc(doc(db!, "users", selectedUser.id), { balance: increment(Number(transferAmount)) });
       toast({ title: "تم إتمام المعاملة بنجاح ✅" });
       setIsTransferModalOpen(false);
       setTransferAmount("");
       setSelectedUser(null);
     } catch (e) {
       toast({ variant: "destructive", title: "فشل بروتوكول التحويل" });
-    }
-  };
-
-  const handleRequestAction = async (request: any, status: 'approved' | 'rejected') => {
-    try {
-      await updateDoc(doc(db!, "paymentRequests", request.id), { status, updatedAt: serverTimestamp() });
-      if (status === 'approved') {
-        await updateDoc(doc(db!, "users", request.userId), { balance: increment(request.amount) });
-      }
-      toast({ title: status === 'approved' ? "تم القبول والشحن" : "تم رفض المعاملة" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل معالجة الطلب" });
     }
   };
 
@@ -140,8 +104,7 @@ export default function SupremeCommandCenter() {
 
   const filteredUsers = allUsers?.filter(u => 
     u.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.phone?.includes(searchTerm)
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -164,19 +127,14 @@ export default function SupremeCommandCenter() {
           <AdminNavBtn icon={<Activity />} text="نظرة شاملة" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
           <AdminNavBtn icon={<Users />} text="إدارة المواطنين" active={activeTab === "users"} onClick={() => setActiveTab("users")} />
           <AdminNavBtn icon={<FileCheck />} text="طلبات الانضمام" active={activeTab === "verifications"} onClick={() => setActiveTab("verifications")} />
-          <AdminNavBtn icon={<ArrowRightLeft />} text="محرك التحويل" active={activeTab === "transfer"} onClick={() => setActiveTab("transfer")} />
           <AdminNavBtn icon={<Wallet />} text="العمليات المالية" active={activeTab === "billing"} onClick={() => setActiveTab("billing")} />
           <AdminNavBtn icon={<ShieldAlert />} text="الدرع الواقي" active={activeTab === "moderation"} onClick={() => setActiveTab("moderation")} />
-          <AdminNavBtn icon={<History />} text="سجلات الأحداث" active={activeTab === "logs"} onClick={() => setActiveTab("logs")} />
         </nav>
 
         <div className="p-8 border-t border-white/5 bg-black/30 relative z-10">
           <Link href="/bot">
             <AdminNavBtn icon={<ArrowLeft />} text="العودة للبوت" active={false} />
           </Link>
-          <button onClick={() => signOut()} className="w-full mt-6 flex items-center gap-5 px-6 py-4 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
-            <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
-          </button>
         </div>
       </aside>
 
@@ -191,9 +149,9 @@ export default function SupremeCommandCenter() {
           </div>
 
           <div className="flex items-center gap-8">
-            <div className="text-left text-right">
+            <div className="text-right">
                <p className="text-sm font-black text-slate-900 dark:text-white">سيادة المالك king2026</p>
-               <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest text-emerald-500">Global Node Active</p>
+               <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Global Node Active</p>
             </div>
             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 p-0.5 shadow-2xl">
                <div className="h-full w-full rounded-[0.9rem] bg-white dark:bg-slate-900 flex items-center justify-center font-black text-2xl text-primary">K</div>
@@ -207,7 +165,7 @@ export default function SupremeCommandCenter() {
             {activeTab === "overview" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <StatBox label="المواطنون" value={allUsers?.length || 0} icon={<Users />} color="blue" />
-                <StatBox label="طلبات انضمام" value={allUsers?.filter(u => u.role === 'pending_expert').length || 0} icon={<Gavel />} color="violet" />
+                <StatBox label="طلبات انضمام" value={allUsers?.filter(u => u.role === ROLES_LIST.PENDING_EXPERT).length || 0} icon={<Gavel />} color="violet" />
                 <StatBox label="طلبات مالية" value={paymentRequests?.filter(r => r.status === 'pending').length || 0} icon={<Zap />} color="amber" />
                 <StatBox label="إجمالي الأرصدة" value={allUsers?.reduce((acc, u) => acc + (u.balance || 0), 0).toLocaleString()} icon={<Wallet />} color="emerald" />
               </motion.div>
@@ -215,11 +173,11 @@ export default function SupremeCommandCenter() {
 
             {activeTab === "users" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <div className="flex justify-between items-center bg-white dark:bg-white/5 p-4 rounded-[2.5rem] shadow-xl">
+                <div className="flex justify-between items-center glass-cosmic p-4 rounded-[2.5rem] border-white/10 dark:border-white/5 bg-white dark:bg-white/5">
                   <h2 className="text-4xl font-black text-primary tracking-tighter px-6">سجل المواطنين</h2>
                   <div className="relative w-[400px]">
                     <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-primary h-6 w-6" />
-                    <Input placeholder="ابحث بالاسم أو الرقم..." className="pr-16 h-16 rounded-3xl bg-[#f8fafc] dark:bg-slate-900 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <Input placeholder="ابحث بالاسم أو الرقم..." className="pr-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-900 border-none text-xl font-bold shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
                 </div>
 
@@ -228,14 +186,14 @@ export default function SupremeCommandCenter() {
                     <div className="py-20 flex justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" /></div>
                   ) : (
                     filteredUsers?.map((u) => (
-                      <Card key={u.id} className={`rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01]'}`}>
+                      <Card key={u.id} className={`rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 ${u.isBanned ? 'opacity-40 grayscale' : 'hover:scale-[1.01] transition-all'}`}>
                         <CardContent className="p-10 flex items-center justify-between">
                           <div className="flex items-center gap-8">
                             <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-3xl font-black text-primary shadow-inner">{u.fullName?.charAt(0)}</div>
                             <div>
                               <div className="flex items-center gap-4">
                                 <h3 className="text-2xl font-black">{u.fullName}</h3>
-                                <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 font-black uppercase text-[10px]">{u.role}</Badge>
+                                <Badge className="bg-primary/10 text-primary border-none px-4 font-black uppercase text-[10px]">{u.role}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
                             </div>
@@ -247,7 +205,6 @@ export default function SupremeCommandCenter() {
                               <p className="text-4xl font-black text-primary tabular-nums">{u.balance} <span className="text-xs">EGP</span></p>
                             </div>
                             <div className="flex gap-3">
-                              {u.role === 'pending_expert' && <ActionBtn icon={<Eye />} onClick={() => setViewingDocs(u)} color="blue" tooltip="عرض الوثائق" />}
                               <ActionBtn icon={<ArrowRightLeft />} onClick={() => { setSelectedUser(u); setIsTransferModalOpen(true); }} tooltip="محرك التحويل السيادي" color="emerald" />
                               <ActionBtn icon={u.isBanned ? <CheckCircle2 /> : <XCircle />} onClick={() => handleBanToggle(u)} color={u.isBanned ? "emerald" : "red"} tooltip="حظر/فك حظر" />
                               <ActionBtn icon={<Trash2 />} onClick={() => handlePurgeUser(u.id)} color="red" tooltip="تطهير نهائي" />
@@ -261,129 +218,53 @@ export default function SupremeCommandCenter() {
               </motion.div>
             )}
 
-            {activeTab === "verifications" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <h2 className="text-4xl font-black text-primary tracking-tighter px-2">طلبات الاعتماد المهني</h2>
-                <div className="grid gap-6">
-                  {allUsers?.filter(u => u.role === 'pending_expert').map(u => (
-                    <Card key={u.id} className="rounded-[3rem] border-none shadow-xl bg-white dark:bg-slate-900/80 p-10 hover:bg-slate-900 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-8">
-                          <div className="h-16 w-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500"><Gavel className="h-8 w-8" /></div>
-                          <div>
-                            <h3 className="text-2xl font-black">{u.fullName}</h3>
-                            <p className="text-sm text-white/30 font-bold">يرغب بالانضمام لهيئة الخبراء</p>
-                            {u.verificationRequest?.aiPreCheck && (
-                              <div className="mt-3 flex items-center gap-3">
-                                 <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[9px] uppercase tracking-widest">AI Verified: {u.verificationRequest.aiPreCheck.confidence}%</Badge>
-                                 <span className="text-[10px] font-bold text-white/20">Profession: {u.verificationRequest.aiPreCheck.profession}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Button onClick={() => setViewingDocs(u)} className="btn-primary h-16 px-10 rounded-2xl text-lg">عرض الوثائق والموافقة</Button>
-                      </div>
-                    </Card>
-                  ))}
-                  {allUsers?.filter(u => u.role === 'pending_expert').length === 0 && (
-                    <div className="py-40 text-center grayscale opacity-10">
-                      <FileCheck className="h-32 w-32 mx-auto mb-6" />
-                      <p className="text-3xl font-black">لا توجد طلبات اعتماد معلقة</p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Rest of Tabs (transfer, billing, logs) follow the same professional pattern */}
-
           </AnimatePresence>
         </div>
       </main>
 
-      {/* Doc Viewer & Approval Modal */}
-      <Dialog open={!!viewingDocs} onOpenChange={(v) => !v && setViewingDocs(null)}>
-        <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-5xl overflow-y-auto max-h-[90vh]" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-4xl font-black text-white mb-4">مراجعة الوثائق المهنية</DialogTitle>
-            <DialogDescription className="text-white/40 font-bold text-lg">التحقق من صحة وثائق المواطن {viewingDocs?.fullName} لاعتماده خبيراً.</DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-10 grid grid-cols-2 gap-8">
-            {viewingDocs?.verificationRequest?.docs && Object.entries(viewingDocs.verificationRequest.docs).map(([key, src]: any) => (
-              <div key={key} className="space-y-3">
-                <Label className="text-xs font-black uppercase text-primary tracking-widest px-4">{key}</Label>
-                <div className="aspect-[4/3] rounded-[2rem] overflow-hidden border-2 border-white/5 shadow-2xl relative group">
-                  <img src={src} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button variant="ghost" onClick={() => window.open(src)} className="text-white font-black">تكبير الوثيقة</Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {viewingDocs?.verificationRequest?.aiPreCheck && (
-            <div className="p-8 rounded-3xl bg-indigo-500/5 border border-indigo-500/20 mb-10">
-               <h4 className="text-lg font-black text-indigo-400 mb-4 flex items-center gap-3"><Cpu className="h-5 w-5" /> تقرير المحرك السيادي</h4>
-               <p className="text-white/60 font-bold leading-relaxed">{viewingDocs.verificationRequest.aiPreCheck.moderationNote}</p>
-            </div>
-          )}
-
-          <DialogFooter className="gap-6 pt-4">
-            <Button variant="ghost" onClick={() => setViewingDocs(null)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء</Button>
-            <Button onClick={() => handleApproveExpert(viewingDocs)} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl gap-3">
-               اعتماد الخبير ونشره في المجلس <ShieldCheck className="h-6 w-6" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Sovereign Transfer Modal */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
-        <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl" dir="rtl">
+        <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 text-right max-w-2xl bg-white dark:bg-slate-900 shadow-3xl" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-4xl font-black text-white mb-4">إتمام المعاملة السيادية</DialogTitle>
-            <DialogDescription className="text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية الموثقة.</DialogDescription>
+            <DialogTitle className="text-4xl font-black text-slate-900 dark:text-white mb-4">إتمام المعاملة السيادية</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-white/40 font-bold text-lg">توجيه الوحدات المالية للمواطن المختار بناءً على الهوية الموثقة.</DialogDescription>
           </DialogHeader>
           
           <div className="py-10 space-y-8">
-            <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 flex items-center justify-between gap-6 shadow-inner">
+            <div className="p-8 rounded-[2.5rem] bg-slate-100 dark:bg-white/5 border border-border dark:border-white/10 flex items-center justify-between gap-6 shadow-inner">
                <div className="flex items-center gap-6">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary">
                     {selectedUser?.fullName?.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-2xl font-black text-white">{selectedUser?.fullName}</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white">{selectedUser?.fullName}</p>
                     <p className="text-xs text-primary font-bold uppercase mt-1 tracking-widest">{selectedUser?.phone || selectedUser?.email}</p>
                   </div>
                </div>
                <div className="text-left">
-                  <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">الرصيد الراهن</p>
-                  <p className="text-2xl font-black text-white tabular-nums">{selectedUser?.balance} EGP</p>
+                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">الرصيد الراهن</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">{selectedUser?.balance} EGP</p>
                </div>
             </div>
 
             <div className="space-y-4">
-              <Label className="text-white/40 text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد تحويلها</Label>
+              <Label className="text-muted-foreground text-xs px-2 font-bold uppercase tracking-widest">القيمة المراد تحويلها</Label>
               <div className="relative">
                 <Input 
                   type="number" 
                   placeholder="0.00" 
                   value={transferAmount} 
                   onChange={e => setTransferAmount(e.target.value)} 
-                  className="h-24 rounded-[2rem] bg-white/5 border-white/10 text-5xl font-black text-primary text-center shadow-inner focus:ring-primary/20 pr-4" 
+                  className="h-24 rounded-[2rem] bg-slate-100 dark:bg-white/5 border-border dark:border-white/10 text-5xl font-black text-primary text-center shadow-inner focus:ring-primary/20 pr-4" 
                 />
-                <span className="absolute left-10 top-1/2 -translate-y-1/2 font-black text-white/20 text-xl uppercase tracking-widest">EGP</span>
+                <span className="absolute left-10 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-xl uppercase tracking-widest">EGP</span>
               </div>
             </div>
           </div>
 
           <DialogFooter className="gap-6 pt-4">
-            <Button variant="ghost" onClick={() => setIsTransferModalOpen(false)} className="text-white/30 hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء العملية</Button>
-            <Button onClick={handleTransfer} className="btn-primary flex-1 h-16 rounded-[1.8rem] text-xl gap-3">
-               تأكيد وإتمام التحويل <ArrowRightLeft className="h-6 w-6" />
-            </Button>
+            <Button variant="ghost" onClick={() => setIsTransferModalOpen(false)} className="text-muted-foreground hover:text-slate-900 dark:hover:text-white font-black text-lg h-16 px-10 rounded-2xl">إلغاء العملية</Button>
+            <SovereignButton text="تأكيد وإتمام التحويل" onClick={handleTransfer} icon={<ArrowRightLeft className="h-6 w-6" />} className="flex-1 h-16 rounded-[1.8rem]" />
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -413,9 +294,9 @@ function StatBox({ label, value, icon, color }: any) {
   return (
     <Card className="rounded-[2.8rem] border-none shadow-2xl bg-white dark:bg-slate-900/80 overflow-hidden relative group hover:scale-[1.05] transition-all duration-500">
       <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-700 text-primary">{icon}</div>
-      <CardContent className="p-10 flex flex-col items-start gap-4 relative z-10">
+      <CardContent className="p-10 flex flex-col items-start gap-4 relative z-10 text-right">
         <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner border ${colors[color]}`}>{icon}</div>
-        <div className="space-y-1 text-right">
+        <div className="space-y-1">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
           <p className={`text-3xl font-black tabular-nums ${colors[color].split(' ')[0]}`}>{value}</p>
         </div>
@@ -428,7 +309,6 @@ function ActionBtn({ icon, onClick, color = "primary", tooltip }: any) {
   const colors: any = {
     primary: "text-primary bg-primary/5 hover:bg-primary/10",
     red: "text-red-500 bg-red-500/5 hover:bg-red-500/10",
-    amber: "text-amber-500 bg-amber-500/5 hover:bg-amber-500/10",
     emerald: "text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10",
     blue: "text-blue-500 bg-blue-500/5 hover:bg-blue-500/10",
   };
@@ -438,3 +318,5 @@ function ActionBtn({ icon, onClick, color = "primary", tooltip }: any) {
     </Button>
   );
 }
+
+import SovereignButton from "@/components/SovereignButton";

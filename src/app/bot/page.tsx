@@ -3,20 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Send, Cpu, Scale, LogOut, Home, Settings, Users, Gavel, ShieldAlert, Tag, Activity,
+  Send, Scale, LogOut, LayoutDashboard, Users, Gavel, ShieldAlert, Tag, Activity,
   Menu, X, Plus, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
-  ArrowLeft, Mic, Paperclip, Camera, Sparkles, MessageCircle, ChevronLeft
+  ArrowLeft, Mic, Paperclip, Camera, Sparkles, MessageCircle, ChevronLeft, Loader2
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { collection, doc, updateDoc, increment } from "firebase/firestore";
-import { useMemoFirebase } from "@/firebase/provider";
+import { doc, updateDoc, increment } from "firebase/firestore";
 import { getPermissions, roles as ROLES_LIST } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -28,10 +26,6 @@ interface Message {
   timestamp: Date;
 }
 
-/**
- * مركز قيادة البوت السيادي - الإصدار الفاخر.
- * تجربة مستخدم تحاكي ChatGPT ولكن بلمسة قانونية ملكية.
- */
 export default function SovereignBotPage() {
   const { user, profile, signOut, role } = useUser();
   const db = useFirestore();
@@ -77,7 +71,7 @@ export default function SovereignBotPage() {
       setTimeout(() => {
         const aiMsg: Message = { 
           role: "ai", 
-          text: "تم استلام استفسارك سيادياً. جاري تحليل المعطيات وفقاً لأحدث التشريعات. يرجى الانتظار...", 
+          text: "تم استلام استفسارك سيادياً. جاري تحليل المعطيات وفقاً لأحدث التشريعات والسابقة القضائية. هل تود التعمق في جانب معين؟", 
           id: (Date.now() + 1).toString(),
           timestamp: new Date()
         };
@@ -95,6 +89,42 @@ export default function SovereignBotPage() {
     router.push("/auth/login");
   };
 
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-[#1e1b4b] dark:bg-[#0a0a1f]">
+      <div className="p-10 border-b border-white/5 flex items-center gap-5 bg-black/20 relative z-10">
+        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-2xl border border-white/20">
+          <Scale className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black tracking-tighter text-white">المستشار AI</h2>
+          <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Sovereign Control</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10 scrollbar-thin">
+        <p className="text-[10px] text-white/30 font-black uppercase tracking-widest px-4 mb-2">القائمة السيادية</p>
+        <SideBtn icon={<MessageCircle />} text="المحادثة الذكية" active={true} />
+        <SideBtn icon={<Gavel />} text="مجلس الخبراء" onClick={() => router.push("/consultants")} />
+        <SideBtn icon={<Tag />} text="المكتبة القانونية" onClick={() => router.push("/templates")} />
+        <SideBtn icon={<Wallet />} text="باقات الشحن" onClick={() => router.push("/pricing")} />
+        
+        {perms.canManageUsers && (
+          <>
+            <p className="text-[10px] text-white/30 font-black uppercase tracking-widest pt-10 px-4 mb-2">غرفة القيادة</p>
+            <SideBtn icon={<LayoutDashboard />} text="لوحة التحكم" onClick={() => router.push("/admin")} />
+            <SideBtn icon={<ShieldAlert />} text="الدرع الواقي" onClick={() => router.push("/admin")} />
+          </>
+        )}
+      </nav>
+
+      <div className="p-8 border-t border-white/5 bg-black/30 relative z-10">
+        <button onClick={handleLogout} className="w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
+          <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <ProtectedRoute>
       <div className="flex h-screen bg-[#f8f9fc] dark:bg-[#020617] overflow-hidden font-sans" dir="rtl">
@@ -106,40 +136,9 @@ export default function SovereignBotPage() {
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
-              className="w-80 h-full bg-[#1e1b4b] dark:bg-[#0a0a1f] text-white flex flex-col z-50 shadow-3xl border-l border-white/5 flex-shrink-0 relative overflow-hidden"
+              className="w-80 h-full text-white flex flex-col z-50 shadow-3xl border-l border-white/5 flex-shrink-0 relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-              <div className="p-10 border-b border-white/5 flex items-center gap-5 bg-black/20 relative z-10">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-2xl border border-white/20">
-                  <Scale className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tighter">المستشار AI</h2>
-                  <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">Sovereign Control</p>
-                </div>
-              </div>
-
-              <nav className="flex-1 p-6 space-y-3 overflow-y-auto relative z-10 scrollbar-thin">
-                <p className="text-[10px] text-white/30 font-black uppercase tracking-widest px-4 mb-2">القائمة السيادية</p>
-                <SideBtn icon={<MessageCircle />} text="المحادثة الذكية" active={true} />
-                <SideBtn icon={<Gavel />} text="مجلس الخبراء" onClick={() => router.push("/consultants")} />
-                <SideBtn icon={<Tag />} text="المكتبة القانونية" onClick={() => router.push("/templates")} />
-                <SideBtn icon={<Wallet />} text="باقات الشحن" onClick={() => router.push("/pricing")} />
-                
-                {perms.canManageUsers && (
-                  <>
-                    <p className="text-[10px] text-white/30 font-black uppercase tracking-widest pt-10 px-4 mb-2">غرفة القيادة</p>
-                    <SideBtn icon={<Users />} text="إدارة المواطنين" onClick={() => router.push("/admin")} />
-                    <SideBtn icon={<ShieldAlert />} text="الدرع الواقي" onClick={() => router.push("/admin")} />
-                  </>
-                )}
-              </nav>
-
-              <div className="p-8 border-t border-white/5 bg-black/30 relative z-10">
-                <button onClick={handleLogout} className="w-full flex items-center gap-5 px-6 py-4 rounded-2xl text-white/60 hover:text-white hover:bg-red-500/20 transition-all font-black text-sm group">
-                  <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" /> خروج سيادي
-                </button>
-              </div>
+              <SidebarContent />
             </motion.aside>
           )}
         </AnimatePresence>
@@ -154,7 +153,7 @@ export default function SovereignBotPage() {
                 {isSidebarOpen ? <ChevronLeft className="h-6 w-6 text-primary" /> : <Menu className="h-6 w-6 text-primary" />}
               </button>
               <div className="flex flex-col">
-                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Sovereign Chat Node Active</h1>
+                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Sovereign Chat Active</h1>
                 <div className="flex items-center gap-3 mt-1">
                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Secure Connection Protocol</span>
@@ -163,12 +162,12 @@ export default function SovereignBotPage() {
             </div>
 
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4 bg-[#f8fafc] dark:bg-white/5 px-6 py-3 rounded-2xl border border-border dark:border-white/5 shadow-inner group cursor-pointer" onClick={() => router.push("/pricing")}>
+              <div className="flex items-center gap-4 bg-slate-100 dark:bg-white/5 px-6 py-3 rounded-2xl border border-border dark:border-white/5 shadow-inner group cursor-pointer" onClick={() => router.push("/pricing")}>
                 <Wallet className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                 <span className="text-lg font-black tabular-nums text-slate-900 dark:text-white">{role === ROLES_LIST.ADMIN ? '∞' : (profile?.balance || 0)} <span className="text-[10px] opacity-40">EGP</span></span>
                 <Plus className="h-4 w-4 text-primary opacity-40 group-hover:opacity-100" />
               </div>
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-border dark:border-white/5 hover:bg-primary/5 transition-all text-primary">
+              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl border border-border dark:border-white/5 hover:bg-primary/5 transition-all text-primary">
                 {theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
               </button>
             </div>
@@ -177,7 +176,7 @@ export default function SovereignBotPage() {
           {/* Messages Area */}
           <main className="flex-1 relative flex flex-col bg-white dark:bg-[#020617]">
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-12">
-              <div className="max-w-4xl mx-auto space-y-12">
+              <div className="max-w-4xl mx-auto space-y-12 pb-20">
                 {messages.map((m) => (
                   <motion.div 
                     key={m.id} 
@@ -206,7 +205,7 @@ export default function SovereignBotPage() {
                 ))}
                 
                 {isTyping && (
-                  <div className="flex items-center gap-3 p-6 glass rounded-full w-fit animate-pulse">
+                  <div className="flex items-center gap-3 p-6 glass rounded-full w-fit animate-pulse border border-primary/20">
                     <div className="w-2 h-2 bg-primary rounded-full" />
                     <div className="w-2 h-2 bg-primary rounded-full delay-100" />
                     <div className="w-2 h-2 bg-primary rounded-full delay-200" />
@@ -222,7 +221,7 @@ export default function SovereignBotPage() {
                 <div className="relative group">
                   <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
                   
-                  <div className="relative bg-[#f8fafc] dark:bg-slate-900 border-2 border-border dark:border-white/5 rounded-[2.5rem] shadow-3xl flex flex-col overflow-hidden focus-within:border-primary/40 transition-all">
+                  <div className="relative bg-[#f1f5f9] dark:bg-slate-900 border-2 border-border dark:border-white/5 rounded-[2.5rem] shadow-3xl flex flex-col overflow-hidden focus-within:border-primary/40 transition-all">
                     <div className="flex items-center gap-2 px-6 py-4 border-b border-black/5 dark:border-white/5 bg-black/[0.02]">
                        <ToolBtn icon={<Paperclip />} tooltip="إرفاق ملفات" />
                        <ToolBtn icon={<Camera />} tooltip="التقاط وثيقة" />
@@ -272,7 +271,7 @@ function SideBtn({ icon, text, active, onClick }: any) {
           : "text-white/30 hover:text-white hover:bg-white/5"
       }`}
     >
-      {active && <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
+      {active && <motion.div layoutId="nav-active" className="absolute inset-0 bg-white/10 rounded-[1.8rem] -z-10 shadow-3xl" />}
       <span className={`shrink-0 transition-transform duration-500 ${active ? "scale-125" : "group-hover:scale-110"}`}>{icon}</span>
       <span className="tracking-tight text-lg">{text}</span>
     </button>

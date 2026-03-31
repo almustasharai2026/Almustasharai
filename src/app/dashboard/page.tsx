@@ -3,106 +3,131 @@
 import { useUser } from "@/firebase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card, CardContent } from "@/components/ui/card";
-import { Wallet, CalendarCheck, Gavel, ArrowLeftRight, ShieldCheck, ChevronLeft } from "lucide-react";
+import { Wallet, CalendarCheck, Gavel, ArrowLeftRight, ShieldCheck, ChevronLeft, Crown, Activity, Sparkles, FileText } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { getBalance } from "@/lib/roles";
+import { getBalance, roles as ROLES_LIST } from "@/lib/roles";
 
-/**
- * لوحة التحكم السيادية للمواطن الرقمي.
- * توفر رؤية شاملة للرصيد، الحجوزات، والوصول السريع للهيئة القانونية.
- */
 export default function Dashboard() {
-  const { user, profile } = useUser();
+  const { user, profile, role } = useUser();
   const balance = getBalance(profile);
 
   return (
     <ProtectedRoute>
-      <div className="p-5 space-y-6 animate-in fade-in duration-500">
-        
-        {/* Sovereign Header */}
-        <div className="flex items-center justify-between px-1">
-          <div className="text-right">
-            <h2 className="text-xl font-black text-primary tracking-tight">أهلاً، {profile?.fullName?.split(' ')[0] || "سيادة المواطن"}</h2>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Sovereign Profile ID: {user?.uid.substring(0, 8)}</p>
-          </div>
-          <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20">
-            <ShieldCheck className="h-5 w-5 text-accent" />
-          </div>
-        </div>
-
-        {/* Financial Heart (Balance Card) */}
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
-          <Card className="bg-primary border-none rounded-[2rem] shadow-xl shadow-primary/20 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-              <Wallet className="h-24 w-24 text-white" />
-            </div>
-            <CardContent className="p-8 space-y-2 relative z-10">
-              <p className="text-xs font-black text-accent uppercase tracking-[0.2em]">الرصيد السيادي المتاح</p>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-white tabular-nums">
-                  {balance === Infinity ? "∞" : balance}
-                </h3>
-                <span className="text-sm font-bold text-white/60">جنيه مصري</span>
-              </div>
-              <div className="pt-4">
-                <Link href="/pricing" className="text-[10px] bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full font-bold transition-colors inline-flex items-center gap-2">
-                  شحن المحفظة <ChevronLeft className="h-3 w-3" />
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Quick Navigation Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <NavCard 
-            href="/bookings" 
-            title="حجوزاتي" 
-            desc="الجلسات المجدولة" 
-            icon={<CalendarCheck className="h-6 w-6 text-primary" />} 
-          />
-          <NavCard 
-            href="/consultants" 
-            title="المستشارين" 
-            desc="مجلس الخبراء" 
-            icon={<Gavel className="h-6 w-6 text-primary" />} 
-          />
-        </div>
-
-        {/* Recent Activity Section Placeholder */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/50">آخر النشاطات</h3>
-            <ArrowLeftRight className="h-3 w-3 text-muted-foreground/30" />
-          </div>
+      <div className="min-h-screen bg-[#f8f9fc] dark:bg-[#02040a] p-8 lg:p-20 font-sans" dir="rtl">
+        <div className="max-w-5xl mx-auto space-y-12">
           
-          <div className="space-y-3">
-            <div className="p-4 bg-secondary/30 rounded-2xl border border-border/50 flex items-center justify-between opacity-60">
-              <span className="text-[10px] font-bold text-muted-foreground">لا توجد عمليات حديثة موثقة</span>
-              <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+          {/* Sovereign Greeting */}
+          <header className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
+            <div className="text-center md:text-right space-y-4">
+              <div className="sovereign-badge mx-auto md:mx-0">
+                 <ShieldCheck className="h-3 w-3" /> Citizen Identity Verified
+              </div>
+              <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+                مرحباً بك، <span className="text-gradient">سيادة {profile?.fullName?.split(' ')[0] || "المواطن"}</span>
+              </h1>
+              <p className="text-lg text-muted-foreground font-bold">معرف الهوية السيادية: <span className="font-mono text-primary">{user?.uid.substring(0, 12).toUpperCase()}</span></p>
+            </div>
+            {role === ROLES_LIST.ADMIN && (
+              <Link href="/admin">
+                <button className="bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary px-8 py-4 rounded-2xl font-black text-sm flex items-center gap-4 transition-all hover:scale-105 shadow-xl shadow-primary/5">
+                  <Crown className="h-6 w-6" /> غرفة القيادة العليا
+                </button>
+              </Link>
+            )}
+          </header>
+
+          {/* Financial Engine */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+            <div className="md:col-span-7">
+              <motion.div whileHover={{ scale: 1.01 }} className="h-full">
+                <Card className="h-full bg-[#1e1b4b] dark:bg-[#0a0a1f] border-none rounded-[3.5rem] shadow-3xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:rotate-12 transition-transform duration-1000">
+                    <Wallet className="h-48 w-48 text-white" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
+                  
+                  <CardContent className="p-12 space-y-10 relative z-10">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">المحفظة السيادية الموثقة</p>
+                      <div className="flex items-baseline gap-4">
+                        <h3 className="text-7xl font-black text-white tabular-nums tracking-tighter">
+                          {balance === Infinity ? "∞" : balance.toLocaleString()}
+                        </h3>
+                        <span className="text-xl font-bold text-white/40 uppercase tracking-widest">EGP</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                      <Link href="/pricing">
+                        <button className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary/30 hover:scale-105 transition-all flex items-center gap-3">
+                          <Plus className="h-5 w-5" /> شحن الوحدات المالية
+                        </button>
+                      </Link>
+                      <Link href="/bookings">
+                        <button className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-black text-sm transition-all flex items-center gap-3">
+                          <History className="h-5 w-5 opacity-40" /> سجل المعاملات
+                        </button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            <div className="md:col-span-5 grid grid-cols-1 gap-8">
+               <QuickStat label="استشارات نشطة" value="١٢" icon={<Activity className="text-blue-500" />} />
+               <QuickStat label="وثائق صادرة" value="٠٨" icon={<FileText className="text-violet-500" />} />
             </div>
           </div>
-        </div>
 
+          {/* Governance Navigation */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-10">
+            <NavBox href="/bot" title="البوت الذكي" desc="استشارات AI فورية" icon={<Sparkles />} color="blue" />
+            <NavBox href="/consultants" title="مجلس الخبراء" desc="اتصال مرئي مشفر" icon={<Gavel />} color="violet" />
+            <NavBox href="/templates" title="المكتبة" desc="وثائق وعقود معتمدة" icon={<FileText />} color="amber" />
+          </div>
+
+        </div>
       </div>
     </ProtectedRoute>
   );
 }
 
-function NavCard({ href, title, desc, icon }: { href: string; title: string; desc: string; icon: React.ReactNode }) {
+function QuickStat({ label, value, icon }: any) {
   return (
-    <Link href={href} className="block group">
-      <div className="p-6 bg-white dark:bg-slate-800 border border-border/50 rounded-[2rem] text-right space-y-4 hover:border-accent/40 transition-all duration-300 shadow-sm hover:shadow-md">
-        <div className="h-12 w-12 rounded-2xl bg-secondary flex items-center justify-center group-hover:scale-110 transition-transform">
+    <Card className="rounded-[2.5rem] bg-white dark:bg-white/5 border border-border dark:border-white/5 shadow-xl hover:bg-slate-50 transition-colors cursor-default">
+      <CardContent className="p-8 flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{label}</p>
+          <p className="text-3xl font-black tabular-nums">{value}</p>
+        </div>
+        <div className="h-14 w-14 rounded-2xl bg-secondary dark:bg-white/5 flex items-center justify-center border border-border dark:border-white/5 shadow-inner">
           {icon}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NavBox({ href, title, desc, icon, color }: any) {
+  const colors: any = {
+    blue: "text-blue-500 bg-blue-500/5 hover:bg-blue-500/10",
+    violet: "text-violet-500 bg-violet-500/5 hover:bg-violet-500/10",
+    amber: "text-amber-500 bg-amber-500/5 hover:bg-amber-500/10",
+  };
+  return (
+    <Link href={href} className="group">
+      <div className="p-10 bg-white dark:bg-slate-900 border border-border dark:border-white/5 rounded-[3rem] text-right space-y-6 hover:shadow-2xl transition-all duration-500 hover:scale-[1.05] relative overflow-hidden">
+        <div className={`h-16 w-16 rounded-[1.5rem] flex items-center justify-center shadow-inner border transition-transform duration-500 group-hover:rotate-12 ${colors[color]}`}>
+          <div className="scale-125">{icon}</div>
+        </div>
         <div>
-          <h4 className="font-black text-primary text-sm">{title}</h4>
-          <p className="text-[10px] text-muted-foreground font-medium">{desc}</p>
+          <h4 className="font-black text-2xl tracking-tighter">{title}</h4>
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-40">{desc}</p>
+        </div>
+        <div className="absolute bottom-10 left-10 p-2 bg-secondary rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+           <ChevronLeft className="h-4 w-4" />
         </div>
       </div>
     </Link>
