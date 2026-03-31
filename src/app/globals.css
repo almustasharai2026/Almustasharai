@@ -6,20 +6,20 @@
   :root {
     --background: 0 0% 2%;
     --foreground: 0 0% 90%;
-    --card: 0 0% 5%;
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 90%;
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 90%;
     --primary: 14 100% 57%; /* Sovereign Orange #ff5722 */
     --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 40%;
     --accent: 14 100% 57%;
     --accent-foreground: 0 0% 6%;
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
     --ring: 14 100% 57%;
     --radius: 3.5rem;
   }
@@ -30,17 +30,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#020202] text-[#e5e5e5] antialiased font-sans selection:bg-[#ff5722]/30 overflow-hidden;
+    @apply bg-[#050505] text-[#e5e5e5] antialiased font-sans selection:bg-[#ff5722]/30 overflow-hidden;
   }
 }
 
 @layer utilities {
   .glass-cosmic {
-    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/5 shadow-2xl;
+    @apply bg-white/[0.01] backdrop-blur-3xl border border-white/5 shadow-2xl;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-zinc-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-zinc-700;
   }
 
   .scrollbar-none::-webkit-scrollbar {
@@ -61,10 +61,15 @@
 
 @keyframes float {
   0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(2deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
   100% { transform: translateY(0px) rotate(0deg); }
 }
 
 .mirror {
   transform: scaleX(-1);
+}
+
+/* Matte Black Texture Effect */
+.matte-black {
+  background: radial-gradient(circle at center, #151515 0%, #0a0a0a 100%);
 }
