@@ -1,16 +1,15 @@
-
 'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Gavel, Video, Send, BrainCircuit, ShieldCheck, Zap } from 'lucide-react';
+import { Sparkles, Gavel, Video, BrainCircuit, ShieldCheck, Zap, ArrowLeft } from 'lucide-react';
 import SovereignButton from '@/components/SovereignButton';
 import FloatingCard from '@/components/FloatingCard';
 import Link from 'next/link';
 
 /**
  * الصفحة الرئيسية السيادية (Sovereign Home).
- * تجمع بين بساطة ChatGPT وفخامة "كوكب المستشار" مع تأثيرات حركية ذكية.
+ * تجمع بين بساطة ChatGPT وفخامة "كوكب المستشار" مع محرك إدخال مطور.
  */
 export default function Home() {
   const [text, setText] = useState('');
@@ -30,23 +29,23 @@ export default function Home() {
         </motion.div>
         <h1 className="text-3xl font-black text-primary tracking-tighter mt-2">المستشار AI</h1>
         <p className="text-muted-foreground text-sm text-center max-w-[280px] font-medium leading-relaxed opacity-80">
-          استشارة ذكية في ثواني. اكتب مشكلتك الآن وسنرشدك لأفضل حل فوراً.
+          اكتب مشكلتك، وسنرشدك لأفضل حل فوراً
         </p>
       </div>
 
-      {/* AI Sovereign Input Box */}
-      <div className="w-full mt-10 bg-white dark:bg-slate-800 rounded-[2.2rem] shadow-xl shadow-black/[0.03] p-2.5 flex items-center gap-2 border border-border/50 focus-within:border-accent/40 focus-within:ring-4 focus-within:ring-accent/5 transition-all">
+      {/* AI Sovereign Input Box - Updated Design */}
+      <div className="w-full mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 flex items-center gap-2 border border-border/50 focus-within:border-accent/40 transition-all">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="اكتب تفاصيل مشكلتك هنا..."
-          className="flex-1 bg-transparent outline-none text-sm pr-5 py-3.5 text-right placeholder:text-muted-foreground/40 font-medium"
+          placeholder="اكتب مشكلتك هنا..."
+          className="flex-1 bg-transparent outline-none text-sm text-right placeholder:text-muted-foreground/40 font-medium"
         />
         <button 
-          className="h-12 w-12 rounded-2xl bg-accent text-white flex items-center justify-center shadow-lg shadow-accent/20 active:scale-90 hover:scale-105 transition-all shrink-0"
-          title="إرسال التحليل"
+          className="bg-gradient-to-r from-accent to-emerald-600 text-white px-4 py-2 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center justify-center"
+          title="إرسال"
         >
-          <Send className="h-5 w-5 rotate-180" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
       </div>
 
