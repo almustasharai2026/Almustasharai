@@ -4,20 +4,24 @@
  * يحدد الرتب الرقمية المعتمدة والصلاحيات الدقيقة لكل رتبة.
  */
 export const roles = {
-  ADMIN: "admin",
-  CONSULTANT: "consultant",
-  USER: "user",
+  ADMIN: "admin",       // المالك (king2026)
+  MODERATOR: "moderator", // مشرف
+  VIP: "vip",           // عميل مميز
+  CONSULTANT: "consultant", // مستشار
+  USER: "user",         // مواطن عادي
 } as const;
 
 export type UserRole = (typeof roles)[keyof typeof roles];
 
 export interface RolePermissions {
   canManageUsers: boolean;
+  canPromoteRoles: boolean;
   canManageSystem: boolean;
   canConsult: boolean;
   canChatAI: boolean;
   canGenerateDocs: boolean;
   canManageMoney: boolean;
+  consultationDiscount: number; // خصم خاص للـ VIP
 }
 
 /**
@@ -28,29 +32,57 @@ export const getPermissions = (role: UserRole | string): RolePermissions => {
     case roles.ADMIN:
       return {
         canManageUsers: true,
+        canPromoteRoles: true,
         canManageSystem: true,
         canConsult: true,
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: true,
+        consultationDiscount: 0,
       };
-    case roles.CONSULTANT:
+    case roles.MODERATOR:
       return {
-        canManageUsers: false,
-        canManageSystem: false,
-        canConsult: true,
+        canManageUsers: true,
+        canPromoteRoles: false,
+        canManageSystem: true,
+        canConsult: false,
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
+        consultationDiscount: 0,
       };
-    default:
+    case roles.VIP:
       return {
         canManageUsers: false,
+        canPromoteRoles: false,
         canManageSystem: false,
         canConsult: false,
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
+        consultationDiscount: 0.5, // خصم 50% على الاستشارات
+      };
+    case roles.CONSULTANT:
+      return {
+        canManageUsers: false,
+        canPromoteRoles: false,
+        canManageSystem: false,
+        canConsult: true,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+        consultationDiscount: 0,
+      };
+    default:
+      return {
+        canManageUsers: false,
+        canPromoteRoles: false,
+        canManageSystem: false,
+        canConsult: false,
+        canChatAI: true,
+        canGenerateDocs: true,
+        canManageMoney: false,
+        consultationDiscount: 0,
       };
   }
 };
