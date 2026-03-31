@@ -1,11 +1,13 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, User, Cpu, ShieldCheck, Sparkles, FileText, Gavel, Camera } from "lucide-react";
+import { Send, User, Cpu, ShieldCheck, Sparkles, FileText, Gavel, Camera, Copy, Trash2, Reply } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Image from "next/image";
 import { useUser } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "ai";
@@ -15,10 +17,11 @@ interface Message {
 
 /**
  * واجهة الدردشة في النسخة المتقدمة.
- * تضم شخصيات عائمة، فقاعات رسائل ملونة، وأوامر سريعة.
+ * تضم منطق Quick Actions (نسخ، حذف، رد سريع) وتحاكي ردود البوت اللحظية.
  */
 export default function BotPage() {
   const { profile } = useUser();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: "ai", 
@@ -36,10 +39,11 @@ export default function BotPage() {
     }
   }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!text.trim() || isTyping) return;
+  const handleSend = (overrideText?: string) => {
+    const input = overrideText || text;
+    if (!input.trim() || isTyping) return;
 
-    const userMsg: Message = { role: "user", text: text.trim(), id: Date.now().toString() };
+    const userMsg: Message = { role: "user", text: input.trim(), id: Date.now().toString() };
     setMessages(prev => [...prev, userMsg]);
     setText("");
     setIsTyping(true);
@@ -48,12 +52,27 @@ export default function BotPage() {
     setTimeout(() => {
       const aiMsg: Message = { 
         role: "ai", 
-        text: "تم رصد استفسارك وتحليله برمجياً. بصفتي المستشار AI، أقترح عليك مراجعة 'المكتبة السيادية' أو بدء 'اتصال مرئي مباشر' مع الخبراء المعتمدين لمناقشة التفاصيل الدقيقة.", 
+        text: "تم استلام رسالتك! جاري تحليل المعطيات وربطها بالمواد القانونية ذات الصلة. بصفتي المستشار AI، أقترح عليك مراجعة 'المكتبة السيادية' أو بدء 'اتصال مرئي مباشر' مع الخبراء.", 
         id: (Date.now() + 1).toString() 
       };
       setMessages(prev => [...prev, aiMsg]);
       setIsTyping(false);
-    }, 1500);
+    }, 1200);
+  };
+
+  const deleteMessage = (id: string) => {
+    setMessages(prev => prev.filter(m => m.id !== id));
+    toast({ title: "تم تطهير الرسالة", description: "تم حذف الرسالة من السجل المحلي." });
+  };
+
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast({ title: "تم النسخ بنجاح", description: "النص جاهز للاستخدام في وثائقك." });
+  };
+
+  const quickReply = (content: string) => {
+    setText(`بناءً على الرد: "${content.substring(0, 20)}..."، أود الاستفسار عن: `);
+    toast({ title: "تم تفعيل الرد السريع" });
   };
 
   return (
@@ -80,24 +99,25 @@ export default function BotPage() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
               >
-                <div className={`p-4 rounded-[1.5rem] text-sm leading-relaxed shadow-md max-w-[80%] ${
+                <div className={`p-4 rounded-[1.5rem] text-sm leading-relaxed shadow-md max-w-[85%] relative group ${
                   m.role === "user"
                     ? "bg-[#dcf8c6] text-slate-900 rounded-tr-none font-bold"
                     : "bg-[#e2e3ff] text-slate-900 rounded-tl-none border border-primary/10"
                 }`}>
                   {m.text}
                   
-                  {/* Quick Actions for AI Responses */}
-                  {m.role === "ai" && m.id !== "init" && (
-                    <div className="quick-action mt-4 flex flex-wrap gap-2">
-                       <button className="flex items-center gap-1 bg-[#17a2b8] text-white px-3 py-1 rounded-full text-[10px] font-black hover:scale-105 transition-transform shadow-md">
-                         <FileText className="h-3 w-3" /> المكتبة
-                       </button>
-                       <button className="flex items-center gap-1 bg-[#17a2b8] text-white px-3 py-1 rounded-full text-[10px] font-black hover:scale-105 transition-transform shadow-md">
-                         <Gavel className="h-3 w-3" /> الخبراء
-                       </button>
-                    </div>
-                  )}
+                  {/* Sovereign Quick Actions Toolbar */}
+                  <div className={`quick-actions-toolbar flex items-center gap-1 mt-3 pt-2 border-t border-black/5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                     <button onClick={() => quickReply(m.text)} className="p-1.5 hover:bg-black/5 rounded-lg text-primary/60 hover:text-primary transition-colors" title="رد سريع">
+                       <Reply className="h-3 w-3" />
+                     </button>
+                     <button onClick={() => copyMessage(m.text)} className="p-1.5 hover:bg-black/5 rounded-lg text-primary/60 hover:text-primary transition-colors" title="نسخ">
+                       <Copy className="h-3 w-3" />
+                     </button>
+                     <button onClick={() => deleteMessage(m.id)} className="p-1.5 hover:bg-black/5 rounded-lg text-red-500/60 hover:text-red-500 transition-colors" title="حذف">
+                       <Trash2 className="h-3 w-3" />
+                     </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -115,7 +135,7 @@ export default function BotPage() {
           <div className="h-4" />
         </div>
 
-        {/* Input Terminal: Success Edition */}
+        {/* Input Terminal: Sovereign Advanced Logic */}
         <div className="p-4 bg-white dark:bg-slate-900 border-t border-border shadow-2xl relative z-20">
           <div className="max-w-2xl mx-auto flex gap-3 items-center">
             <div className="flex gap-1 shrink-0">
@@ -131,7 +151,7 @@ export default function BotPage() {
               className="flex-1 bg-secondary/30 border border-border/50 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none font-bold"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!text.trim() || isTyping}
               className="bg-[#28a745] hover:bg-emerald-600 text-white p-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-90 disabled:opacity-50 shrink-0"
             >
