@@ -14,7 +14,7 @@ export const roles = {
 
 export type UserRole = (typeof roles)[keyof typeof roles];
 
-// المرجع النهائي للسلطة البرمجية
+// المرجع النهائي للسلطة البرمجية للمالك bishoysamy
 export const SOVEREIGN_ADMIN_EMAIL = "bishoysamy390@gmail.com";
 
 export interface RolePermissions {
@@ -99,6 +99,7 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
 };
 
 export const getBalance = (profile: any) => {
+  // المالك دائماً لديه رصيد لا نهائي سيادياً
   if (profile?.role === roles.ADMIN || isOwner(profile?.email)) return Infinity;
   return Number(profile?.balance || 0);
 };
