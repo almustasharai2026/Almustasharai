@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Cpu, Scale, LogOut, Home, Settings, Users, Gavel, ShieldAlert, Tag, Activity,
-  Menu, X, Plus, ChevronDown, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
+  Menu, X, Plus, Copy, Trash2, Wallet, Crown, Search, Bell, Sun, Moon,
   ArrowLeft
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -12,13 +13,13 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { collection, doc, updateDoc, addDoc, serverTimestamp, increment, deleteDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, increment } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { getPermissions, roles as ROLES_LIST } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 interface Message {
@@ -42,13 +43,6 @@ export default function SovereignBotPage() {
   ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-
-  // Queries
-  const usersQuery = useMemoFirebase(() => db && perms.canManageUsers ? collection(db, "users") : null, [db, perms.canManageUsers]);
-  const { data: allUsers } = useCollection(usersQuery);
-
-  const bannedWordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
-  const { data: forbiddenWords } = useCollection(bannedWordsQuery);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -96,11 +90,33 @@ export default function SovereignBotPage() {
     router.push("/auth/login");
   };
 
+  // 🔥 شاشة الانتظار السيادية للخبراء الجدد
+  if (role === ROLES_LIST.PENDING_EXPERT) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-[#020617] text-center p-10 space-y-8" dir="rtl">
+         <div className="h-32 w-32 rounded-[3rem] bg-amber-500/10 flex items-center justify-center text-amber-600 border border-amber-500/20 animate-pulse">
+            <ShieldAlert className="h-16 w-16" />
+         </div>
+         <div className="space-y-4">
+           <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">بانتظار المصادقة السيادية</h1>
+           <p className="text-lg text-muted-foreground font-bold max-w-md mx-auto leading-relaxed">
+             مرحباً سيادة المستشار. حسابك المهني قيد المراجعة حالياً من قبل <span className="text-primary">king2026</span>. 
+             سيتم تفعيل وصولك لكافة الصلاحيات فور التأكد من صحة وثائق القيد المرفقة.
+           </p>
+         </div>
+         <div className="flex gap-4">
+           <Button onClick={handleLogout} variant="outline" className="rounded-2xl h-14 px-8 font-black border-border">تسجيل خروج</Button>
+           <Link href="/">
+             <Button variant="ghost" className="rounded-2xl h-14 px-8 font-black">العودة للرئيسية</Button>
+           </Link>
+         </div>
+      </div>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="flex h-screen bg-[#f8f9fc] dark:bg-[#020617] overflow-hidden" dir="rtl">
-        
-        {/* Persistent Sidebar */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.aside 
@@ -147,9 +163,7 @@ export default function SovereignBotPage() {
           )}
         </AnimatePresence>
 
-        {/* Workspace */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
-          
           <header className="h-20 bg-gradient-to-r from-[#4e54c8] to-[#8f94fb] dark:from-[#1e1b4b] dark:to-[#312e81] text-white flex items-center justify-between px-8 z-40 shadow-xl border-b border-white/10">
             <div className="flex items-center gap-6">
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/10 rounded-2xl hover:bg-white/20 transition-all shadow-inner">
@@ -217,58 +231,7 @@ export default function SovereignBotPage() {
               </>
             ) : (
               <div className="flex-1 p-8 lg:p-12 overflow-y-auto">
-                {currentPage === "users" && (
-                  <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                    <h2 className="text-4xl font-black text-primary tracking-tighter">قاعدة المواطنين الرقمية</h2>
-                    <div className="grid gap-6">
-                      {allUsers?.map(u => (
-                        <Card key={u.id} className="glass border-none rounded-[2.5rem] shadow-xl overflow-hidden">
-                          <CardContent className="p-8 flex items-center justify-between gap-8">
-                            <div className="flex items-center gap-6">
-                              <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary">
-                                {u.fullName?.charAt(0)}
-                              </div>
-                              <div className="space-y-1">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white">{u.fullName}</h3>
-                                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">{u.email}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <Badge className="px-4 py-1.5 rounded-full font-black text-[10px] uppercase bg-primary/10 text-primary border-none">
-                                Role: {u.role}
-                              </Badge>
-                              <div className="h-10 w-px bg-border" />
-                              <p className="text-lg font-black tabular-nums">{u.balance} EGP</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {currentPage === "banned" && (
-                  <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in zoom-in-95">
-                    <div className="text-center space-y-4">
-                      <div className="h-20 w-20 mx-auto rounded-[2rem] bg-red-500/10 flex items-center justify-center text-red-600 border border-red-500/20">
-                        <ShieldAlert className="h-10 w-10" />
-                      </div>
-                      <h2 className="text-4xl font-black text-red-600 tracking-tighter">الدرع الواقي السيادي</h2>
-                      <p className="text-muted-foreground font-bold">إدارة الكلمات المحظورة التي يراقبها محرك الرقابة اللحظي.</p>
-                    </div>
-                    <div className="flex gap-4">
-                      <Input id="new-word" placeholder="أدخل كلمة محظورة جديدة..." className="h-16 rounded-2xl border-2 border-red-500/10 bg-white dark:bg-slate-900 px-8 text-lg font-medium" />
-                      <button className="bg-red-600 text-white px-10 rounded-2xl font-black hover:scale-105 transition-all shadow-xl">إضافة</button>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      {forbiddenWords?.map(w => (
-                        <Badge key={w.id} className="p-4 rounded-2xl bg-red-500/5 text-red-600 border border-red-500/10">
-                          <span className="font-black">{w.word}</span>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Content for other tabs */}
               </div>
             )}
           </main>

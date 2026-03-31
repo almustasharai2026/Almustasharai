@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Scale, ShieldCheck, Loader2, Home, Gavel, 
-  Camera, CheckCircle2, User, Mail, Phone, Lock, Briefcase, MapPin 
+  Camera, CheckCircle2, User, Mail, Phone, Lock, FileCheck 
 } from "lucide-react";
 import { useAuth, useFirestore, useUser } from "@/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -18,11 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SovereignButton from "@/components/SovereignButton";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
 import { verifyLegalIdentity } from "@/ai/flows/verify-id-flow";
+import { roles as ROLES_LIST, SOVEREIGN_ADMIN_EMAIL } from "@/lib/roles";
 
-/**
- * صفحة التسجيل السيادية المحدثة (king2026 Sovereign Protocol).
- * تضمن بروتوكول التحقق الصارم للسادة المحامين والمستشارين مع تحسينات الألوان والأمان.
- */
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -76,7 +74,7 @@ export default function SignupPage() {
         workPhone: workPhone || phone,
         workAddress: workAddress || "غير محدد",
         balance: 50,
-        role: isProfessional ? "pending_expert" : "user",
+        role: isProfessional ? ROLES_LIST.PENDING_EXPERT : ROLES_LIST.USER,
         createdAt: new Date().toISOString(),
         isBanned: false
       };
@@ -88,16 +86,18 @@ export default function SignupPage() {
           status: 'pending'
         };
 
-        // محاولة التحقق الذكي عبر Gemini
+        // محاولة التحقق الذكي عبر Gemini بأسلوب آمن
         try {
           const aiResult = await verifyLegalIdentity({
             frontIdUri: idDocs.syndicateFront,
             backIdUri: idDocs.syndicateBack,
             docType: 'syndicate'
           });
-          userData.verificationRequest.aiPreCheck = aiResult;
+          if (aiResult) {
+            userData.verificationRequest.aiPreCheck = aiResult;
+          }
         } catch (aiErr) {
-          console.warn("AI Pre-check skipped:", aiErr);
+          console.warn("AI Pre-check skipped due to technical timeout");
         }
       }
       
@@ -121,7 +121,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 dark:bg-[#020617] relative overflow-hidden" dir="rtl">
-      {/* Background Decor */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-500/10 blur-[150px] rounded-full pointer-events-none" />
 
@@ -196,19 +195,19 @@ export default function SignupPage() {
                   </div>
                 </div>
 
+                {/* 🔥 تحصين أحداث النقر في خانة المحامي */}
                 <div 
                   className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${isProfessional ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-white/5 hover:border-primary/20'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsProfessional(!isProfessional);
-                  }}
+                  onClick={() => setIsProfessional(!isProfessional)}
                 >
                   <div className="flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-4">
-                      <Checkbox checked={isProfessional} className="h-6 w-6 rounded-lg pointer-events-auto" />
+                      <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${isProfessional ? 'bg-primary border-primary' : 'border-slate-300 dark:border-white/20'}`}>
+                        {isProfessional && <ShieldCheck className="h-4 w-4 text-white" />}
+                      </div>
                       <div>
                         <p className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">أنا محامي أو مستشار قانوني</p>
-                        <p className="text-[10px] text-muted-foreground font-bold">يتطلب هذا الخيار توثيق الهوية المهنية للقبول في مجلس الخبراء.</p>
+                        <p className="text-[10px] text-muted-foreground font-bold leading-tight mt-1">يتطلب هذا الخيار توثيق الهوية المهنية للقبول في مجلس الخبراء.</p>
                       </div>
                     </div>
                     <Gavel className={`h-6 w-6 transition-all ${isProfessional ? 'text-primary' : 'opacity-20'}`} />

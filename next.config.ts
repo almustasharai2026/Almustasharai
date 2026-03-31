@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -29,6 +30,10 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // 🔥 تحصين اتصالات بيئة التطوير لمنع التوقف المتكرر
+  experimental: {
+    allowedDevOrigins: ["*.cloudworkstations.dev", "localhost:9002"],
   },
 };
 
