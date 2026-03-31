@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from "react";
@@ -6,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Scale, Sparkles, Sun, Moon,
   ChevronLeft, Loader2, Mic, Camera, Paperclip, 
-  ShieldCheck, BrainCircuit, History
+  ShieldCheck, BrainCircuit, History, Volume2, MicOff
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SovereignLayout from "@/components/SovereignLayout";
@@ -37,9 +36,66 @@ export default function SmartConsultantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // --- بروتوكول التوثيق الصوتي (Speech to Text) ---
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = 'ar-SA';
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInputText(prev => prev + (prev ? " " : "") + transcript);
+          setIsRecording(false);
+        };
+
+        recognitionRef.current.onerror = () => setIsRecording(false);
+        recognitionRef.current.onend = () => setIsRecording(false);
+      }
+    }
+  }, []);
+
+  const toggleVoiceRecording = () => {
+    if (!recognitionRef.current) {
+      toast({ variant: "destructive", title: "المتصفح لا يدعم الإملاء الصوتي" });
+      return;
+    }
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+      setIsRecording(true);
+      toast({ title: "بروتوكول الإملاء الصوتي نشط 🎤" });
+    }
+  };
+
+  // --- بروتوكول القراءة الآلية (Text to Speech) ---
+  const readLastResponse = () => {
+    if (!cloudMessages || cloudMessages.length === 0) return;
+    const lastAiMsg = [...cloudMessages].reverse().find(m => m.role === 'ai');
+    if (!lastAiMsg) return;
+
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(lastAiMsg.text);
+    utterance.lang = 'ar-SA';
+    utterance.onstart = () => setIsReading(true);
+    utterance.onend = () => setIsReading(false);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const chatQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -53,11 +109,10 @@ export default function SmartConsultantPage() {
     }
   }, [cloudMessages, isTyping]);
 
-  const handleSend = async (customText?: string) => {
-    const text = customText || inputText.trim();
+  const handleSend = async () => {
+    const text = inputText.trim();
     if (!text || isTyping || !db || !user) return;
 
-    // --- بروتوكول الفوترة السيادي قبل المعالجة ---
     const billing = await executeSovereignBilling(db, user.uid, 'ai_chat', role);
     if (!billing.canProceed) {
       toast({ 
@@ -100,7 +155,7 @@ export default function SmartConsultantPage() {
   return (
     <ProtectedRoute>
       <SovereignLayout activeId="bot">
-        <div className="flex flex-col h-screen relative overflow-hidden">
+        <div className="flex flex-col h-screen relative overflow-hidden bg-[#020205]">
           {/* Deep Cinematic Background Overlay */}
           <div className="absolute inset-0 -z-10 opacity-10">
             <Image 
@@ -119,7 +174,7 @@ export default function SmartConsultantPage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 bg-white/5 rounded-2xl text-primary border border-white/5">
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 bg-white/5 rounded-2xl text-primary border border-white/5 hover:bg-white/10 transition-all">
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
             </div>
@@ -154,16 +209,50 @@ export default function SmartConsultantPage() {
             </div>
           </div>
 
-          <div className="absolute bottom-0 inset-x-0 p-10 z-20 bg-gradient-to-t from-[#02020a] via-[#02020a]/90 to-transparent pointer-events-none">
-            <div className="max-w-4xl mx-auto space-y-6 pointer-events-auto">
-              <div className="flex items-center gap-4 px-4">
-                 <ToolBtn icon={<Paperclip />} onClick={() => fileInputRef.current?.click()} tooltip="رفع ملف" />
-                 <ToolBtn icon={<Camera />} onClick={() => setIsCameraOpen(true)} tooltip="المعالج البصري" />
-                 <ToolBtn icon={<Mic />} active={isRecording} color="red" tooltip="إملاء صوتي" />
-                 <input type="file" ref={fileInputRef} className="hidden" />
-              </div>
-              <div className="relative glass-cosmic border-2 border-white/10 rounded-[3rem] overflow-hidden shadow-3xl group focus-within:border-primary/30 transition-all bg-black/40">
-                <div className="flex items-center px-10 py-6 gap-8">
+          {/* --- Smart Chat Input: الجيل الجديد من الإدخال السيادي --- */}
+          <div className="absolute bottom-0 inset-x-0 p-10 z-20 bg-gradient-to-t from-[#02020a] via-[#02020a]/90 to-transparent">
+            <div className="max-w-4xl mx-auto relative">
+              
+              {/* Floating Volume Action */}
+              <AnimatePresence>
+                {cloudMessages && cloudMessages.length > 0 && (
+                  <motion.button 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={readLastResponse}
+                    className={`absolute -top-14 left-8 px-6 py-2 rounded-full flex items-center gap-3 text-[10px] font-black uppercase tracking-widest border transition-all z-30 ${
+                      isReading ? 'bg-primary text-black border-primary animate-pulse' : 'bg-white/5 text-white/40 border-white/10 hover:text-white'
+                    }`}
+                  >
+                    <Volume2 size={14} /> {isReading ? "جاري قراءة الرد القانوني" : "استماع للرد الأخير"}
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              <div className="relative glass-cosmic border border-white/10 rounded-[3rem] overflow-hidden shadow-3xl bg-zinc-900/50 backdrop-blur-3xl focus-within:border-primary/30 transition-all p-3">
+                <div className="flex items-center gap-2 bg-black/40 border border-white/5 p-2 rounded-[2.2rem]">
+                  
+                  {/* tools */}
+                  <div className="flex items-center gap-1">
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.jpg,.png" />
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-4 text-zinc-500 hover:text-primary transition-all rounded-2xl hover:bg-white/5" 
+                      title="إرفاق ملف"
+                    >
+                      <Paperclip size={22} />
+                    </button>
+                    
+                    <button 
+                      onClick={() => setIsCameraOpen(true)}
+                      className="p-4 text-zinc-500 hover:text-emerald-500 transition-all rounded-2xl hover:bg-white/5" 
+                      title="المعالج البصري"
+                    >
+                      <Camera size={22} />
+                    </button>
+                  </div>
+
+                  {/* text input */}
                   <textarea 
                     value={inputText} 
                     onChange={(e) => {
@@ -172,12 +261,29 @@ export default function SmartConsultantPage() {
                       e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                    placeholder="اطرح استشارتك برصانة..."
-                    className="flex-1 bg-transparent border-none outline-none text-xl font-bold text-white placeholder:text-white/10 resize-none py-2"
+                    placeholder="تحدث أو اكتب مشكلتك هنا..."
+                    className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-white placeholder:text-white/10 resize-none py-3 px-4 scrollbar-none"
                     rows={1}
                   />
-                  <button onClick={() => handleSend()} disabled={!inputText.trim() || isTyping} className="h-16 w-16 rounded-3xl bg-primary text-white flex items-center justify-center shadow-2xl transition-all disabled:opacity-20 hover:scale-110 active:scale-95">
-                    <Send className="rotate-180 h-8 w-8 text-black" />
+
+                  {/* voice input */}
+                  <button 
+                    onClick={toggleVoiceRecording}
+                    className={`p-4 rounded-2xl transition-all ${
+                      isRecording ? 'text-red-500 bg-red-500/10 animate-pulse' : 'text-zinc-500 hover:text-red-400'
+                    }`}
+                    title="إملاء صوتي"
+                  >
+                    {isRecording ? <MicOff size={22} /> : <Mic size={22} />}
+                  </button>
+
+                  {/* send button */}
+                  <button 
+                    onClick={() => handleSend()} 
+                    disabled={!inputText.trim() || isTyping} 
+                    className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-2xl transition-all disabled:opacity-20 hover:scale-105 active:scale-95 shrink-0"
+                  >
+                    {isTyping ? <Loader2 className="animate-spin" size={24} /> : <Send className="rotate-180" size={24} fill="currentColor" />}
                   </button>
                 </div>
               </div>
@@ -185,6 +291,7 @@ export default function SmartConsultantPage() {
           </div>
         </div>
 
+        {/* Camera/Vision Dialog */}
         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
           <DialogContent className="glass-cosmic border-none rounded-[4rem] p-12 max-w-2xl bg-black/95 shadow-3xl">
              <DialogHeader className="mb-10 text-center">
@@ -196,16 +303,5 @@ export default function SmartConsultantPage() {
         </Dialog>
       </SovereignLayout>
     </ProtectedRoute>
-  );
-}
-
-function ToolBtn({ icon, onClick, active, tooltip }: any) {
-  return (
-    <button onClick={onClick} className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-all border shadow-2xl relative group ${active ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/[0.05] border-white/10 text-white/20 hover:text-primary hover:border-primary/30 hover:bg-primary/5'}`}>
-      <div className="scale-110">{icon}</div>
-      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-black px-4 py-2 rounded-xl text-[8px] font-black text-primary uppercase border border-primary/20 pointer-events-none">
-        {tooltip}
-      </div>
-    </button>
   );
 }
