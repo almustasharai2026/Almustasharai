@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Scale, Gift, Loader2, Home, Gavel, ShieldCheck, Phone, MapPin, Briefcase } from "lucide-react";
+import { Scale, Gift, Loader2, Home, Gavel, ShieldCheck, Phone, MapPin, Briefcase, Camera } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useFirestore, useUser } from "@/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -48,6 +49,7 @@ export default function SignupPage() {
       return;
     }
 
+    // بروتوكول المنع السيادي: إذا كان محامي ولم يصور الوثائق بعد، نفتح له الكاميرا قسراً
     if (isProfessional && !idDocs) {
       setIsCapturing(true);
       return;
@@ -65,7 +67,7 @@ export default function SignupPage() {
         email,
         fullName,
         phone,
-        workPhone: workPhone || phone, // إذا لم يكتب رقم العمل، نعتمد الشخصي
+        workPhone: workPhone || phone,
         workAddress: workAddress || "غير محدد",
         balance: 50,
         role: isProfessional ? "pending_expert" : "user",
@@ -80,7 +82,7 @@ export default function SignupPage() {
           status: 'pending'
         };
 
-        // تفعيل الذكاء الاصطناعي للتحقق المبدئي (Sovereign AI Verify)
+        // محاولة التحقق الذكي المبدئي
         try {
           const aiResult = await verifyLegalIdentity({
             frontIdUri: idDocs.syndicateFront,
@@ -89,16 +91,16 @@ export default function SignupPage() {
           });
           userData.verificationRequest.aiPreCheck = aiResult;
         } catch (aiErr) {
-          console.error("AI Pre-check failed, proceeding to manual review");
+          console.warn("AI Pre-check skipped");
         }
       }
       
       await setDoc(doc(db, "users", newUser.uid), userData);
       
       toast({ 
-        title: isProfessional ? "تم التسجيل بنجاح ✅" : "تم إنشاء الهوية السيادية", 
+        title: isProfessional ? "تم التوثيق وبانتظار المراجعة ✅" : "مرحباً بك في الكوكب", 
         description: isProfessional 
-          ? "وثائقك قيد المراجعة السيادية الآن. ستحصل على تنبيه عند الاعتماد." 
+          ? "سيتم مراجعة وثائقك من قبل المالك king2026 لتفعيل حسابك كخبير." 
           : "حصلت على ٥٠ EGP رصيد ترحيبي." 
       });
       router.push("/bot");
@@ -129,9 +131,13 @@ export default function SignupPage() {
         <CardContent className="space-y-6 text-right px-8 pb-10">
           <AnimatePresence mode="wait">
             {!isCapturing ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                
-                {/* الحقول المشتركة */}
+              <motion.div 
+                key="form"
+                initial={{ opacity: 0, x: 20 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                exit={{ opacity: 0, x: -20 }} 
+                className="space-y-6"
+              >
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-white/40 text-xs px-2">الاسم الكامل رباعي</Label>
@@ -153,7 +159,6 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* خيار المحامي */}
                 <div className="p-6 glass rounded-3xl border-white/5 hover:border-primary/20 transition-all cursor-pointer group" onClick={() => setIsProfessional(!isProfessional)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -167,48 +172,60 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* حقول المحامي الإضافية */}
                 <AnimatePresence>
                   {isProfessional && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-white/40 text-xs px-2">رقم هاتف العمل (اختياري)</Label>
+                          <Label className="text-white/40 text-xs px-2">رقم هاتف العمل (إن وجد)</Label>
                           <Input placeholder="رقم المكتب" className="glass h-14 rounded-2xl text-right" value={workPhone} onChange={e => setWorkPhone(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-white/40 text-xs px-2">عنوان العمل (إن وجد)</Label>
+                          <Label className="text-white/40 text-xs px-2">عنوان المكتب (اختياري)</Label>
                           <Input placeholder="المكتب، الشركة..." className="glass h-14 rounded-2xl text-right" value={workAddress} onChange={e => setWorkAddress(e.target.value)} />
                         </div>
                       </div>
-                      <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20">
-                        <p className="text-[10px] text-amber-500 font-bold leading-tight flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4" /> سيطلب منك النظام تصوير كارنيه النقابة والبطاقة في الخطوة التالية.
-                        </p>
-                      </div>
+                      
+                      {idDocs ? (
+                        <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                              <span className="text-[10px] text-emerald-500 font-black uppercase">Documents Captured</span>
+                           </div>
+                           <Button variant="ghost" size="sm" onClick={() => setIsCapturing(true)} className="text-[10px] text-emerald-500 underline font-bold">تعديل</Button>
+                        </div>
+                      ) : (
+                        <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20">
+                          <p className="text-[10px] text-amber-500 font-bold leading-tight flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4" /> يجب تصوير الوثائق لفتح بروتوكول الحساب المهني.
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
                 
                 <SovereignButton 
-                  text={isLoading ? "جاري الإنشاء..." : (isProfessional ? "متابعة تصوير الوثائق" : "إنشاء الحساب السيادي")}
+                  text={isLoading ? "جاري المعالجة..." : (isProfessional && !idDocs ? "متابعة تصوير الوثائق" : "إنشاء الحساب السيادي")}
                   onClick={handleSignup}
                   disabled={isLoading}
-                  icon={isLoading ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
+                  icon={isLoading ? <Loader2 className="animate-spin" /> : (isProfessional && !idDocs ? <Camera /> : <ShieldCheck />)}
                 />
               </motion.div>
             ) : (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                <div className="text-center space-y-2 mb-8">
-                  <h3 className="text-xl font-black text-primary uppercase tracking-widest">Identity Protocol</h3>
-                  <p className="text-xs text-white/30 font-bold">التقط صوراً واضحة لوثائق القيد المهني والبطاقة الشخصية.</p>
-                </div>
+              <motion.div 
+                key="wizard"
+                initial={{ opacity: 0, scale: 0.9 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="space-y-6"
+              >
                 <IdCaptureWizard onComplete={(docs) => {
                   setIdDocs(docs);
                   setIsCapturing(false);
-                  toast({ title: "تم التوثيق المبدئي ✅", description: "يمكنك الآن إرسال طلب الانضمام." });
+                  toast({ title: "تم التوثيق المبدئي ✅", description: "بياناتك جاهزة الآن للتسجيل النهائي." });
                 }} />
-                <Button variant="ghost" onClick={() => setIsCapturing(false)} className="w-full text-white/20 hover:text-white h-12">إلغاء والعودة للبيانات</Button>
+                <Button variant="ghost" onClick={() => setIsCapturing(false)} className="w-full text-white/20 hover:text-white h-12 font-black">إلغاء والعودة للبيانات</Button>
               </motion.div>
             )}
           </AnimatePresence>

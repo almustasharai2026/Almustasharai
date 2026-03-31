@@ -1,10 +1,11 @@
+
 'use client';
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface IdCaptureWizardProps {
@@ -28,9 +29,11 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
   const [capturedImages, setCapturedImages] = useState<Record<string, string>>({});
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const webcamRef = useRef<Webcam>(null);
 
   const capture = useCallback(() => {
+    setIsCapturing(true);
     try {
       const imageSrc = webcamRef.current?.getScreenshot();
       if (imageSrc) {
@@ -38,101 +41,116 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
         setIsCameraActive(false);
         setError(null);
       } else {
-        setError("فشل التقاط الصورة، يرجى المحاولة ثانية.");
+        setError("فشل التقاط الصورة، يرجى التأكد من إضاءة الغرفة.");
       }
     } catch (e) {
-      setError("تعذر الوصول للكاميرا.");
+      setError("تعذر الوصول للكاميرا السيادية.");
+    } finally {
+      setIsCapturing(false);
     }
   }, [webcamRef, currentStep]);
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
+      setIsCameraActive(false);
     } else {
       onComplete(capturedImages as any);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 0) setCurrentStep(prev => prev - 1);
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+      setIsCameraActive(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between mb-2 px-2">
-        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Step {currentStep + 1} of 4</span>
-        <div className="flex gap-1">
+        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sovereign Capture: Step {currentStep + 1} of 4</span>
+        <div className="flex gap-1.5">
           {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 w-6 rounded-full transition-all ${i <= currentStep ? 'bg-primary' : 'bg-slate-200 dark:bg-white/10'}`} />
+            <div key={i} className={`h-1.5 w-8 rounded-full transition-all duration-500 ${i <= currentStep ? 'bg-primary shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-200 dark:bg-white/5'}`} />
           ))}
         </div>
       </div>
 
-      <Card className="rounded-[2.5rem] border-2 border-primary/10 overflow-hidden bg-slate-50 dark:bg-black/20 shadow-inner">
+      <Card className="rounded-[3rem] border-2 border-primary/10 overflow-hidden bg-slate-50 dark:bg-black/40 shadow-inner relative">
         <CardContent className="p-0">
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
               className="p-8 space-y-6"
             >
-              <div className="flex items-center gap-4 text-right">
-                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <div className="flex items-center gap-5 text-right">
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-xl border border-primary/5">
                   {STEPS[currentStep].icon}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white">{STEPS[currentStep].title}</h3>
-                  <p className="text-xs text-muted-foreground font-bold">يرجى تثبيت الوثيقة والتقاط صورة واضحة.</p>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{STEPS[currentStep].title}</h3>
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Identity Protocol Active</p>
                 </div>
               </div>
 
-              <div className="relative aspect-[4/3] rounded-[2rem] bg-black overflow-hidden border-4 border-white/5 shadow-2xl">
+              <div className="relative aspect-[4/3] rounded-[2.5rem] bg-[#050505] overflow-hidden border-4 border-white/5 shadow-3xl group">
                 {isCameraActive ? (
                   <Webcam
                     audio={false}
                     ref={webcamRef}
                     screenshotFormat="image/jpeg"
                     videoConstraints={{ facingMode: "environment" }}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover mirror"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center relative">
                     {capturedImages[STEPS[currentStep].id] ? (
                       <img src={capturedImages[STEPS[currentStep].id]} className="w-full h-full object-cover" alt="captured" />
                     ) : (
-                      <div className="text-center space-y-4">
-                        <Camera className="h-16 w-16 mx-auto text-white/10" />
-                        <p className="text-xs text-white/20 font-black uppercase tracking-widest">Camera Ready</p>
+                      <div className="text-center space-y-6 opacity-20 group-hover:opacity-40 transition-opacity">
+                        <Camera className="h-24 w-24 mx-auto text-primary" />
+                        <p className="text-xs font-black uppercase tracking-[0.3em]">Lens Standby</p>
                       </div>
                     )}
                   </div>
                 )}
-                {error && (
-                  <div className="absolute top-4 inset-x-4 bg-red-600 text-white p-3 rounded-xl text-xs font-bold flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" /> {error}
+                
+                <AnimatePresence>
+                  {error && (
+                    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} className="absolute top-6 inset-x-6 bg-red-600/90 backdrop-blur-md text-white p-4 rounded-2xl text-xs font-black flex items-center gap-3 shadow-2xl">
+                      <AlertCircle className="h-5 w-5" /> {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {isCapturing && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 {isCameraActive ? (
-                  <Button onClick={capture} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl">التقاط الآن</Button>
+                  <Button onClick={capture} disabled={isCapturing} className="flex-1 h-16 rounded-[1.5rem] bg-primary text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all">التقاط الوثيقة</Button>
                 ) : (
                   <>
                     <Button 
                       variant="outline" 
-                      onClick={() => setIsCameraActive(true)} 
-                      className="flex-1 h-14 rounded-2xl border-primary/20 text-primary font-black gap-2 hover:bg-primary/5"
+                      onClick={() => { setError(null); setIsCameraActive(true); }} 
+                      className="flex-1 h-16 rounded-[1.5rem] border-primary/20 bg-white dark:bg-white/5 text-primary font-black text-lg gap-3 hover:bg-primary/5 shadow-xl transition-all"
                     >
-                      {capturedImages[STEPS[currentStep].id] ? <RefreshCw className="h-5 w-5" /> : <Camera className="h-5 w-5" />}
-                      {capturedImages[STEPS[currentStep].id] ? 'إعادة الالتقاط' : 'فتح الكاميرا'}
+                      {capturedImages[STEPS[currentStep].id] ? <RefreshCw className="h-6 w-6" /> : <Camera className="h-6 w-6" />}
+                      {capturedImages[STEPS[currentStep].id] ? 'إعادة التصوير' : 'تفعيل العدسة'}
                     </Button>
                     
                     {capturedImages[STEPS[currentStep].id] && (
-                      <Button onClick={handleNext} className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-lg gap-2">
-                        {currentStep === 3 ? 'إتمام المصادقة' : 'التالي'} <ChevronLeft className="h-5 w-5" />
+                      <Button onClick={handleNext} className="flex-1 h-16 rounded-[1.5rem] bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xl gap-3 shadow-2xl hover:scale-105 transition-all">
+                        {currentStep === 3 ? 'إتمام المصادقة' : 'التالي'} <ChevronLeft className="h-6 w-6" />
                       </Button>
                     )}
                   </>
@@ -143,14 +161,15 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between px-4">
+      <div className="flex justify-between items-center px-6">
         <button 
           onClick={handleBack} 
           disabled={currentStep === 0}
-          className="text-xs font-black text-muted-foreground hover:text-primary disabled:opacity-0 transition-all flex items-center gap-2"
+          className="text-[10px] font-black text-muted-foreground hover:text-primary disabled:opacity-0 transition-all flex items-center gap-2 uppercase tracking-widest"
         >
-          <ChevronRight className="h-4 w-4" /> الخطوة السابقة
+          <ChevronRight className="h-4 w-4" /> Previous Step
         </button>
+        <span className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">{STEPS[currentStep].id}</span>
       </div>
     </div>
   );
