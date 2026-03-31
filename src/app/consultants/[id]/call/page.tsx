@@ -41,10 +41,11 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
   const wordsQuery = useMemoFirebase(() => db ? collection(db, "system", "moderation", "forbiddenWords") : null, [db]);
   const { data: forbiddenWords } = useCollection(wordsQuery);
 
+  // تحصين محادثات البث: لا تبدأ القراءة إلا بعد تسجيل الدخول
   const messagesQuery = useMemoFirebase(() => {
-    if (!db || !consultantId) return null;
+    if (!db || !user || !consultantId) return null;
     return query(collection(db, "liveConsultations", consultantId, "messages"), orderBy("timestamp", "asc"), limit(100));
-  }, [db, consultantId]);
+  }, [db, user, consultantId]);
   const { data: messages } = useCollection(messagesQuery);
 
   useEffect(() => {
@@ -90,7 +91,6 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
   const handleSendMessage = async () => {
     if (!chatMessage.trim() || !user || !db || hasViolated) return;
 
-    // 🔥 تفعيل الدرع الواقي (Sovereign Moderation Shield)
     const isViolated = checkSovereignViolation(chatMessage, forbiddenWords || []);
     
     if (isViolated) {
@@ -111,13 +111,10 @@ export default function ProfessionalLiveRoom({ params }: { params: Promise<{ id:
     const currentInput = chatMessage;
     setChatMessage("");
 
-    // 1. إرسال رسالة المواطن
     sendSovereignLiveMessage(db, consultantId, user.uid, user.displayName || "مواطن سيادي", currentInput);
 
-    // 2. تفعيل المساعد الذكي السيادي (AI Autopilot)
     const aiReply = await getSovereignQuickReply(currentInput);
     if (aiReply) {
-      // إرسال رد المحرك السيادي بصفة مساعد (Assistant)
       sendSovereignLiveMessage(db, consultantId, "assistant", "المستشار AI", aiReply);
     }
   };

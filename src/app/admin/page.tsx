@@ -14,10 +14,9 @@ import { useMemoFirebase } from "@/firebase/provider";
 import { roles as ROLES_LIST } from "@/lib/roles";
 import { useTheme } from "next-themes";
 import SovereignLayout from "@/components/SovereignLayout";
-import SovereignButton from "@/components/SovereignButton";
 
 export default function SupremeCommandCenter() {
-  const { user, profile, role } = useUser();
+  const { user, profile, role, isUserLoading } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -29,13 +28,17 @@ export default function SupremeCommandCenter() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const usersQuery = useMemoFirebase(() => db ? collection(db, "users") : null, [db]);
+  // تحصين الاستعلامات السيادية: لا يتم الطلب إلا بعد التأكد من الهوية والرتبة
+  const usersQuery = useMemoFirebase(() => {
+    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    return collection(db, "users");
+  }, [db, user, role]);
   const { data: allUsers } = useCollection(usersQuery);
 
   const pendingRequestsQuery = useMemoFirebase(() => {
-    if (!db) return null;
+    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
     return query(collection(db, "paymentRequests"), where("status", "==", "pending"));
-  }, [db]);
+  }, [db, user, role]);
   const { data: pendingRequests } = useCollection(pendingRequestsQuery);
 
   useEffect(() => {
@@ -82,6 +85,15 @@ export default function SupremeCommandCenter() {
     a.download = `Sovereign_Report_${Date.now()}.txt`;
     a.click();
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-black gap-6">
+        <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
+        <p className="text-sm font-black text-white/20 uppercase tracking-[0.5em]">Syncing Supreme Authority...</p>
+      </div>
+    );
+  }
 
   if (role !== ROLES_LIST.ADMIN) {
     return (

@@ -5,23 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Gavel, UserMinus, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
-import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, deleteDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { roles as ROLES_LIST } from "@/lib/roles";
 
 export default function AdminConsultants() {
-  const { user, role } = useUser();
+  const { user, role, isUserLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const router = useRouter();
 
-  const consultantsQuery = useMemoFirebase(() => db ? collection(db, "consultants") : null, [db]);
+  const consultantsQuery = useMemoFirebase(() => {
+    if (!db || !user || role !== ROLES_LIST.ADMIN) return null;
+    return collection(db, "consultants");
+  }, [db, user, role]);
+  
   const { data: allConsultants, isLoading } = useCollection(consultantsQuery);
 
-  if (role !== "admin") {
+  if (isUserLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-black">
+        <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
+
+  if (role !== ROLES_LIST.ADMIN) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-black text-red-500 font-black gap-8">
         <h1 className="text-4xl uppercase tracking-[0.5em]">Sovereign Lock Active</h1>
