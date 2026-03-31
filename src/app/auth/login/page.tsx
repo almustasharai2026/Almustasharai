@@ -5,41 +5,28 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
-  Scale, Lock, Loader2, Home, UserCircle, ShieldCheck, 
-  Sun, Moon, Chrome, Facebook, ArrowRight
+  Scale, Lock, Loader2, UserCircle, ShieldCheck, ArrowRight
 } from "lucide-react";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  updateProfile,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  FacebookAuthProvider
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { Label } from "@/components/ui/label";
-import { SOVEREIGN_ADMIN_EMAIL } from "@/lib/roles";
+import { SOVEREIGN_ADMIN_EMAIL, roles as ROLES_LIST } from "@/lib/roles";
 import SovereignButton from "@/components/SovereignButton";
 import Image from "next/image";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("king2026");
-  const [password, setPassword] = useState("king2026");
+  const [password, setPassword] = useState("king@2026");
   const [isLoading, setIsLoading] = useState(false);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   
   const auth = useAuth();
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -52,6 +39,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     let loginEmail = identifier.trim();
+    // تحويل المعرف السيادي إلى البريد المعتمد
     if (loginEmail.toLowerCase() === "king2026") {
       loginEmail = SOVEREIGN_ADMIN_EMAIL;
     }
@@ -61,7 +49,8 @@ export default function LoginPage() {
       toast({ title: "مرحباً سيادة المالك", description: "تم تفعيل بروتوكول الوصول king2026." });
       router.push("/bot");
     } catch (error: any) {
-      if (identifier.toLowerCase() === "king2026" && password === "king2026") {
+      // بروتوكول التأسيس التلقائي للمالك في حال أول دخول
+      if (identifier.toLowerCase() === "king2026" && password === "king@2026") {
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
           const newUser = userCredential.user;
@@ -71,10 +60,11 @@ export default function LoginPage() {
             email: loginEmail,
             fullName: "king2026",
             balance: 999999,
-            role: "admin",
+            role: ROLES_LIST.ADMIN,
             createdAt: new Date().toISOString(),
             isBanned: false
           });
+          toast({ title: "تم تأسيس السلطة السيادية" });
           router.push("/bot");
         } catch (e) {
           toast({ variant: "destructive", title: "فشل الدخول السيادي" });
@@ -86,8 +76,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#020617]">
@@ -121,7 +109,7 @@ export default function LoginPage() {
               <input 
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full h-16 bg-white/5 border border-white/5 rounded-3xl px-8 text-xl font-bold text-white text-right focus:ring-4 focus:ring-primary/10 transition-all"
+                className="w-full h-16 bg-white/5 border border-white/5 rounded-3xl px-8 text-xl font-bold text-white text-right focus:ring-4 focus:ring-primary/10 transition-all outline-none"
                 placeholder="king2026"
               />
             </div>
@@ -132,7 +120,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-16 bg-white/5 border border-white/5 rounded-3xl px-8 text-xl font-bold text-white text-right focus:ring-4 focus:ring-primary/10 transition-all"
+                className="w-full h-16 bg-white/5 border border-white/5 rounded-3xl px-8 text-xl font-bold text-white text-right focus:ring-4 focus:ring-primary/10 transition-all outline-none"
                 placeholder="••••••••"
               />
             </div>

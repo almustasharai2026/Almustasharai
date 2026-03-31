@@ -71,7 +71,7 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
-        consultationDiscount: 0.5, // خصم ٥٠٪ على الخدمات
+        consultationDiscount: 0.5, 
       };
     case roles.CONSULTANT:
       return {
@@ -79,17 +79,6 @@ export const getPermissions = (role: UserRole | string | null | undefined): Role
         canPromoteRoles: false,
         canManageSystem: false,
         canConsult: true,
-        canChatAI: true,
-        canGenerateDocs: true,
-        canManageMoney: false,
-        consultationDiscount: 0,
-      };
-    case roles.PENDING_EXPERT:
-      return {
-        canManageUsers: false,
-        canPromoteRoles: false,
-        canManageSystem: false,
-        canConsult: false, // بانتظار الاعتماد السيادي
         canChatAI: true,
         canGenerateDocs: true,
         canManageMoney: false,
