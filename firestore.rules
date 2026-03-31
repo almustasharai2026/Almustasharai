@@ -13,12 +13,6 @@ service cloud.firestore {
       ); 
     }
     
-    function isModerator() { 
-      return isSignedIn() && (
-        (request.auth.token.keys().contains('role') && request.auth.token.role == "moderator")
-      ); 
-    }
-    
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     
     function isNotBanned() { 
@@ -26,15 +20,14 @@ service cloud.firestore {
       return !exists(userPath) || get(userPath).data.get('isBanned', false) == false; 
     }
 
-    // User Profile Rules
+    // User Profile & Recursive Chat History Rules
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin() || isModerator();
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isSignedIn();
-      // المالك فقط يمكنه تعديل الرصيد والرتبة وحالة الحظر
-      allow update: if isAdmin() || (isOwner(userId) && isNotBanned() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
+      allow update: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance', 'isBanned']));
       allow delete: if isAdmin();
 
-      // 🔥 بروتوكول سجل المحادثات السيادي
+      // 🔥 بروتوكول سجل المحادثات السيادي - يسمح بالوصول الكامل للمالك والمستخدم
       match /chatHistory/{msgId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
@@ -46,36 +39,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Sovereign System Hierarchy (Logs, Moderation, Config)
+    // Sovereign System Hierarchy
     match /system/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
-    }
-
-    // Live Consultations & Bookings
-    match /liveConsultations/{sessionId} {
-      allow read, write: if isSignedIn() && isNotBanned();
-      match /messages/{messageId} {
-        allow read, write: if isSignedIn() && isNotBanned();
-      }
-    }
-    
-    match /bookings/{id} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn() && isNotBanned();
-      allow update, delete: if isAdmin();
     }
 
     // Payment Requests
     match /paymentRequests/{id} {
       allow create: if isSignedIn() && isNotBanned();
       allow read, update, delete: if isAdmin();
-    }
-
-    // Analytics (Restricted)
-    match /analytics/{id} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || isModerator();
     }
   }
 }

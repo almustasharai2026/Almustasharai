@@ -31,9 +31,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // 🔥 تحصين اتصالات بيئة التطوير لمنع التوقف المتكرر
+  // 🔥 تحصين اتصالات بيئة التطوير السيادية لمنع عطل الـ Manifest
   experimental: {
-    allowedDevOrigins: ["*.cloudworkstations.dev", "localhost:9002"],
+    allowedDevOrigins: [
+      "6000-firebase-studio-1774815253377.cluster-cbeiita7rbe7iuwhvjs5zww2i4.cloudworkstations.dev",
+      "*.cloudworkstations.dev",
+      "localhost:9002"
+    ],
   },
 };
 
