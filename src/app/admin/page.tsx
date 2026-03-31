@@ -10,7 +10,7 @@ import {
   ArrowRight, CheckCircle, RefreshCw, Terminal, CreditCard,
   Menu, X, LogOut
 } from "lucide-react";
-import { useUser, useFirestore, useCollection } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { collection, query, where, doc, updateDoc, getDocs, increment, serverTimestamp } from "firebase/firestore";
@@ -30,12 +30,18 @@ export default function SupremeCommandCenter() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // جلب إحصائيات سريعة للكوكب
-  const usersQuery = collection(db!, "users");
-  const { data: allUsers } = useCollection(usersQuery as any);
+  // جلب إحصائيات سريعة للكوكب - تم تغليفها ببروتوكول useMemoFirebase السيادي
+  const usersQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "users");
+  }, [db]);
+  const { data: allUsers } = useCollection(usersQuery);
   
-  const requestsQuery = collection(db!, "paymentRequests");
-  const { data: allRequests } = useCollection(requestsQuery as any);
+  const requestsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "paymentRequests");
+  }, [db]);
+  const { data: allRequests } = useCollection(requestsQuery);
 
   // حماية الوصول الصارمة للملك فقط
   const isOwner = user?.email === SOVEREIGN_ADMIN_EMAIL;
