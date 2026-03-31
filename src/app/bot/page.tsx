@@ -7,7 +7,7 @@ import {
   Send, Scale, LogOut, LayoutDashboard, Sparkles, 
   Menu, X, Plus, Wallet, Sun, Moon,
   ChevronLeft, Loader2, Mic, Camera, Paperclip, 
-  FileText, Zap, MessageSquare
+  FileText, Zap, MessageSquare, ShieldCheck, History
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -16,11 +16,21 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { doc, collection, query, orderBy, limit, addDoc, serverTimestamp, updateDoc, increment } from "firebase/firestore";
 import { roles as ROLES_LIST } from "@/lib/roles";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog";
 import { useMemoFirebase } from "@/firebase/provider";
 import IdCaptureWizard from "@/components/IdCaptureWizard";
 import Link from "next/link";
 
+/**
+ * مركز قيادة "المستشار الذكي" - النسخة الفاخرة المحدثة.
+ * تفعيل كافة وسائل الراحة للمواطن مع القائمة الجانبية للأوامر.
+ */
 export default function SmartConsultantPage() {
   const { user, profile, signOut, role } = useUser();
   const db = useFirestore();
@@ -53,7 +63,7 @@ export default function SmartConsultantPage() {
     if (!text || isTyping || !db || !user) return;
 
     if (role === ROLES_LIST.USER && (profile?.balance || 0) < 1) {
-      toast({ variant: "destructive", title: "رصيد غير كافٍ" });
+      toast({ variant: "destructive", title: "الرصيد السيادي نفذ", description: "يرجى التوجه للخزنة لشحن الوحدات." });
       return;
     }
 
@@ -84,7 +94,7 @@ export default function SmartConsultantPage() {
         timestamp: serverTimestamp()
       });
     } catch (e) {
-      toast({ variant: "destructive", title: "فشل الإرسال" });
+      toast({ variant: "destructive", title: "انقطاع الاتصال السيادي" });
     } finally {
       setIsTyping(false);
     }
@@ -98,33 +108,34 @@ export default function SmartConsultantPage() {
         </div>
         <div>
           <h2 className="text-xl font-black text-white">المستشار الذكي</h2>
-          <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Smart Citizen Bot</p>
+          <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Elite Citizen Hub</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        <button onClick={() => setInputText("")} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-black text-xs">
-          <Plus className="h-4 w-4 text-primary" /> استشارة جديدة
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
+        <button onClick={() => handleSend("ابدأ استشارة جديدة")} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-black text-xs group">
+          <Plus className="h-4 w-4 text-primary group-hover:rotate-90 transition-transform" /> استشارة جديدة
         </button>
 
         <div className="space-y-2">
-          <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] px-4">أوامر سريعة</p>
-          <CommandBtn icon={<FileText />} text="تحليل عقد" onClick={() => handleSend("قم بتحليل هذا العقد وتوضيح المخاطر.")} color="blue" />
-          <CommandBtn icon={<Zap />} text="استشارة فورية" onClick={() => handleSend("أحتاج نصيحة قانونية سريعة.")} color="amber" />
-          <CommandBtn icon={<MessageSquare />} text="صياغة خطاب" onClick={() => handleSend("ساعدني في صياغة خطاب رسمي.")} color="emerald" />
+          <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] px-4">أوامر المواطن السريعة</p>
+          <CommandBtn icon={<FileText />} text="تحليل وثيقة" onClick={() => handleSend("قم بتحليل هذا المستند وتوضيح المخاطر القانونية.")} color="blue" />
+          <CommandBtn icon={<Zap />} text="استشارة فورية" onClick={() => handleSend("أحتاج نصيحة قانونية سريعة بخصوص مشكلة عاجلة.")} color="amber" />
+          <CommandBtn icon={<MessageSquare />} text="صياغة خطاب" onClick={() => handleSend("ساعدني في صياغة خطاب قانوني رسمي.")} color="emerald" />
+          <CommandBtn icon={<ShieldCheck />} text="فحص امتثال" onClick={() => handleSend("هل هذا الإجراء متوافق مع القوانين الحالية؟")} color="blue" />
         </div>
       </div>
 
       <div className="p-6 border-t border-white/5 bg-black/40 space-y-4">
-        <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+        <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5 shadow-inner">
            <div className="flex items-center gap-3">
               <Wallet className="h-4 w-4 text-primary" />
               <span className="text-sm font-black tabular-nums">{profile?.balance || 0} EGP</span>
            </div>
-           <Link href="/pricing" className="text-[9px] font-black text-primary">شحن</Link>
+           <Link href="/pricing" className="text-[9px] font-black text-primary hover:underline">شحن الرصيد</Link>
         </div>
-        <button onClick={() => signOut()} className="w-full flex items-center gap-4 px-6 py-3 rounded-xl text-white/40 hover:text-red-500 transition-all font-black text-[10px] uppercase">
-          <LogOut className="h-4 w-4" /> خروج
+        <button onClick={() => signOut()} className="w-full flex items-center gap-4 px-6 py-3 rounded-xl text-white/40 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-widest">
+          <LogOut className="h-4 w-4" /> خروج سيادي
         </button>
       </div>
     </div>
@@ -142,26 +153,26 @@ export default function SmartConsultantPage() {
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col relative">
-          <header className="h-20 bg-black/40 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-8 z-40">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-xl text-primary border border-white/5">
+          <header className="h-20 bg-black/40 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-8 z-40 shadow-2xl">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 bg-white/5 rounded-xl text-primary border border-white/5 hover:bg-white/10 transition-all">
               {isSidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <div className="flex items-center gap-4">
               {role === ROLES_LIST.ADMIN && (
                 <Link href="/admin">
-                  <Button variant="outline" className="rounded-xl border-primary/20 text-primary hover:bg-primary/10 gap-2 font-black text-xs">
-                    لوحة الإدارة
-                  </Button>
+                  <button className="bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all">
+                    <LayoutDashboard className="h-4 w-4" /> غرفة القيادة
+                  </button>
                 </Link>
               )}
-              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2.5 bg-white/5 rounded-xl text-primary">
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2.5 bg-white/5 rounded-xl text-primary border border-white/5">
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
             </div>
           </header>
 
           <main className="flex-1 flex flex-col relative overflow-hidden bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent">
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-10 pb-40">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-10 pb-40 scrollbar-thin">
               <div className="max-w-4xl mx-auto space-y-8">
                 {cloudMessages?.map((m) => (
                   <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}>
@@ -172,7 +183,7 @@ export default function SmartConsultantPage() {
                     </div>
                   </div>
                 ))}
-                {isTyping && <div className="p-4 bg-primary/5 rounded-full w-fit animate-pulse text-[8px] font-black uppercase text-primary">المستشار الذكي يحلل...</div>}
+                {isTyping && <div className="p-4 bg-primary/5 rounded-full w-fit animate-pulse text-[8px] font-black uppercase text-primary tracking-[0.3em]">جاري المعالجة الذكية...</div>}
               </div>
             </div>
 
@@ -188,13 +199,17 @@ export default function SmartConsultantPage() {
                   <div className="flex items-center px-8 py-5 gap-6">
                     <textarea 
                       value={inputText} 
-                      onChange={(e) => setInputText(e.target.value)}
+                      onChange={(e) => {
+                        setInputText(e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
+                      }}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      placeholder="اسأل المستشار الذكي..."
+                      placeholder="اطرح سؤالك القانوني برصانة..."
                       className="flex-1 bg-transparent border-none outline-none text-xl font-bold text-white placeholder:text-white/10 resize-none py-2"
                       rows={1}
                     />
-                    <button onClick={() => handleSend()} disabled={!inputText.trim() || isTyping} className="h-16 w-16 rounded-[1.5rem] bg-primary text-white flex items-center justify-center shadow-xl transition-all disabled:opacity-20">
+                    <button onClick={() => handleSend()} disabled={!inputText.trim() || isTyping} className="h-16 w-16 rounded-[1.5rem] bg-primary text-white flex items-center justify-center shadow-xl transition-all disabled:opacity-20 hover:scale-105 active:scale-95">
                       <Send className="rotate-180 h-7 w-7" />
                     </button>
                   </div>
@@ -206,8 +221,12 @@ export default function SmartConsultantPage() {
       </div>
 
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
-        <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 max-w-2xl bg-black">
-           <IdCaptureWizard onComplete={() => { setIsCameraOpen(false); toast({ title: "تم التوثيق السيادي ✅" }); }} />
+        <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 max-w-2xl bg-black shadow-3xl">
+           <DialogHeader className="mb-6">
+              <DialogTitle className="text-2xl font-black text-white text-right">المعالج البصري</DialogTitle>
+              <DialogDescription className="text-right text-white/40">التقط صورة للمستند القانوني ليقوم المستشار بتحليلها.</DialogDescription>
+           </DialogHeader>
+           <IdCaptureWizard onComplete={() => { setIsCameraOpen(false); toast({ title: "تم التوثيق البصري بنجاح ✅" }); }} />
         </DialogContent>
       </Dialog>
     </ProtectedRoute>
