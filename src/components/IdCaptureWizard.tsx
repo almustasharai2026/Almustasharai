@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, RefreshCw, CheckCircle2, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
+import { Camera, RefreshCw, ShieldCheck, CreditCard, ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface IdCaptureWizardProps {
@@ -69,7 +69,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between mb-2 px-2">
-        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sovereign Capture: Step {currentStep + 1} of 4</span>
+        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Capture Mode: Step {currentStep + 1} of 4</span>
         <div className="flex gap-1.5">
           {STEPS.map((_, i) => (
             <div key={i} className={`h-1.5 w-8 rounded-full transition-all duration-500 ${i <= currentStep ? 'bg-primary shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-200 dark:bg-white/5'}`} />
@@ -82,9 +82,10 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentStep}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
               className="p-8 space-y-6"
             >
               <div className="flex items-center gap-5 text-right">
@@ -104,7 +105,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
                     ref={webcamRef}
                     screenshotFormat="image/jpeg"
                     videoConstraints={{ facingMode: "environment" }}
-                    className="w-full h-full object-cover mirror"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center relative">
@@ -161,7 +162,7 @@ export default function IdCaptureWizard({ onComplete }: IdCaptureWizardProps) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between items-center px-6">
+      <div className="flex justify-between items-center px-6 pb-2">
         <button 
           onClick={handleBack} 
           disabled={currentStep === 0}
