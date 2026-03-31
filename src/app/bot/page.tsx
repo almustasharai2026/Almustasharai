@@ -7,7 +7,7 @@ import {
   Send, Scale, LogOut, LayoutDashboard, Sparkles, 
   Menu, X, Plus, Wallet, Sun, Moon,
   ChevronLeft, Loader2, Mic, Camera, Paperclip, 
-  FileText, Copy, Trash2, Zap, MessageSquare
+  FileText, Copy, Trash2, Zap, MessageSquare, ShieldCheck
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -33,9 +33,8 @@ import IdCaptureWizard from "@/components/IdCaptureWizard";
 import Link from "next/link";
 
 /**
- * المستشار الذكي (The Smart Consultant)
- * رفيق المواطنين السيادي، مجهز بكافة وسائل الراحة والتحليل.
- * تم إصلاح استيراد Dialog لضمان عمل محرك الكاميرا.
+ * المستشار الذكي (The Smart Consultant) - واجهة المواطنين السيادية.
+ * تم تصميمها لتكون الأكثر سلاسة وفخامة في العالم العربي.
  */
 export default function SmartConsultantPage() {
   const { user, profile, signOut, role } = useUser();
@@ -65,7 +64,6 @@ export default function SmartConsultantPage() {
     }
   }, [cloudMessages, isTyping]);
 
-  // بروتوكول الإملاء الصوتي السيادي
   const toggleRecording = () => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -97,7 +95,6 @@ export default function SmartConsultantPage() {
     const text = customText || inputText.trim();
     if (!text || isTyping || !db || !user) return;
 
-    // حماية الرصيد للمواطنين
     if (role === ROLES_LIST.USER && (profile?.balance || 0) < 1) {
       toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن محفظتك للمتابعة." });
       return;
@@ -261,7 +258,6 @@ export default function SmartConsultantPage() {
         </div>
       </div>
 
-      {/* معالج تصوير الوثائق السيادي */}
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
         <DialogContent className="glass-cosmic border-none rounded-[3rem] p-10 max-w-2xl bg-black shadow-3xl">
            <DialogHeader className="mb-6">

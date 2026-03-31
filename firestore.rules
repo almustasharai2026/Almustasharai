@@ -1,132 +1,75 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * ALMUSTASHARAI SECURITY RULES - PROTOTYPING PHASE
-     * 
-     * Core Philosophy:
-     * This ruleset enforces a strict ownership and role-based access model. 
-     * While data shapes are kept flexible for rapid development, who can access 
-     * specific resources is strictly controlled based on Firebase Authentication.
-     * 
-     * Data Structure:
-     * - /users/{userId}: Private user profiles (Owner-only).
-     * - /consultants/{consultantId}: Publicly readable professional profiles (Self-managed).
-     * - /expertiseAreas: Publicly readable legal categories (Admin-only writes).
-     * - /consultations: Private shared documents between a user and a consultant.
-     * - /roles_admin: Database Access Control (DBAC) for system administrators.
-     * 
-     * Key Security Decisions:
-     * - Denormalization for Authorization: Critical IDs (userId, consultantId) are stored 
-     *   directly on documents to avoid expensive get() calls in rules.
-     * - Shared Access: The /consultations collection uses field-based checks (userId, consultantId)
-     *   to allow secure access for both the client and the legal professional.
-     * - Admin Roles: Administrative power is checked against the /roles_admin collection.
+     * ميثاق الحماية السيادي (Supreme Security Protocol king2026).
+     * يسمح للمواطنين والمديرين بالوصول الكامل لمسارات البيانات المحددة.
      */
 
-    // --- GLOBAL HELPER FUNCTIONS ---
-
-    /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the authenticated user matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks if the authenticated user owns an existing document. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /** Checks if the authenticated user has an entry in the roles_admin collection. */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
     }
 
-    // --- MATCH RULES ---
-
-    /**
-     * @description Rules for private user profiles.
-     * @path /users/{userId}
-     * @allow (get, list, create, update) if the authenticated user's UID matches the {userId} path.
-     * @deny If a user attempts to read or write a profile belonging to another UID.
-     * @principle Ownership: Strict path-based ownership for private sensitive data.
-     */
+    // المواطنون وإدارة الهوية
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if false; // Profiles are typically not deleted by users in this app.
-    }
-
-    /**
-     * @description Rules for consultant profiles. Publicly readable for discovery.
-     * @path /consultants/{consultantId}
-     * @allow (get, list) for everyone. (create, update) if the user's UID matches {consultantId}.
-     * @deny If a user tries to modify a consultant profile they do not own.
-     * @principle Public Read with Owner-Only Writes: Encourages browsing while protecting identity.
-     */
-    match /consultants/{consultantId} {
-      allow get, list: if true;
-      allow create: if isOwner(consultantId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(consultantId);
-      allow delete: if isExistingOwner(consultantId);
-
-      /**
-       * @description Rules for availability slots nested under a consultant.
-       * @path /consultants/{consultantId}/availabilitySlots/{slotId}
-       * @allow (get, list) for everyone. (create, update, delete) for the parent consultant.
-       * @deny If a non-owner tries to manage a consultant's schedule.
-       * @principle Hierarchical Ownership: Subcollection access mirrored from the parent document's owner.
-       */
-      match /availabilitySlots/{slotId} {
-        allow get, list: if true;
-        allow create: if isOwner(consultantId) && request.resource.data.consultantId == consultantId;
-        allow update, delete: if isExistingOwner(consultantId);
+      allow read, write: if isOwner(userId) || isAdmin();
+      
+      // سجل التوثيق السيادي - مفتوح للطرفين
+      match /chatHistory/{msgId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      // محادثات التحكم السيادية
+      match /sovereignChat/{msgId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    /**
-     * @description Global definitions for legal expertise areas.
-     * @path /expertiseAreas/{areaId}
-     * @allow (get, list) for all users. (create, update, delete) for users with admin role.
-     * @deny Any write operation from a non-admin user.
-     * @principle Role-Based Access: Protects global metadata from unauthorized changes.
-     */
-    match /expertiseAreas/{areaId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+    // هيئة الخبراء
+    match /consultants/{consultantId} {
+      allow read: if true;
+      allow write: if isOwner(consultantId) || isAdmin();
     }
 
-    /**
-     * @description Private legal consultations between two parties.
-     * @path /consultations/{consultationId}
-     * @allow (all) if the user's UID is found in either the 'userId' or 'consultantId' fields.
-     * @deny If a user is not part of the consultation as either the client or the consultant.
-     * @principle Shared Access (Collaborators): Uses denormalized IDs to permit multi-party access.
-     */
-    match /consultations/{consultationId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.consultantId == request.auth.uid);
-      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || request.resource.data.consultantId == request.auth.uid);
-      allow update: if resource != null && (resource.data.userId == request.auth.uid || resource.data.consultantId == request.auth.uid);
-      allow delete: if isAdmin(); // Only admins can hard-delete consultation records for auditing.
+    // الحجوزات والتعاملات
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
     }
 
-    /**
-     * @description System administrative roles.
-     * @path /roles_admin/{userId}
-     * @allow (get) for any signed-in user to check status. (list, write) for existing admins only.
-     * @deny If a non-admin tries to list or grant admin privileges.
-     * @principle Roles (DBAC): A dedicated collection to manage high-level permissions.
-     */
+    // طلبات الدفع والشحن
+    match /paymentRequests/{reqId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // محادثات البث المباشر
+    match /liveConsultations/{sessionId} {
+      allow read, write: if isSignedIn();
+      match /messages/{msgId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // الصلاحيات العليا
     match /roles_admin/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }

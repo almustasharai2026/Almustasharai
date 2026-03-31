@@ -1,31 +1,12 @@
+
 {
   "version": 2,
-  "buildCommand": "cd artifacts/legal-ai && pnpm install && PORT=3000 BASE_PATH=/ pnpm run build",
-  "outputDirectory": "artifacts/legal-ai/dist/public",
   "framework": "nextjs",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x",
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/admin/requests/([^/]+)/approve",
-      "dest": "/api/admin/requests/[id]/approve.js?id=$1"
-    },
-    {
-      "src": "/api/admin/requests/([^/]+)/reject",
-      "dest": "/api/admin/requests/[id]/reject.js?id=$1"
-    },
-    {
-      "src": "/api/(?<path>.*)",
-      "dest": "/api/$path.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "buildCommand": "pnpm install && next build",
+  "outputDirectory": ".next",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "github": {
+    "silent": true
+  }
 }

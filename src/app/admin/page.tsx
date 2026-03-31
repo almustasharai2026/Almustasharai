@@ -8,7 +8,7 @@ import {
   Trash2, CheckCircle2, XCircle, ShieldCheck, 
   Activity, ArrowLeft, Loader2, ArrowRightLeft,
   Zap, History, Cpu, Globe, ChevronLeft, UserMinus, Star, Eye, FileCheck, Gavel, Settings,
-  Mic, Camera, Paperclip, Send, Sparkles, Plus
+  Mic, Camera, Paperclip, Send, Sparkles, Plus, MessageSquare
 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,6 @@ export default function SupremeCommandCenter() {
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -60,10 +59,6 @@ export default function SupremeCommandCenter() {
       scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [adminChat, isTyping]);
-
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [transferAmount, setTransferAmount] = useState("");
 
   const handleSend = async (customText?: string) => {
     const text = customText || inputText.trim();
@@ -230,7 +225,6 @@ export default function SupremeCommandCenter() {
               </motion.div>
             )}
 
-            {/* Other tabs follow original admin structure but with updated UI */}
             {activeTab === "overview" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
