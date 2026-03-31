@@ -3,8 +3,22 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Sovereign Access Helpers
     function isSignedIn() { return request.auth != null; }
-    function isAdmin() { return isSignedIn() && request.auth.token.email == 'bishoysamy390@gmail.com'; }
-    function isModerator() { return isSignedIn() && request.auth.token.email.matches('.*moderator.*'); }
+    
+    // وظيفة التحقق من الرتبة السيادية (Admin)
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email == 'bishoysamy390@gmail.com' || 
+        request.auth.token.role == "admin"
+      ); 
+    }
+    
+    function isModerator() { 
+      return isSignedIn() && (
+        request.auth.token.role == "moderator" || 
+        request.auth.token.email.matches('.*moderator.*')
+      ); 
+    }
+    
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     
     // بروتوكول التحقق من حالة المواطن (Resilient Banned Check)
@@ -43,10 +57,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Global Moderation System (Moderators have full access here)
+    // Global Moderation System
     match /system/moderation/forbiddenWords/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin() || isModerator();
+    }
+    
+    // System Core Settings
+    match /system/settings {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /system/offers/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Live Consultations
