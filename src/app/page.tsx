@@ -1,13 +1,15 @@
+
 'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Gavel, Video, Send, BrainCircuit, ShieldCheck, Zap } from 'lucide-react';
 import SovereignButton from '@/components/SovereignButton';
+import FloatingCard from '@/components/FloatingCard';
 import Link from 'next/link';
 
 /**
- * الصفحة الرئيسية السيادية المحدثة.
+ * الصفحة الرئيسية السيادية (Sovereign Home).
  * تجمع بين بساطة ChatGPT وفخامة "كوكب المستشار" مع تأثيرات حركية ذكية.
  */
 export default function Home() {
@@ -28,7 +30,7 @@ export default function Home() {
         </motion.div>
         <h1 className="text-3xl font-black text-primary tracking-tighter mt-2">المستشار AI</h1>
         <p className="text-muted-foreground text-sm text-center max-w-[280px] font-medium leading-relaxed opacity-80">
-          اكتب مشكلتك الآن، وسيقوم المحرك السيادي بتوجيهك لأفضل حل قانوني في ثوانٍ.
+          استشارة ذكية في ثواني. اكتب مشكلتك الآن وسنرشدك لأفضل حل فوراً.
         </p>
       </div>
 
@@ -54,48 +56,22 @@ export default function Home() {
         
         <FloatingCard 
           title="تحليل ذكي" 
-          icon={<Zap className="h-3.5 w-3.5" />}
           delay={0} 
-          position={{ top: '15%', right: '10%' }}
+          icon={<Zap className="h-3 w-3" />}
         />
         <FloatingCard 
           title="مجلس الخبراء" 
-          icon={<Gavel className="h-3.5 w-3.5" />}
           delay={0.8} 
-          position={{ bottom: '20%', left: '15%' }}
+          icon={<Gavel className="h-3 w-3" />}
         />
         <FloatingCard 
-          title="اتصال مباشر" 
-          icon={<Video className="h-3.5 w-3.5" />}
+          title="جلسات مباشرة" 
           delay={1.5} 
-          position={{ top: '45%', right: '45%' }}
+          icon={<Video className="h-3 w-3" />}
         />
         
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-          <ShieldCheck className="h-48 w-48 text-primary" />
-        </div>
-      </div>
-
-      {/* Protocols & Features List */}
-      <div className="w-full mt-12 space-y-5">
-        <div className="flex items-center gap-3 px-1">
-          <div className="h-px flex-grow bg-border/50" />
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
-            بروتوكولات العدالة الرقمية
-          </h2>
-        </div>
-        
-        <div className="grid gap-4">
-          <FeatureItem 
-            title="محرك القرار الاستراتيجي" 
-            desc="تحليل هيكلي عميق يحدد مستوى المخاطر ويضع خطة عمل فورية لموقفك."
-            icon={<Sparkles className="h-4 w-4 text-accent" />}
-          />
-          <FeatureItem 
-            title="الدرع الواقي للبيانات" 
-            desc="تشفير سيادي لكافة المراسلات يضمن خصوصيتك المطلقة وفق أعلى المعايير."
-            icon={<ShieldCheck className="h-4 w-4 text-accent" />}
-          />
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none text-primary">
+          <ShieldCheck className="h-48 w-48" />
         </div>
       </div>
 
@@ -103,7 +79,7 @@ export default function Home() {
       <div className="w-full mt-12 mb-6">
         <Link href="/auth/signup" className="block group">
           <SovereignButton 
-            text="انطلق في أول استشارة مجاناً" 
+            text="ابدأ أول استشارة الآن" 
             icon={<Sparkles className="h-5 w-5 animate-pulse" />}
           />
         </Link>
@@ -112,51 +88,31 @@ export default function Home() {
         </p>
       </div>
 
+      {/* Features Detail Grid */}
+      <div className="w-full space-y-4">
+        <FeatureDetail 
+          title="تحليل ذكي" 
+          desc="محرك AI يحلل معطيات حالتك فوراً ويحدد المخاطر."
+        />
+        <FeatureDetail 
+          title="مستشارين متخصصين" 
+          desc="نخبة من الخبراء القانونيين في كافة التخصصات."
+        />
+        <FeatureDetail 
+          title="جلسات مباشرة" 
+          desc="تواصل مباشر وآمن عبر الفيديو مع مستشارك الخاص."
+        />
+      </div>
+
     </div>
   );
 }
 
-/**
- * مكون البطاقة العائمة لإضفاء حيوية على الواجهة.
- */
-function FloatingCard({ title, delay, position, icon }: { title: string; delay: number; position: any; icon: React.ReactNode }) {
+function FeatureDetail({ title, desc }: { title: string; desc: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: 10 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        y: [0, -12, 0],
-        rotate: [0, 2, -2, 0]
-      }}
-      transition={{ 
-        duration: 5, 
-        repeat: Infinity, 
-        delay: delay,
-        ease: "easeInOut"
-      }}
-      className="absolute bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-5 py-3 rounded-[1.5rem] shadow-2xl shadow-black/10 border border-white/20 text-[11px] font-black text-primary flex items-center gap-3 z-10"
-      style={position}
-    >
-      <div className="h-6 w-6 rounded-xl bg-accent/10 flex items-center justify-center text-accent shadow-inner">
-        {icon}
-      </div>
-      <span className="tracking-tight">{title}</span>
-    </motion.div>
-  );
-}
-
-/**
- * بطاقة عرض الميزة في القائمة السفلية.
- */
-function FeatureItem({ title, desc, icon }: { title: string; desc: string; icon: React.ReactNode }) {
-  return (
-    <div className="p-6 bg-secondary/30 rounded-[2.5rem] border border-border/40 hover:bg-white dark:hover:bg-slate-800 hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 transition-all duration-500 group">
-      <div className="flex items-center gap-3 mb-2 justify-end">
-        <h3 className="font-black text-primary text-sm tracking-tight">{title}</h3>
-        <div className="group-hover:rotate-12 transition-transform">{icon}</div>
-      </div>
-      <p className="text-[11px] text-muted-foreground leading-relaxed text-right font-bold opacity-70 group-hover:opacity-100">{desc}</p>
+    <div className="p-5 bg-secondary/30 rounded-[2rem] border border-border/40 text-right">
+      <h3 className="font-black text-primary text-sm mb-1">{title}</h3>
+      <p className="text-[11px] text-muted-foreground font-bold opacity-70">{desc}</p>
     </div>
   );
 }
