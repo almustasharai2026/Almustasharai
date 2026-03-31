@@ -70,6 +70,17 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "title", "description"]
+    },
+    "AnalyticsEvent": {
+      "title": "AnalyticsEvent",
+      "description": "سجل تتبع الأحداث والنشاطات داخل النظام البيئي.",
+      "type": "object",
+      "properties": {
+        "event": { "type": "string" },
+        "data": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["event", "data"]
     }
   },
   "auth": {
@@ -95,6 +106,10 @@
     "/cases/{caseId}": {
       "schema": "LegalCase",
       "description": "أرشيف القضايا والحالات القانونية"
+    },
+    "/analytics/{id}": {
+      "schema": "AnalyticsEvent",
+      "description": "سجلات التحليلات والنشاط البرمجي"
     }
   }
 }
