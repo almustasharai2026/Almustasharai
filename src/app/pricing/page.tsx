@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Zap, Crown, Shield, Loader2, Wallet, Plus } from "lucide-react";
+import { Check, Zap, Crown, Shield, Loader2, Wallet, Plus, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useState } from "react";
 import { useFirestore, useUser } from "@/firebase";
@@ -9,6 +9,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import SovereignButton from "@/components/SovereignButton";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function PricingPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -82,9 +83,18 @@ export default function PricingPage() {
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[150px] rounded-full -z-10" />
 
       <div className="max-w-7xl mx-auto space-y-24">
+        
+        <div className="flex justify-start">
+           <Link href="/dashboard">
+             <button className="glass-cosmic border-white/5 px-8 py-4 rounded-2xl text-white/40 hover:text-white flex items-center gap-4 font-bold transition-all">
+                <ArrowRight className="h-4 w-4" /> العودة للوحة التحكم
+             </button>
+           </Link>
+        </div>
+
         <header className="text-center space-y-8 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-primary">
-             <Wallet className="h-4 w-4" /> Sovereign Vault
+             <Wallet className="h-4 w-4" /> Sovereign Vault Protocol
           </div>
           <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter">
             خزنة <span className="text-gradient">الرصيد السيادي</span>
@@ -131,7 +141,7 @@ export default function PricingPage() {
 
                 <CardFooter className="p-12 pt-6">
                   <SovereignButton 
-                    text={loadingId === offer.id ? "جاري المعالجة..." : "تفعيل الباقة"} 
+                    text={loadingId === offer.id ? "جاري المعالجة..." : "تفعيل الباقة السيادية"} 
                     onClick={() => handleSelect(offer)}
                     disabled={loadingId === offer.id}
                     icon={<Plus />}
