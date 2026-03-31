@@ -1,125 +1,129 @@
-"use client";
 
-import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  CalendarDays, User, Gavel, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, ArrowRight, BookOpen
-} from "lucide-react";
-import { collection, query, where, orderBy } from "firebase/firestore";
-import { useMemoFirebase } from "@/firebase/provider";
-import { motion } from "framer-motion";
+'use client';
+
+import { useState } from "react";
+import SovereignLayout from "@/components/SovereignLayout";
+import SovereignCalendar from "@/components/SovereignCalendar";
+import { useUser, useFirestore } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { initiateSovereignBooking } from "@/lib/sovereign-booking-engine";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, Loader2, ShieldCheck, Smartphone, Calendar, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
-export default function SovereignBookingsPage() {
-  const { user, role } = useUser();
+/**
+ * صفحة الحجز السيادي للمواطن.
+ * تدمج التقويم مع تأكيد الهوية المالية والـ SMS.
+ */
+export default function CitizenBookingPage() {
+  const { user, profile } = useUser();
   const db = useFirestore();
+  const { toast } = useToast();
+  
+  const [step, setStep] = useState<'calendar' | 'confirm' | 'success'>('calendar');
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
 
-  // بناء استعلام سيادي: المدير يرى الكل، المواطن يرى حجوزاته فقط
-  const bookingsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    const baseRef = collection(db, "bookings");
-    if (role === "admin") {
-      return query(baseRef, orderBy("createdAt", "desc"));
+  const handleSelectSlot = (date: Date, slot: string, isEmergency: boolean) => {
+    setBookingDetails({ date, slot, isEmergency });
+    setStep('confirm');
+  };
+
+  const confirmBooking = async () => {
+    if (!user || !db) return;
+    
+    const price = bookingDetails.isEmergency ? 150 : 50;
+    
+    if (profile?.balance < price && profile?.role !== 'admin') {
+      toast({ variant: "destructive", title: "رصيد غير كافٍ", description: "يرجى شحن محفظتك لمتابعة الحجز السيادي." });
+      return;
     }
-    return query(baseRef, where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-  }, [db, user, role]);
 
-  const { data: bookings, isLoading } = useCollection(bookingsQuery);
+    initiateSovereignBooking(db, {
+      userId: user.uid,
+      userName: profile.fullName,
+      consultantId: "supreme_consultant", // مثال
+      consultantName: "خبير الجنايات السيادي",
+      date: bookingDetails.date.toISOString(),
+      slot: bookingDetails.slot,
+      type: bookingDetails.isEmergency ? 'emergency' : 'normal',
+      price: price
+    });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 py-1 font-black text-[10px] uppercase">Confirmed</Badge>;
-      case "completed":
-        return <Badge className="bg-blue-500/10 text-blue-500 border-none px-4 py-1 font-black text-[10px] uppercase">Completed</Badge>;
-      case "cancelled":
-        return <Badge className="bg-red-500/10 text-red-500 border-none px-4 py-1 font-black text-[10px] uppercase">Cancelled</Badge>;
-      default:
-        return <Badge className="bg-amber-500/10 text-amber-500 border-none px-4 py-1 font-black text-[10px] uppercase animate-pulse">Pending Review</Badge>;
-    }
+    setStep('success');
+    toast({ title: "تم توثيق الحجز بنجاح ✅" });
   };
 
   return (
-    <div className="min-h-screen bg-[#02040a] text-white p-8 lg:p-20 font-sans" dir="rtl">
-      <header className="max-w-6xl mx-auto mb-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 relative">
-        <div className="absolute -top-20 right-0 w-64 h-64 bg-primary/10 blur-[120px] -z-10" />
-        <div className="space-y-6">
-          <div className="sovereign-badge">
-             <CalendarDays className="h-3 w-3" /> سجل التعاملات السيادية
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter">أرشيف <span className="text-gradient">الحجوزات</span></h1>
-          <p className="text-white/30 text-xl font-bold max-w-xl">توثيق كامل لكافة الجلسات الاستشارية المجدولة والمنفذة ضمن النظام.</p>
-        </div>
-        <Link href="/dashboard">
-          <Button variant="ghost" className="text-white/40 hover:text-white gap-3 font-bold">
-            <ArrowRight className="h-4 w-4" /> العودة للمركز
-          </Button>
-        </Link>
-      </header>
-
-      <main className="max-w-6xl mx-auto">
-        {isLoading ? (
-          <div className="py-40 flex flex-col items-center gap-8 opacity-20">
-             <Loader2 className="h-16 w-16 animate-spin text-primary" />
-             <p className="text-2xl font-black uppercase tracking-[0.5em]">Synchronizing Archive...</p>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {bookings && bookings.length > 0 ? (
-              bookings.map((b, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }} 
-                  animate={{ opacity: 1, x: 0 }} 
-                  transition={{ delay: i * 0.05 }}
-                  key={b.id}
-                >
-                  <Card className="glass-cosmic border-none rounded-[2.5rem] overflow-hidden group hover:border-primary/20 transition-all shadow-xl">
-                    <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-                      <div className="flex flex-col md:flex-row items-center gap-10">
-                        <div className="h-20 w-20 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/10 transition-colors">
-                           <BookOpen className="h-10 w-10 text-primary" />
-                        </div>
-                        <div className="space-y-3 text-center md:text-right">
-                           <div className="flex items-center justify-center md:justify-start gap-3">
-                              <h3 className="text-2xl font-black text-white">حجز جلسة استشارية</h3>
-                              {getStatusBadge(b.status)}
-                           </div>
-                           <div className="flex flex-wrap justify-center md:justify-start gap-6 text-white/40 text-sm font-bold">
-                              <span className="flex items-center gap-2"><User className="h-4 w-4 text-primary" /> المواطن: {b.userId.substring(0, 8).toUpperCase()}</span>
-                              <span className="flex items-center gap-2"><Gavel className="h-4 w-4 text-primary" /> الخبير: {b.consultantId.substring(0, 8).toUpperCase()}</span>
-                              <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> {b.createdAt?.toDate ? b.createdAt.toDate().toLocaleString('ar-EG') : 'قيد المعالجة'}</span>
-                           </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-center md:items-end gap-4">
-                         <p className="text-3xl font-black text-white tabular-nums">{b.price} <span className="text-xs text-primary font-black">EGP</span></p>
-                         <Button variant="outline" className="rounded-xl border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/5">
-                           عرض التفاصيل السيادية
-                         </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))
-            ) : (
-              <div className="py-40 text-center glass rounded-[4rem] border-dashed border-white/5 space-y-8">
-                 <AlertCircle className="h-20 w-20 mx-auto text-white/5" />
-                 <div className="space-y-2">
-                    <p className="text-3xl font-black text-white/20">لا توجد حجوزات مسجلة</p>
-                    <p className="text-white/10 font-bold">ابدأ بحجز أول جلسة استشارية لك من سوق الخبراء.</p>
-                 </div>
-                 <Link href="/consultants">
-                    <Button className="btn-primary h-14 px-10 rounded-2xl">استعرض الخبراء المعتمدين</Button>
-                 </Link>
-              </div>
+    <SovereignLayout activeId="bookings">
+      <div className="min-h-screen p-10 lg:p-20 relative">
+        <div className="max-w-4xl mx-auto space-y-16">
+          
+          <AnimatePresence mode="wait">
+            {step === 'calendar' && (
+              <motion.div key="cal" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <header className="mb-16 space-y-4">
+                  <div className="sovereign-badge">
+                    <Calendar className="h-3 w-3" /> Booking Protocol v3.0
+                  </div>
+                  <h1 className="text-6xl font-black tracking-tighter text-white">جدولة <span className="text-gradient">الاستشارات</span></h1>
+                  <p className="text-xl text-white/30 font-bold">حدد موعدك ضمن الكوكب القانوني. نظام SMS سيقوم بإخطارك فور التأكيد.</p>
+                </header>
+                <SovereignCalendar onSelectSlot={handleSelectSlot} />
+              </motion.div>
             )}
-          </div>
-        )}
-      </main>
+
+            {step === 'confirm' && (
+              <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-cosmic p-12 rounded-[4rem] space-y-10">
+                <h2 className="text-4xl font-black text-white text-center">تأكيد الحجز السيادي</h2>
+                <div className="grid grid-cols-2 gap-6 text-right">
+                  <InfoItem label="تاريخ الجلسة" value={bookingDetails.date.toLocaleDateString('ar-EG')} />
+                  <InfoItem label="التوقيت" value={bookingDetails.slot} />
+                  <InfoItem label="نوع الجلسة" value={bookingDetails.isEmergency ? 'طوارئ عاجلة' : 'استشارة عادية'} />
+                  <InfoItem label="التكلفة" value={`${bookingDetails.isEmergency ? 150 : 50} EGP`} />
+                </div>
+                <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl flex items-center gap-4 text-emerald-500">
+                   <Smartphone className="h-6 w-6 animate-bounce" />
+                   <p className="text-sm font-black uppercase tracking-widest leading-relaxed">سيتم إرسال رمز التحقق (SMS) إلى هاتفك المسجل فور الضغط على تأكيد.</p>
+                </div>
+                <div className="flex gap-4">
+                  <button onClick={confirmBooking} className="flex-1 h-20 bg-primary text-black font-black text-xl rounded-3xl shadow-2xl hover:scale-105 transition-all">تأكيد ومتابعة</button>
+                  <button onClick={() => setStep('calendar')} className="px-10 h-20 glass rounded-3xl text-white/40 font-bold hover:text-white">إلغاء</button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 'success' && (
+              <motion.div key="success" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20 space-y-10">
+                <div className="h-40 w-40 rounded-[4rem] bg-emerald-500/20 mx-auto flex items-center justify-center border border-emerald-500/30 shadow-3xl text-emerald-500 animate-pulse">
+                  <CheckCircle2 size={80} strokeWidth={3} />
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-5xl font-black text-white">تم الحجز سيادياً</h2>
+                  <p className="text-white/30 font-bold text-xl">تأكد من هاتفك، لقد أرسلنا لك كافة تفاصيل الجلسة.</p>
+                </div>
+                <div className="flex justify-center gap-6">
+                   <button className="bg-white/5 border border-white/10 text-primary px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3">
+                      <ShieldCheck size={16} /> مزامنة مع Google Calendar
+                   </button>
+                   <Link href="/dashboard">
+                      <button className="text-white/40 hover:text-white font-bold flex items-center gap-2">العودة للوحة القيادة <ArrowRight size={16} /></button>
+                   </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+        </div>
+      </div>
+    </SovereignLayout>
+  );
+}
+
+function InfoItem({ label, value }: any) {
+  return (
+    <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5">
+      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-2">{label}</p>
+      <p className="text-xl font-bold text-white">{value}</p>
     </div>
   );
 }

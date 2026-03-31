@@ -3,11 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * ميثاق الحماية السيادي (Supreme Security Protocol king2026).
-     * يسمح للمواطنين والمديرين بالوصول الكامل لمسارات البيانات المحددة.
-     */
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -23,53 +18,38 @@ service cloud.firestore {
       );
     }
 
-    // المواطنون وإدارة الهوية
+    // المواطنون
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
-      
-      // سجل التوثيق السيادي - مفتوح للطرفين (المواطن والمدير)
-      match /chatHistory/{msgId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
-      
-      // محادثات التحكم السيادية
-      match /sovereignChat/{msgId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
+      match /chatHistory/{msgId} { allow read, write: if isOwner(userId) || isAdmin(); }
     }
 
-    // هيئة الخبراء
-    match /consultants/{consultantId} {
-      allow read: if true;
-      allow write: if isOwner(consultantId) || isAdmin();
-    }
-
-    // الحجوزات والتعاملات
+    // نظام الحجز والجدولة (Sovereign Booking System)
     match /bookings/{bookingId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // المواطن يرى حجوزاته، الخبير يرى الموجهة له، المدير يرى الكل
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.consultantId == request.auth.uid || 
+        isAdmin()
+      );
+      // المواطن يستطيع إنشاء حجز
       allow create: if isSignedIn();
-      allow update: if isAdmin();
+      // الخبير والمدير يستطيعون التحديث (إلغاء، تعديل حالة)
+      allow update: if isSignedIn() && (
+        resource.data.consultantId == request.auth.uid || 
+        isAdmin()
+      );
+      allow delete: if isAdmin();
     }
 
-    // طلبات الدفع والشحن
+    // طلبات الدفع
     match /paymentRequests/{reqId} {
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
 
-    // محادثات البث المباشر
-    match /liveConsultations/{sessionId} {
-      allow read, write: if isSignedIn();
-      match /messages/{msgId} {
-        allow read, write: if isSignedIn();
-      }
-    }
-
-    // الصلاحيات العليا
-    match /roles_admin/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
+    match /consultants/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /roles_admin/{userId} { allow read: if isSignedIn(); allow write: if isAdmin(); }
   }
 }
