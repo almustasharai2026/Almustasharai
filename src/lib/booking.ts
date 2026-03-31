@@ -2,16 +2,38 @@
 
 import { Firestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { trackEvent } from "./analytics";
 
 /**
- * بروتوكول حجز الجلسات الاستشارية.
+ * بروتوكول حجز الجلسات الاستشارية السيادي.
  */
-export function createBooking(db: Firestore, userId: string, consultantId: string, price: number) {
+export function createBooking(db: Firestore, userId: string, consultantId: string, price: number): void {
   const bookingsRef = collection(db, "bookings");
-  const data = { userId, consultantId, price, status: "active", createdAt: serverTimestamp() };
+  
+  const bookingData = {
+    userId,
+    consultantId,
+    price,
+    status: "active",
+    createdAt: serverTimestamp(),
+  };
 
-  addDoc(bookingsRef, data).catch(err => {
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: bookingsRef.path, operation: 'create', requestResourceData: data }));
-  });
+  // 1. إنشاء سجل الحجز بأسلوب غير حاصر
+  addDoc(bookingsRef, bookingData)
+    .then(() => {
+      // 2. تتبع الحدث سيادياً فور نجاح المبادرة
+      trackEvent(db, "booking_created", {
+        userId,
+        consultantId,
+        price
+      });
+    })
+    .catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: bookingsRef.path,
+        operation: 'create',
+        requestResourceData: bookingData,
+      } satisfies SecurityRuleContext));
+    });
 }
